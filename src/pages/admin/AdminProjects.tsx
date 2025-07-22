@@ -56,14 +56,18 @@ export function AdminProjects() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
+        console.log('Fetching projects...');
         const { data, error } = await supabase
           .from('projects')
           .select('*')
           .order('created_at', { ascending: false });
 
+        console.log('Projects query result:', { data, error });
+
         if (error) {
           console.error('Error fetching projects:', error);
         } else {
+          console.log('Setting projects:', data);
           setProjects(data || []);
         }
       } catch (error) {
