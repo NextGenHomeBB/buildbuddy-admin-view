@@ -1,10 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Index = () => {
   const { user, signOut, loading } = useAuth();
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -31,11 +32,12 @@ const Index = () => {
               </p>
               
               {user.role === 'admin' && (
-                <Link to="/admin">
-                  <Button className="w-full">
-                    Access Admin Dashboard
-                  </Button>
-                </Link>
+                <Button 
+                  className="w-full"
+                  onClick={() => navigate('/admin')}
+                >
+                  Access Admin Dashboard
+                </Button>
               )}
               
               <Button 
