@@ -26,9 +26,8 @@ import { cn } from '@/lib/utils';
 const navigationItems = [
   {
     title: 'Overview',
-    url: '/admin',
-    icon: BarChart3,
-    exact: true
+    url: '/admin/overview',
+    icon: BarChart3
   },
   {
     title: 'Projects',
@@ -52,11 +51,9 @@ export function AdminSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
   
-  const isActiveRoute = (url: string, exact = false) => {
-    if (exact) {
-      return location.pathname === url;
-    }
-    return location.pathname.startsWith(url);
+  const isActiveRoute = (url: string) => {
+    return location.pathname === url || 
+           (url === '/admin/overview' && location.pathname === '/admin');
   };
 
   return (
@@ -97,7 +94,7 @@ export function AdminSidebar() {
                     asChild
                     className={cn(
                       "w-full justify-start gap-3 transition-colors hover:bg-sidebar-accent",
-                      isActiveRoute(item.url, item.exact) && 
+                      isActiveRoute(item.url) && 
                       "bg-sidebar-accent text-sidebar-primary font-medium"
                     )}
                   >
