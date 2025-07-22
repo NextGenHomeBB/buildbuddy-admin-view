@@ -1,42 +1,126 @@
+import { useState, useEffect } from 'react';
 import { BarChart3, FolderKanban, Users, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { mockStats, mockProjects } from '@/lib/mockData';
+import { supabase } from '@/integrations/supabase/client';
 
-const statCards = [
-  {
-    title: 'Total Projects',
-    value: mockStats.total_projects,
-    description: '+2 from last month',
-    icon: FolderKanban,
-    trend: 'up'
-  },
-  {
-    title: 'Active Projects',
-    value: mockStats.active_projects,
-    description: 'Currently in progress',
-    icon: Clock,
-    trend: 'neutral'
-  },
-  {
-    title: 'Completed Projects',
-    value: mockStats.completed_projects,
-    description: 'This quarter',
-    icon: CheckCircle,
-    trend: 'up'
-  },
-  {
-    title: 'Team Members',
-    value: mockStats.active_users,
-    description: `${mockStats.total_users} total users`,
-    icon: Users,
-    trend: 'up'
-  }
-];
+interface Stats {
+  total_projects: number;
+  active_projects: number;
+  completed_projects: number;
+  total_users: number;
+  active_users: number;
+}
+
+interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  progress: number;
+}
 
 export function AdminOverview() {
-  const recentProjects = mockProjects.slice(0, 3);
+  const [stats, setStats] = useState<Stats>({
+    total_projects: 0,
+    active_projects: 0,
+    completed_projects: 0,
+    total_users: 0,
+    active_users: 0
+  });
+  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log('Fetching overview data...');
+        
+        // Fetch projects stats
+        const { data: projects, error: projectsError } = await supabase
+          .from('projects')
+          .select('status');
+        
+        // Fetch users stats  
+        const { data: users, error: usersError } = await supabase
+          .from('profiles')
+          .select('id, role');
+
+        // Fetch recent projects
+        const { data: recent, error: recentError } = await supabase
+          .from('projects')
+          .select('id, name, description, status, progress')
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        console.log('Overview data:', { projects, users, recent });
+
+        if (projectsError) console.error('Projects error:', projectsError);
+        if (usersError) console.error('Users error:', usersError);
+        if (recentError) console.error('Recent projects error:', recentError);
+
+        // Calculate stats
+        const projectStats = projects || [];
+        const userStats = users || [];
+        
+        setStats({
+          total_projects: projectStats.length,
+          active_projects: projectStats.filter(p => p.status === 'active').length,
+          completed_projects: projectStats.filter(p => p.status === 'completed').length,
+          total_users: userStats.length,
+          active_users: userStats.filter(u => u.role !== 'client').length
+        });
+
+        setRecentProjects(recent || []);
+      } catch (error) {
+        console.error('Error fetching overview data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const statCards = [
+    {
+      title: 'Total Projects',
+      value: stats.total_projects,
+      description: '+2 from last month',
+      icon: FolderKanban,
+      trend: 'up'
+    },
+    {
+      title: 'Active Projects',
+      value: stats.active_projects,
+      description: 'Currently in progress',
+      icon: Clock,
+      trend: 'neutral'
+    },
+    {
+      title: 'Completed Projects',
+      value: stats.completed_projects,
+      description: 'This quarter',
+      icon: CheckCircle,
+      trend: 'up'
+    },
+    {
+      title: 'Team Members',
+      value: stats.active_users,
+      description: `${stats.total_users} total users`,
+      icon: Users,
+      trend: 'up'
+    }
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -84,7 +168,7 @@ export function AdminOverview() {
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <h4 className="font-semibold text-foreground">{project.name}</h4>
-                    <p className="text-sm text-muted-foreground">{project.client_name}</p>
+                    <p className="text-sm text-muted-foreground">{project.description || 'No description'}</p>
                   </div>
                   <Badge 
                     variant={
@@ -100,9 +184,9 @@ export function AdminOverview() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Progress</span>
-                    <span className="font-medium">{project.completion_percentage}%</span>
+                    <span className="font-medium">{Math.round(project.progress)}%</span>
                   </div>
-                  <Progress value={project.completion_percentage} className="h-2" />
+                  <Progress value={project.progress} className="h-2" />
                 </div>
               </div>
             ))}
