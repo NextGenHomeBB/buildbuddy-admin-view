@@ -47,6 +47,27 @@ export function useProjects() {
   });
 }
 
+export function useProject(projectId: string) {
+  return useQuery({
+    queryKey: ['project', projectId],
+    queryFn: async (): Promise<Project> => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          project_phases:project_phases(id)
+        `)
+        .eq('id', projectId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) throw new Error('Project not found');
+      return data;
+    },
+    enabled: !!projectId,
+  });
+}
+
 export function useCreateProject() {
   const queryClient = useQueryClient();
   const { toast } = useToast();

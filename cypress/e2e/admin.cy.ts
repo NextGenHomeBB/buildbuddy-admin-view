@@ -154,6 +154,65 @@ describe('Admin Panel E2E - Smoke Tests', () => {
     cy.contains('Successfully updated 2 phases').should('be.visible');
   });
 
+  it('should navigate to project tabs and verify tab functionality', () => {
+    cy.loginAsAdmin();
+    
+    // Mock project data with phases
+    cy.intercept('GET', '**/rest/v1/projects*', {
+      statusCode: 200,
+      body: [
+        { 
+          id: 'test-project-1', 
+          name: 'Test Project', 
+          status: 'active',
+          description: 'Test project with tabs',
+          created_at: '2025-01-01T00:00:00.000Z',
+          project_phases: [
+            { id: 'phase-1' },
+            { id: 'phase-2' }
+          ]
+        }
+      ]
+    }).as('getProjects');
+
+    // Mock single project data
+    cy.intercept('GET', '**/rest/v1/projects?id=eq.test-project-1*', {
+      statusCode: 200,
+      body: [
+        { 
+          id: 'test-project-1', 
+          name: 'Test Project', 
+          status: 'active',
+          description: 'Test project with tabs',
+          created_at: '2025-01-01T00:00:00.000Z',
+          project_phases: []
+        }
+      ]
+    }).as('getSingleProject');
+
+    // Visit project detail page (should default to overview)
+    cy.visit('/admin/projects/test-project-1');
+    
+    // Verify we're on overview tab
+    cy.url().should('include', '/admin/projects/test-project-1');
+    cy.contains('Phase Timeline').should('be.visible');
+    
+    // Navigate to phases tab
+    cy.contains('[role="tab"]', 'Phases').click();
+    cy.url().should('include', '/admin/projects/test-project-1/phases');
+    cy.contains('Project Phases').should('be.visible');
+    
+    // Navigate to tasks tab
+    cy.contains('[role="tab"]', 'Tasks').click();
+    cy.url().should('include', '/admin/projects/test-project-1/tasks');
+    cy.contains('Task Board').should('be.visible');
+    
+    // Navigate to files tab
+    cy.contains('[role="tab"]', 'Files').click();
+    cy.url().should('include', '/admin/projects/test-project-1/files');
+    cy.contains('Project Files').should('be.visible');
+  });
+
   it('should redirect non-admin users from admin routes', () => {
     // Visit admin route without authentication
     cy.visit('/admin/projects');

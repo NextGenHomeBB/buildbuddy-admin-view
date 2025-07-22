@@ -1,0 +1,174 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'todo' | 'in_progress' | 'done';
+  priority: 'low' | 'medium' | 'high';
+  phase_id?: string;
+  project_id: string;
+  assignee?: string;
+  created_at: string;
+  updated_at?: string;
+  completed_at?: string;
+}
+
+export interface CreateTaskData {
+  title: string;
+  description?: string;
+  status: 'todo' | 'in_progress' | 'done';
+  priority: 'low' | 'medium' | 'high';
+  phase_id?: string;
+}
+
+export interface UpdateTaskData extends CreateTaskData {
+  id: string;
+}
+
+export function useTasks(projectId: string) {
+  return useQuery({
+    queryKey: ['tasks', projectId],
+    queryFn: async (): Promise<Task[]> => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      return (data || []).map(task => ({
+        ...task,
+        status: task.status as Task['status'],
+        priority: task.priority as Task['priority']
+      }));
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useCreateTask() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ projectId, data }: { projectId: string; data: CreateTaskData }): Promise<Task> => {
+      const { data: task, error } = await supabase
+        .from('tasks')
+        .insert([{ ...data, project_id: projectId }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return {
+        ...task,
+        status: task.status as Task['status'],
+        priority: task.priority as Task['priority']
+      };
+    },
+    onMutate: async ({ projectId, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks', projectId] });
+      const previousTasks = queryClient.getQueryData<Task[]>(['tasks', projectId]);
+      
+      const optimisticTask: Task = {
+        id: 'temp-' + Date.now(),
+        project_id: projectId,
+        created_at: new Date().toISOString(),
+        ...data,
+      };
+
+      queryClient.setQueryData<Task[]>(['tasks', projectId], (old = []) => 
+        [...old, optimisticTask]
+      );
+
+      return { previousTasks, projectId };
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', variables.projectId] });
+      toast({
+        title: "Task created",
+        description: "New task has been created successfully.",
+      });
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks', context.projectId], context.previousTasks);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to create task. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+export function useUpdateTask() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (data: UpdateTaskData): Promise<Task> => {
+      const { data: task, error } = await supabase
+        .from('tasks')
+        .update(data)
+        .eq('id', data.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return {
+        ...task,
+        status: task.status as Task['status'],
+        priority: task.priority as Task['priority']
+      };
+    },
+    onMutate: async (updatedTask) => {
+      // Find the project ID from existing data
+      const allTaskQueries = queryClient.getQueriesData({ queryKey: ['tasks'] });
+      let projectId: string | undefined;
+
+      for (const [queryKey, queryData] of allTaskQueries) {
+        const tasks = queryData as Task[] | undefined;
+        if (tasks?.some(task => task.id === updatedTask.id)) {
+          projectId = (queryKey as string[])[1];
+          break;
+        }
+      }
+
+      if (!projectId) return;
+
+      await queryClient.cancelQueries({ queryKey: ['tasks', projectId] });
+      const previousTasks = queryClient.getQueryData<Task[]>(['tasks', projectId]);
+
+      queryClient.setQueryData<Task[]>(['tasks', projectId], (old = []) =>
+        old.map(task =>
+          task.id === updatedTask.id
+            ? { ...task, ...updatedTask }
+            : task
+        )
+      );
+
+      return { previousTasks, projectId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', data.project_id] });
+      toast({
+        title: "Task updated",
+        description: "Task has been updated successfully.",
+      });
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousTasks && context?.projectId) {
+        queryClient.setQueryData(['tasks', context.projectId], context.previousTasks);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update task. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+}

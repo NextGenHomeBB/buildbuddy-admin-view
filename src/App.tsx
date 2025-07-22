@@ -13,6 +13,7 @@ import { AdminUsers } from "./pages/admin/AdminUsers";
 import { ProjectDetail } from "./pages/admin/ProjectDetail";
 import { AdminSettings } from "./pages/admin/AdminSettings";
 import { RequireAdmin } from "./components/RequireAdmin";
+import { ProjectLayout } from "./components/admin/ProjectLayout";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,7 +46,7 @@ const App = () => (
             <Route index element={<Navigate to="/admin/overview" replace />} />
             <Route path="overview" element={<AdminOverview />} />
             <Route path="projects" element={<AdminProjects />} />
-            <Route path="projects/:id" element={<ProjectDetail />} />
+            <Route path="projects/:id/*" element={<ProjectLayout />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>

@@ -15,5 +15,8 @@ enabled = true
 [functions.bulk_update_phase_status]
 verify_jwt = true
 
+[functions.duplicate_project]
+verify_jwt = true
+
 [storage]
 enabled = true
