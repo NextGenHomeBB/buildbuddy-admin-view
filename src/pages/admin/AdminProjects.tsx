@@ -87,7 +87,10 @@ export function AdminProjects() {
       cell: ({ row }) => {
         const project = row.original;
         return (
-          <div className="space-y-1 min-w-0">
+          <div 
+            className="space-y-1 min-w-0 cursor-pointer hover:text-primary transition-colors"
+            onClick={() => navigate(`/admin/projects/${project.id}`)}
+          >
             <div className="font-semibold text-foreground truncate">{project.name}</div>
             <div className="text-sm text-muted-foreground truncate">{project.description || 'No description'}</div>
           </div>
