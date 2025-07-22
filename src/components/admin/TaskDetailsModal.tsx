@@ -186,14 +186,14 @@ export function TaskDetailsModal({ task, isOpen, onClose }: TaskDetailsModalProp
             <Label>Assignee</Label>
             {isEditing ? (
               <Select
-                value={editData.assignee || ''}
-                onValueChange={(value) => setEditData(prev => ({ ...prev, assignee: value || undefined }))}
+                value={editData.assignee || 'unassigned'}
+                onValueChange={(value) => setEditData(prev => ({ ...prev, assignee: value === 'unassigned' ? undefined : value }))}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select assignee" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
                   {workers.map((worker) => (
                     <SelectItem key={worker.id} value={worker.id}>
                       {worker.full_name} ({worker.role})
