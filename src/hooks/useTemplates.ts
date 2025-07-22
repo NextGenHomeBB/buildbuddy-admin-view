@@ -268,8 +268,9 @@ export function useApplyFastPhases() {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["project-phases"] });
-      queryClient.invalidateQueries({ queryKey: ["project-tasks"] });
+      // Invalidate all phases queries and the specific project's phases
+      queryClient.invalidateQueries({ queryKey: ["phases"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toast({
         title: "Fast Phases Applied",
         description: `${data.phases} phases and ${data.tasks} tasks added successfully.`,
