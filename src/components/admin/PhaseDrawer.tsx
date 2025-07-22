@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { useCreatePhase, CreatePhaseData } from '@/hooks/usePhases';
+import { useCreatePhase, useUpdatePhase, CreatePhaseData, ProjectPhase } from '@/hooks/usePhases';
 
 const phaseFormSchema = z.object({
   name: z.string().min(3, 'Phase name must be at least 3 characters'),
@@ -46,23 +46,48 @@ interface PhaseDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   projectId: string;
+  editingPhase?: ProjectPhase | null;
 }
 
-export function PhaseDrawer({ isOpen, onClose, projectId }: PhaseDrawerProps) {
+export function PhaseDrawer({ isOpen, onClose, projectId, editingPhase }: PhaseDrawerProps) {
   const createPhase = useCreatePhase();
+  const updatePhase = useUpdatePhase();
   const [startDateOpen, setStartDateOpen] = useState(false);
   const [endDateOpen, setEndDateOpen] = useState(false);
+
+  const isEditing = !!editingPhase;
 
   const form = useForm<PhaseFormData>({
     resolver: zodResolver(phaseFormSchema),
     defaultValues: {
-      name: '',
-      description: '',
-      status: 'not_started',
-      start_date: '',
-      end_date: '',
+      name: editingPhase?.name || '',
+      description: editingPhase?.description || '',
+      status: editingPhase?.status || 'not_started',
+      start_date: editingPhase?.start_date || '',
+      end_date: editingPhase?.end_date || '',
     },
   });
+
+  // Reset form when editingPhase changes
+  useEffect(() => {
+    if (editingPhase) {
+      form.reset({
+        name: editingPhase.name,
+        description: editingPhase.description || '',
+        status: editingPhase.status,
+        start_date: editingPhase.start_date || '',
+        end_date: editingPhase.end_date || '',
+      });
+    } else {
+      form.reset({
+        name: '',
+        description: '',
+        status: 'not_started',
+        start_date: '',
+        end_date: '',
+      });
+    }
+  }, [editingPhase, form]);
 
   const handleSubmit = async (data: PhaseFormData) => {
     try {
@@ -74,11 +99,24 @@ export function PhaseDrawer({ isOpen, onClose, projectId }: PhaseDrawerProps) {
         end_date: data.end_date || undefined,
       };
 
-      await createPhase.mutateAsync({ projectId, data: phaseData });
+      if (isEditing && editingPhase) {
+        await updatePhase.mutateAsync({ 
+          id: editingPhase.id,
+          project_id: editingPhase.project_id,
+          name: phaseData.name,
+          description: phaseData.description,
+          status: phaseData.status,
+          start_date: phaseData.start_date,
+          end_date: phaseData.end_date,
+        });
+      } else {
+        await createPhase.mutateAsync({ projectId, data: phaseData });
+      }
+      
       form.reset();
       onClose();
     } catch (error) {
-      console.error('Failed to create phase:', error);
+      console.error(`Failed to ${isEditing ? 'update' : 'create'} phase:`, error);
     }
   };
 
@@ -94,9 +132,14 @@ export function PhaseDrawer({ isOpen, onClose, projectId }: PhaseDrawerProps) {
           <DrawerHeader className="px-0 pt-0">
             <div className="flex items-center justify-between">
               <div>
-                <DrawerTitle>Create New Phase</DrawerTitle>
+                <DrawerTitle>
+                  {isEditing ? 'Edit Phase' : 'Create New Phase'}
+                </DrawerTitle>
                 <DrawerDescription>
-                  Add a new phase to organize your project work.
+                  {isEditing 
+                    ? 'Update the phase details below.' 
+                    : 'Add a new phase to organize your project work.'
+                  }
                 </DrawerDescription>
               </div>
               <Button
@@ -235,10 +278,13 @@ export function PhaseDrawer({ isOpen, onClose, projectId }: PhaseDrawerProps) {
               </Button>
               <Button
                 type="submit"
-                disabled={createPhase.isPending || !form.formState.isValid}
+                disabled={(isEditing ? updatePhase.isPending : createPhase.isPending) || !form.formState.isValid}
                 className="flex-1"
               >
-                {createPhase.isPending ? 'Creating...' : 'Create Phase'}
+                {isEditing 
+                  ? (updatePhase.isPending ? 'Updating...' : 'Update Phase')
+                  : (createPhase.isPending ? 'Creating...' : 'Create Phase')
+                }
               </Button>
             </div>
           </form>

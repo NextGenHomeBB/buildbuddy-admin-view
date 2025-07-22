@@ -49,6 +49,7 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
   const [selectedPhases, setSelectedPhases] = useState<Record<string, boolean>>({});
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [fastPhasesModalOpen, setFastPhasesModalOpen] = useState(false);
+  const [editingPhase, setEditingPhase] = useState<ProjectPhase | null>(null);
   
   const bulkPhaseUpdate = useBulkPhaseUpdate();
 
@@ -97,7 +98,13 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
       cell: ({ row }) => {
         const phase = row.original;
         return (
-          <div className="flex items-start gap-3">
+          <div 
+            className="flex items-start gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
+            onClick={() => {
+              setEditingPhase(phase);
+              setDrawerOpen(true);
+            }}
+          >
             <div className="mt-1">
               {getPhaseStatusIcon(phase.status)}
             </div>
@@ -240,8 +247,12 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
       {/* Phase Drawer */}
       <PhaseDrawer
         isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={() => {
+          setDrawerOpen(false);
+          setEditingPhase(null);
+        }}
         projectId={projectId}
+        editingPhase={editingPhase}
       />
 
       {/* Fast Phases Modal */}
