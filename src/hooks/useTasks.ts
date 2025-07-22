@@ -114,16 +114,19 @@ export function useUpdateTask() {
 
   return useMutation({
     mutationFn: async (data: UpdateTaskData): Promise<Task> => {
+      // Extract id from data to avoid conflict with WHERE clause
+      const { id, ...updateFields } = data;
+      
       // Set completed_at if status is being changed to 'done'
       const updateData = {
-        ...data,
+        ...updateFields,
         completed_at: data.status === 'done' ? new Date().toISOString() : null
       };
 
       const { data: task, error } = await supabase
         .from('tasks')
         .update(updateData)
-        .eq('id', data.id)
+        .eq('id', id)
         .select()
         .single();
 
