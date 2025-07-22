@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { KanbanColumn } from '@/components/admin/KanbanColumn';
+import { TaskDrawer } from '@/components/admin/TaskDrawer';
 import { useTasks } from '@/hooks/useTasks';
 
 interface TasksBoardTabProps {
@@ -11,6 +12,7 @@ interface TasksBoardTabProps {
 
 export function TasksBoardTab({ projectId }: TasksBoardTabProps) {
   const { data: tasks = [], isLoading } = useTasks(projectId);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Group tasks by status
   const backlogTasks = tasks.filter(task => task.status === 'todo');
@@ -32,7 +34,7 @@ export function TasksBoardTab({ projectId }: TasksBoardTabProps) {
           <h3 className="text-lg font-semibold">Task Board</h3>
           <p className="text-sm text-muted-foreground">Manage tasks across different phases</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setDrawerOpen(true)}>
           <Plus className="h-4 w-4" />
           New Task
         </Button>
@@ -58,6 +60,13 @@ export function TasksBoardTab({ projectId }: TasksBoardTabProps) {
           projectId={projectId}
         />
       </div>
+
+      {/* Task Drawer */}
+      <TaskDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        projectId={projectId}
+      />
     </div>
   );
 }
