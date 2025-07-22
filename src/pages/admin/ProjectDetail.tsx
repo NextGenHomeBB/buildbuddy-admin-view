@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ColumnDef } from '@tanstack/react-table';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -10,12 +11,14 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  Circle
+  Circle,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +27,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { DataTable } from '@/components/admin/DataTable';
 import { supabase } from '@/integrations/supabase/client';
+import { useBulkPhaseUpdate } from '@/hooks/useBulkPhaseUpdate';
 
 const getPhaseStatusIcon = (status: string) => {
   switch (status) {
@@ -60,6 +65,9 @@ export function ProjectDetail() {
   const [project, setProject] = useState<any>(null);
   const [phases, setPhases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPhases, setSelectedPhases] = useState<Record<string, boolean>>({});
+  
+  const bulkPhaseUpdate = useBulkPhaseUpdate();
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -104,6 +112,120 @@ export function ProjectDetail() {
 
     fetchProject();
   }, [id]);
+
+  // Get selected phase IDs
+  const selectedPhaseIds = Object.keys(selectedPhases).filter(id => selectedPhases[id]);
+  const hasSelectedPhases = selectedPhaseIds.length > 0;
+
+  // Handle bulk update
+  const handleMarkComplete = async () => {
+    if (!id || selectedPhaseIds.length === 0) return;
+    
+    await bulkPhaseUpdate.mutateAsync({
+      projectId: id,
+      phaseIds: selectedPhaseIds,
+      status: 'completed'
+    });
+    
+    // Clear selection after successful update
+    setSelectedPhases({});
+  };
+
+  // Define columns for the phases table
+  const phaseColumns: ColumnDef<any>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: 'name',
+      header: 'Phase Name',
+      cell: ({ row }) => {
+        const phase = row.original;
+        return (
+          <div className="flex items-start gap-3">
+            <div className="mt-1">
+              {getPhaseStatusIcon(phase.status)}
+            </div>
+            <div>
+              <div className="font-semibold text-foreground">{phase.name}</div>
+              {phase.description && (
+                <p className="text-sm text-muted-foreground mt-1">{phase.description}</p>
+              )}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => {
+        const status = row.getValue('status') as string;
+        return getPhaseStatusBadge(status);
+      },
+    },
+    {
+      accessorKey: 'progress',
+      header: 'Progress',
+      cell: ({ row }) => {
+        const progress = row.getValue('progress') as number || 0;
+        return (
+          <div className="space-y-2 min-w-24">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium">{Math.round(progress)}%</span>
+            </div>
+            <Progress value={progress} className="h-1.5" />
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'start_date',
+      header: 'Start Date',
+      cell: ({ row }) => {
+        const startDate = row.getValue('start_date') as string;
+        return startDate ? (
+          <div className="flex items-center gap-1 text-sm">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            {new Date(startDate).toLocaleDateString()}
+          </div>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        );
+      },
+    },
+    {
+      accessorKey: 'end_date',
+      header: 'End Date',
+      cell: ({ row }) => {
+        const endDate = row.getValue('end_date') as string;
+        return endDate ? (
+          <div className="flex items-center gap-1 text-sm">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            {new Date(endDate).toLocaleDateString()}
+          </div>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        );
+      },
+    },
+  ];
 
   if (loading) {
     return (
@@ -229,52 +351,44 @@ export function ProjectDetail() {
           {/* Project Phases */}
           <Card className="admin-card">
             <CardHeader>
-              <CardTitle>Project Phases</CardTitle>
-              <CardDescription>Timeline and progress of project phases</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Project Phases</CardTitle>
+                  <CardDescription>Timeline and progress of project phases</CardDescription>
+                </div>
+                {hasSelectedPhases && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {selectedPhaseIds.length} phase{selectedPhaseIds.length !== 1 ? 's' : ''} selected
+                    </span>
+                    <Button 
+                      onClick={handleMarkComplete}
+                      disabled={bulkPhaseUpdate.isPending}
+                      className="gap-2"
+                      size="sm"
+                    >
+                      <Check className="h-4 w-4" />
+                      {bulkPhaseUpdate.isPending ? 'Updating...' : 'Mark Complete'}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {phases.map((phase) => (
-                  <div key={phase.id} className="flex items-start gap-4 p-4 rounded-lg border border-border">
-                    <div className="mt-1">
-                      {getPhaseStatusIcon(phase.status)}
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-semibold text-foreground">{phase.name}</h4>
-                        {getPhaseStatusBadge(phase.status)}
-                      </div>
-                      {phase.description && (
-                         <p className="text-sm text-muted-foreground">{phase.description}</p>
-                       )}
-                       <div className="space-y-2">
-                         <div className="flex justify-between text-sm">
-                           <span className="text-muted-foreground">Progress</span>
-                           <span className="font-medium">{phase.progress || 0}%</span>
-                         </div>
-                         <Progress value={phase.progress || 0} className="h-1.5" />
-                       </div>
-                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                         {phase.start_date && (
-                           <div className="flex items-center gap-1">
-                             <Calendar className="h-4 w-4" />
-                             {new Date(phase.start_date).toLocaleDateString()}
-                           </div>
-                         )}
-                         {phase.end_date && (
-                           <>
-                             <span>→</span>
-                             <div className="flex items-center gap-1">
-                               <Calendar className="h-4 w-4" />
-                               {new Date(phase.end_date).toLocaleDateString()}
-                             </div>
-                           </>
-                         )}
-                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {phases.length > 0 ? (
+                <DataTable
+                  columns={phaseColumns}
+                  data={phases}
+                  searchPlaceholder="Search phases..."
+                  enableRowSelection={true}
+                  onRowSelectionChange={setSelectedPhases}
+                  rowSelection={selectedPhases}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">No phases found for this project.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

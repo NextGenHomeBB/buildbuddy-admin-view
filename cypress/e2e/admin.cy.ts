@@ -81,6 +81,79 @@ describe('Admin Panel E2E - Smoke Tests', () => {
     });
   });
 
+  it('should select phases and bulk update status', () => {
+    cy.loginAsAdmin();
+    
+    // Mock project data with phases
+    cy.intercept('GET', '**/rest/v1/projects*', {
+      statusCode: 200,
+      body: [
+        { 
+          id: 'test-project-1', 
+          name: 'Test Project', 
+          status: 'active',
+          description: 'Test project with phases',
+          created_at: '2025-01-01T00:00:00.000Z',
+          project_phases: [
+            { id: 'phase-1' },
+            { id: 'phase-2' }
+          ]
+        }
+      ]
+    }).as('getProjects');
+
+    // Mock project phases data
+    cy.intercept('GET', '**/rest/v1/project_phases*', {
+      statusCode: 200,
+      body: [
+        {
+          id: 'phase-1',
+          name: 'Phase 1',
+          status: 'in_progress',
+          progress: 50,
+          description: 'First phase',
+          project_id: 'test-project-1'
+        },
+        {
+          id: 'phase-2', 
+          name: 'Phase 2',
+          status: 'not_started',
+          progress: 0,
+          description: 'Second phase',
+          project_id: 'test-project-1'
+        }
+      ]
+    }).as('getPhases');
+
+    // Mock the bulk update edge function
+    cy.intercept('POST', '**/functions/v1/bulk_update_phase_status', {
+      statusCode: 200,
+      body: {
+        updated_count: 2,
+        message: 'Successfully updated 2 phases'
+      }
+    }).as('invokeBulk');
+
+    // Visit project detail page
+    cy.visit('/admin/projects/test-project-1');
+    
+    // Wait for data to load
+    cy.wait('@getProjects');
+    cy.wait('@getPhases');
+
+    // Select two phases using checkboxes
+    cy.get('input[type="checkbox"]').first().check(); // Select all checkbox
+    
+    // Verify Mark Complete button appears and click it
+    cy.contains('Mark Complete').should('be.visible').click();
+    
+    // Wait for bulk update API call
+    cy.wait('@invokeBulk').should('have.property', 'response.statusCode', 200);
+    
+    // Verify success toast appears
+    cy.contains('Successfully updated 2 phases').should('be.visible');
+  });
+
   it('should redirect non-admin users from admin routes', () => {
     // Visit admin route without authentication
     cy.visit('/admin/projects');

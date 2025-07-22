@@ -8,6 +8,7 @@ import {
   getFilteredRowModel,
   SortingState,
   ColumnFiltersState,
+  RowSelectionState,
   useReactTable,
 } from '@tanstack/react-table';
 import {
@@ -41,6 +42,9 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchKey?: string;
   searchPlaceholder?: string;
+  enableRowSelection?: boolean;
+  onRowSelectionChange?: (selection: Record<string, boolean>) => void;
+  rowSelection?: Record<string, boolean>;
 }
 
 export function DataTable<TData, TValue>({
@@ -48,10 +52,23 @@ export function DataTable<TData, TValue>({
   data,
   searchKey = '',
   searchPlaceholder = 'Search...',
+  enableRowSelection = false,
+  onRowSelectionChange,
+  rowSelection: externalRowSelection = {},
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
+  const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({});
+  
+  // Use external row selection if provided, otherwise use internal state
+  const rowSelection = enableRowSelection 
+    ? (externalRowSelection && onRowSelectionChange ? externalRowSelection : internalRowSelection)
+    : {};
+    
+  const setRowSelection = enableRowSelection
+    ? (onRowSelectionChange || setInternalRowSelection)
+    : () => {};
 
   const table = useReactTable({
     data,
@@ -63,10 +80,13 @@ export function DataTable<TData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
+    enableRowSelection: enableRowSelection,
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
       globalFilter,
+      ...(enableRowSelection && { rowSelection }),
     },
     initialState: {
       pagination: {

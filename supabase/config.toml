@@ -1,1 +1,19 @@
 project_id = "ppsjrqfgsznnlojpyjvu"
+
+[auth]
+enabled = true
+external_anonymous_users_enabled = true
+disable_signup = false
+auto_confirm_email = true
+
+[db]
+shadow_database_url = "postgresql://postgres:postgres@localhost:54322/postgres"
+
+[edge_functions]
+enabled = true
+
+[functions.bulk_update_phase_status]
+verify_jwt = true
+
+[storage]
+enabled = true
