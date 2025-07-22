@@ -197,12 +197,12 @@ export function AdminProjects() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Projects</h1>
+          <h1 data-testid="admin-projects-header" className="text-3xl font-bold text-foreground">Projects</h1>
           <p className="text-muted-foreground mt-2">
             Manage and monitor all your projects in one place.
           </p>
         </div>
-        <Button className="admin-button-primary gap-2">
+        <Button data-testid="new-project-button" className="admin-button-primary gap-2">
           <Plus className="h-4 w-4" />
           New Project
         </Button>

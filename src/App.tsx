@@ -11,6 +11,7 @@ import { AdminProjects } from "./pages/admin/AdminProjects";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { ProjectDetail } from "./pages/admin/ProjectDetail";
 import { AdminSettings } from "./pages/admin/AdminSettings";
+import { RequireAdmin } from "./components/RequireAdmin";
 
 const queryClient = new QueryClient();
 
@@ -24,7 +25,11 @@ const App = () => (
           <Route path="/" element={<Index />} />
           
           {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route path="/admin" element={
+            <RequireAdmin>
+              <AdminLayout />
+            </RequireAdmin>
+          }>
             <Route index element={<Navigate to="/admin/overview" replace />} />
             <Route path="overview" element={<AdminOverview />} />
             <Route path="projects" element={<AdminProjects />} />
