@@ -37,8 +37,12 @@ const getStatusBadgeVariant = (status: string) => {
 
 
 export function AdminProjects() {
+  console.log('AdminProjects component rendering...');
   const navigate = useNavigate();
+  console.log('useNavigate hook called');
+  
   const { data: projects = [], isLoading } = useProjects();
+  console.log('useProjects hook called, data:', { projects, isLoading });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

@@ -38,6 +38,7 @@ interface ProjectDrawerProps {
 }
 
 export function ProjectDrawer({ isOpen, onClose, project }: ProjectDrawerProps) {
+  console.log('ProjectDrawer component rendering, props:', { isOpen, onClose: !!onClose, project: !!project });
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const isEditing = !!project;
