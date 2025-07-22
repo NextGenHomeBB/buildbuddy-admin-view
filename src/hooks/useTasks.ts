@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -47,6 +48,7 @@ export function useTasks(projectId: string) {
       }));
     },
     enabled: !!projectId,
+    staleTime: 30000, // 30 seconds
   });
 }
 
@@ -112,9 +114,15 @@ export function useUpdateTask() {
 
   return useMutation({
     mutationFn: async (data: UpdateTaskData): Promise<Task> => {
+      // Set completed_at if status is being changed to 'done'
+      const updateData = {
+        ...data,
+        completed_at: data.status === 'done' ? new Date().toISOString() : null
+      };
+
       const { data: task, error } = await supabase
         .from('tasks')
-        .update(data)
+        .update(updateData)
         .eq('id', data.id)
         .select()
         .single();
@@ -147,7 +155,11 @@ export function useUpdateTask() {
       queryClient.setQueryData<Task[]>(['tasks', projectId], (old = []) =>
         old.map(task =>
           task.id === updatedTask.id
-            ? { ...task, ...updatedTask }
+            ? { 
+                ...task, 
+                ...updatedTask,
+                completed_at: updatedTask.status === 'done' ? new Date().toISOString() : task.completed_at
+              }
             : task
         )
       );
@@ -156,10 +168,7 @@ export function useUpdateTask() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', data.project_id] });
-      toast({
-        title: "Task updated",
-        description: "Task has been updated successfully.",
-      });
+      // Don't show toast here since real-time will handle it
     },
     onError: (error, variables, context) => {
       if (context?.previousTasks && context?.projectId) {

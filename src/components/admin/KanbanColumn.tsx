@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Task } from '@/hooks/useTasks';
@@ -7,6 +8,7 @@ interface KanbanColumnProps {
   tasks: Task[];
   status: string;
   projectId: string;
+  onTaskClick: (task: Task) => void;
 }
 
 const getPriorityBadgeVariant = (priority: string) => {
@@ -22,7 +24,7 @@ const getPriorityBadgeVariant = (priority: string) => {
   }
 };
 
-export function KanbanColumn({ title, tasks, status }: KanbanColumnProps) {
+export function KanbanColumn({ title, tasks, status, onTaskClick }: KanbanColumnProps) {
   return (
     <Card>
       <CardHeader className="pb-4">
@@ -45,7 +47,11 @@ export function KanbanColumn({ title, tasks, status }: KanbanColumnProps) {
           </div>
         ) : (
           tasks.map((task) => (
-            <Card key={task.id} className="cursor-pointer hover:shadow-md transition-shadow">
+            <Card 
+              key={task.id} 
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => onTaskClick(task)}
+            >
               <CardContent className="p-4">
                 <div className="space-y-2">
                   <div className="flex items-start justify-between">
@@ -65,6 +71,11 @@ export function KanbanColumn({ title, tasks, status }: KanbanColumnProps) {
                     <span>
                       {task.created_at && new Date(task.created_at).toLocaleDateString()}
                     </span>
+                    {task.assignee && (
+                      <Badge variant="outline" className="text-xs">
+                        Assigned
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </CardContent>
