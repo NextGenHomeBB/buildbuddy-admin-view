@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -24,7 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { mockProjects, mockProjectPhases } from '@/lib/mockData';
+import { supabase } from '@/integrations/supabase/client';
 
 const getPhaseStatusIcon = (status: string) => {
   switch (status) {
@@ -57,9 +57,61 @@ const getPhaseStatusBadge = (status: string) => {
 export function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  
-  const project = mockProjects.find(p => p.id === id);
-  const phases = mockProjectPhases[id!] || [];
+  const [project, setProject] = useState<any>(null);
+  const [phases, setPhases] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProject = async () => {
+      if (!id) return;
+
+      try {
+        console.log('Fetching project with ID:', id);
+        
+        const { data: projectData, error: projectError } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (projectError) {
+          console.error('Error fetching project:', projectError);
+          setLoading(false);
+          return;
+        }
+
+        console.log('Project data:', projectData);
+        setProject(projectData);
+
+        // Fetch project phases
+        const { data: phasesData, error: phasesError } = await supabase
+          .from('project_phases')
+          .select('*')
+          .eq('project_id', id);
+
+        if (phasesError) {
+          console.error('Error fetching phases:', phasesError);
+        } else {
+          setPhases(phasesData || []);
+        }
+
+      } catch (error) {
+        console.error('Error in fetchProject:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProject();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Loading project...</p>
+      </div>
+    );
+  }
 
   if (!project) {
     return (
@@ -139,20 +191,19 @@ export function ProjectDetail() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <div className="text-2xl font-bold">{project.completion_percentage}%</div>
-              <Progress value={project.completion_percentage} className="h-2" />
+              <div className="text-2xl font-bold">{project.progress || 0}%</div>
+              <Progress value={project.progress || 0} className="h-2" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="admin-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Team Size</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Location</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              <span className="text-2xl font-bold">{project.team_size}</span>
+              <span className="text-2xl font-bold">{project.location || 'N/A'}</span>
             </div>
           </CardContent>
         </Card>
@@ -194,30 +245,32 @@ export function ProjectDetail() {
                         {getPhaseStatusBadge(phase.status)}
                       </div>
                       {phase.description && (
-                        <p className="text-sm text-muted-foreground">{phase.description}</p>
-                      )}
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Progress</span>
-                          <span className="font-medium">{phase.completion_percentage}%</span>
-                        </div>
-                        <Progress value={phase.completion_percentage} className="h-1.5" />
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {new Date(phase.start_date).toLocaleDateString()}
-                        </div>
-                        {phase.end_date && (
-                          <>
-                            <span>→</span>
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4" />
-                              {new Date(phase.end_date).toLocaleDateString()}
-                            </div>
-                          </>
-                        )}
-                      </div>
+                         <p className="text-sm text-muted-foreground">{phase.description}</p>
+                       )}
+                       <div className="space-y-2">
+                         <div className="flex justify-between text-sm">
+                           <span className="text-muted-foreground">Progress</span>
+                           <span className="font-medium">{phase.progress || 0}%</span>
+                         </div>
+                         <Progress value={phase.progress || 0} className="h-1.5" />
+                       </div>
+                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                         {phase.start_date && (
+                           <div className="flex items-center gap-1">
+                             <Calendar className="h-4 w-4" />
+                             {new Date(phase.start_date).toLocaleDateString()}
+                           </div>
+                         )}
+                         {phase.end_date && (
+                           <>
+                             <span>→</span>
+                             <div className="flex items-center gap-1">
+                               <Calendar className="h-4 w-4" />
+                               {new Date(phase.end_date).toLocaleDateString()}
+                             </div>
+                           </>
+                         )}
+                       </div>
                     </div>
                   </div>
                 ))}
@@ -233,41 +286,36 @@ export function ProjectDetail() {
               <CardTitle>Project Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {project.location && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Location</label>
+                  <p className="text-foreground">{project.location}</p>
+                </div>
+              )}
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Client</label>
-                <p className="text-foreground">{project.client_name || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Priority</label>
+                <label className="text-sm font-medium text-muted-foreground">Status</label>
                 <div className="mt-1">
                   <Badge 
                     variant={
-                      project.priority === 'critical' || project.priority === 'high' ? 'destructive' :
-                      project.priority === 'medium' ? 'default' : 'secondary'
+                      project.status === 'active' ? 'default' :
+                      project.status === 'completed' ? 'secondary' :
+                      project.status === 'planning' ? 'outline' : 'secondary'
                     }
                     className="capitalize"
                   >
-                    {project.priority}
+                    {project.status.replace('_', ' ')}
                   </Badge>
                 </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Start Date</label>
-                <p className="text-foreground">{new Date(project.start_date).toLocaleDateString()}</p>
-              </div>
-              {project.end_date && (
+              {project.start_date && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">End Date</label>
-                  <p className="text-foreground">{new Date(project.end_date).toLocaleDateString()}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Start Date</label>
+                  <p className="text-foreground">{new Date(project.start_date).toLocaleDateString()}</p>
                 </div>
               )}
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Created</label>
                 <p className="text-foreground">{new Date(project.created_at).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Last Updated</label>
-                <p className="text-foreground">{new Date(project.updated_at).toLocaleDateString()}</p>
               </div>
             </CardContent>
           </Card>
