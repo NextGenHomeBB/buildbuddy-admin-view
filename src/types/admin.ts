@@ -1,17 +1,16 @@
 export interface Project {
   id: string;
   name: string;
-  description: string;
-  status: 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled';
-  priority: 'low' | 'medium' | 'high' | 'critical';
+  description?: string;
+  status: 'planning' | 'in_progress' | 'completed' | 'on_hold';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
   start_date: string;
   end_date?: string;
   budget?: number;
-  client_name?: string;
-  team_size: number;
-  completion_percentage: number;
+  company_id: string;
   created_at: string;
   updated_at: string;
+  project_phases?: ProjectPhase[];
 }
 
 export interface ProjectPhase {
@@ -22,8 +21,8 @@ export interface ProjectPhase {
   status: 'not_started' | 'in_progress' | 'completed' | 'blocked';
   start_date: string;
   end_date?: string;
-  completion_percentage: number;
-  order: number;
+  progress: number;
+  order_index: number;
   created_at: string;
   updated_at: string;
 }
@@ -33,8 +32,9 @@ export interface User {
   email: string;
   full_name: string;
   role: 'admin' | 'project_manager' | 'developer' | 'client';
-  avatar_url?: string;
   status: 'active' | 'inactive' | 'pending';
+  avatar_url?: string;
+  company_id: string;
   last_login?: string;
   created_at: string;
   updated_at: string;

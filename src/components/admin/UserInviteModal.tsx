@@ -43,7 +43,9 @@ export function UserInviteModal() {
     setIsSubmitting(true);
     try {
       await createUser.mutateAsync({
-        ...data,
+        email: data.email!,
+        full_name: data.full_name!,
+        role: data.role!,
         status: 'pending',
         company_id: 'default-company-id', // This should come from context
       });

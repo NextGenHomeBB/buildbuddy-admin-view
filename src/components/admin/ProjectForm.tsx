@@ -53,6 +53,8 @@ export function ProjectForm({ project, onSuccess }: ProjectFormProps) {
       } else {
         await createProject.mutateAsync({
           ...data,
+          name: data.name!,
+          start_date: data.start_date!,
           company_id: 'default-company-id', // This should come from context
         });
       }
