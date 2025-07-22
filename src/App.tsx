@@ -14,7 +14,17 @@ import { ProjectDetail } from "./pages/admin/ProjectDetail";
 import { AdminSettings } from "./pages/admin/AdminSettings";
 import { RequireAdmin } from "./components/RequireAdmin";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: (failureCount, error) => {
+        console.error('Query failed:', error);
+        return failureCount < 2;
+      },
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
