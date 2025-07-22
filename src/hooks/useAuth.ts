@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,36 +13,48 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('useAuth - Initializing');
+    
     const fetchUserProfile = async (user: User) => {
       try {
-        const { data: profile } = await supabase
+        console.log('useAuth - Fetching profile for user:', user.id);
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', user.id)
           .single();
         
+        if (error) {
+          console.error('useAuth - Error fetching user profile:', error);
+          return { ...user, role: 'worker' };
+        }
+        
+        console.log('useAuth - Profile fetched:', profile);
         return { ...user, role: profile?.role || 'worker' };
       } catch (error) {
-        console.error('Error fetching user profile:', error);
+        console.error('useAuth - Exception fetching user profile:', error);
         return { ...user, role: 'worker' };
       }
     };
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        console.log('useAuth - Auth state changed:', event, !!session);
         setSession(session);
-        setLoading(false);
         
-        // Defer Supabase calls to prevent deadlock
         if (session?.user) {
-          setTimeout(() => {
-            fetchUserProfile(session.user).then(userWithRole => {
-              setUser(userWithRole);
-            });
+          // Defer Supabase calls to prevent deadlock
+          setTimeout(async () => {
+            const userWithRole = await fetchUserProfile(session.user);
+            console.log('useAuth - Setting user with role:', userWithRole.role);
+            setUser(userWithRole);
+            setLoading(false);
           }, 0);
         } else {
+          console.log('useAuth - No session, clearing user');
           setUser(null);
+          setLoading(false);
         }
       }
     );
@@ -49,15 +62,25 @@ export const useAuth = () => {
     // Check for existing session
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('useAuth - Checking for existing session');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('useAuth - Error getting session:', error);
+          setLoading(false);
+          return;
+        }
+        
+        console.log('useAuth - Initial session check:', !!session);
         setSession(session);
         
         if (session?.user) {
           const userWithRole = await fetchUserProfile(session.user);
+          console.log('useAuth - Initial user with role:', userWithRole.role);
           setUser(userWithRole);
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error('useAuth - Error initializing auth:', error);
       } finally {
         setLoading(false);
       }
@@ -65,12 +88,23 @@ export const useAuth = () => {
 
     initializeAuth();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('useAuth - Cleaning up subscription');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
+    console.log('useAuth - Signing out');
     await supabase.auth.signOut();
   };
+
+  console.log('useAuth - Current state:', { 
+    hasUser: !!user, 
+    userRole: user?.role, 
+    hasSession: !!session, 
+    loading 
+  });
 
   return {
     user,
