@@ -505,6 +505,10 @@ export type Database = {
         Args: { user_id: string; user_email?: string }
         Returns: Json
       }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       setup_demo_data: {
         Args: { manager_id: string; worker_id: string }
         Returns: Json
