@@ -52,7 +52,7 @@ export function TaskDrawer({ isOpen, onClose, projectId }: TaskDrawerProps) {
       description: '',
       status: 'todo',
       priority: 'medium',
-      phase_id: '',
+      phase_id: 'none',
     },
   });
 
@@ -63,7 +63,7 @@ export function TaskDrawer({ isOpen, onClose, projectId }: TaskDrawerProps) {
         description: data.description || undefined,
         status: data.status,
         priority: data.priority,
-        phase_id: data.phase_id || undefined,
+        phase_id: data.phase_id === 'none' ? undefined : data.phase_id,
       };
 
       await createTask.mutateAsync({ projectId, data: taskData });
@@ -179,7 +179,7 @@ export function TaskDrawer({ isOpen, onClose, projectId }: TaskDrawerProps) {
                     <SelectValue placeholder="Select a phase" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No phase</SelectItem>
+                    <SelectItem value="none">No phase</SelectItem>
                     {phases.map((phase) => (
                       <SelectItem key={phase.id} value={phase.id}>
                         {phase.name}
