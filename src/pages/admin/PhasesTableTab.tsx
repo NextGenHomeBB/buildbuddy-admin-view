@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Plus, Check, Calendar, CheckCircle, Clock, AlertCircle, Circle } from 'lucide-react';
+import { Plus, Check, Calendar, CheckCircle, Clock, AlertCircle, Circle, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/admin/DataTable';
 import { PhaseDrawer } from '@/components/admin/PhaseDrawer';
+import { ApplyFastPhasesModal } from '@/components/admin/ApplyFastPhasesModal';
 import { usePhases, ProjectPhase } from '@/hooks/usePhases';
 import { useBulkPhaseUpdate } from '@/hooks/useBulkPhaseUpdate';
 
@@ -47,6 +48,7 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
   const { data: phases = [], isLoading } = usePhases(projectId);
   const [selectedPhases, setSelectedPhases] = useState<Record<string, boolean>>({});
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [fastPhasesModalOpen, setFastPhasesModalOpen] = useState(false);
   
   const bulkPhaseUpdate = useBulkPhaseUpdate();
 
@@ -198,6 +200,14 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
                   </Button>
                 </>
               )}
+              <Button 
+                variant="outline" 
+                className="gap-2" 
+                onClick={() => setFastPhasesModalOpen(true)}
+              >
+                <Zap className="h-4 w-4" />
+                Fast Phases
+              </Button>
               <Button className="gap-2" onClick={() => setDrawerOpen(true)}>
                 <Plus className="h-4 w-4" />
                 New Phase
@@ -232,6 +242,13 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         projectId={projectId}
+      />
+
+      {/* Fast Phases Modal */}
+      <ApplyFastPhasesModal
+        projectId={projectId}
+        open={fastPhasesModalOpen}
+        onOpenChange={setFastPhasesModalOpen}
       />
     </div>
   );

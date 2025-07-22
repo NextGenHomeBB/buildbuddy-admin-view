@@ -12,6 +12,8 @@ import { AdminProjects } from "./pages/admin/AdminProjects";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { ProjectDetail } from "./pages/admin/ProjectDetail";
 import { AdminSettings } from "./pages/admin/AdminSettings";
+import { PhaseTemplateListPage } from "./pages/admin/PhaseTemplateListPage";
+import { PhaseTemplateDetailPage } from "./pages/admin/PhaseTemplateDetailPage";
 import { RequireAdmin } from "./components/RequireAdmin";
 import { ProjectLayout } from "./components/admin/ProjectLayout";
 
@@ -47,6 +49,8 @@ const App = () => (
             <Route path="overview" element={<AdminOverview />} />
             <Route path="projects" element={<AdminProjects />} />
             <Route path="projects/:id/*" element={<ProjectLayout />} />
+            <Route path="templates/phases" element={<PhaseTemplateListPage />} />
+            <Route path="templates/phases/:id" element={<PhaseTemplateDetailPage />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
