@@ -182,7 +182,7 @@ export function PhaseDrawer({ isOpen, onClose, projectId, editingPhase }: PhaseD
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select
-                value={form.watch('status')}
+                value={form.watch('status') || 'not_started'}
                 onValueChange={(value) => 
                   form.setValue('status', value as CreatePhaseData['status'])
                 }
