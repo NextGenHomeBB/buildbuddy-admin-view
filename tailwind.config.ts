@@ -10,12 +10,18 @@ export default {
 	],
 	prefix: "",
 	theme: {
+		screens: {
+			'xs': '375px',
+		},
 		container: {
 			center: true,
 			padding: '2rem',
 			screens: {
 				'2xl': '1400px'
 			}
+		},
+		spacing: {
+			'safe': 'env(safe-area-inset-bottom)',
 		},
 		extend: {
 			colors: {

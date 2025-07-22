@@ -1,10 +1,8 @@
-import { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Plus, Eye, Edit, Trash2, Calendar, DollarSign, Users } from 'lucide-react';
+import { MoreHorizontal, Calendar, DollarSign, Edit, Trash2 } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,19 +12,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Project } from '@/types/admin';
-import { mockProjects } from '@/lib/mockData';
+import { useProjects, useDeleteProject } from '@/hooks/useProjects';
+import { ProjectDrawer } from '@/components/admin/ProjectDrawer';
 import { useNavigate } from 'react-router-dom';
 
 const getStatusBadgeVariant = (status: Project['status']) => {
   switch (status) {
-    case 'active':
+    case 'in_progress':
       return 'default';
     case 'completed':
       return 'secondary';
     case 'on_hold':
       return 'destructive';
-    case 'cancelled':
-      return 'outline';
     case 'planning':
       return 'outline';
     default:
@@ -36,7 +33,7 @@ const getStatusBadgeVariant = (status: Project['status']) => {
 
 const getPriorityBadgeVariant = (priority: Project['priority']) => {
   switch (priority) {
-    case 'critical':
+    case 'urgent':
       return 'destructive';
     case 'high':
       return 'destructive';
@@ -51,7 +48,8 @@ const getPriorityBadgeVariant = (priority: Project['priority']) => {
 
 export function AdminProjects() {
   const navigate = useNavigate();
-  const [projects] = useState<Project[]>(mockProjects);
+  const { data: projects = [], isLoading } = useProjects();
+  const deleteProject = useDeleteProject();
 
   const columns: ColumnDef<Project>[] = [
     {
@@ -62,7 +60,7 @@ export function AdminProjects() {
         return (
           <div className="space-y-1 min-w-0">
             <div className="font-semibold text-foreground truncate">{project.name}</div>
-            <div className="text-sm text-muted-foreground truncate">{project.client_name}</div>
+            <div className="text-sm text-muted-foreground truncate">{project.description || 'No description'}</div>
           </div>
         );
       },
@@ -92,31 +90,19 @@ export function AdminProjects() {
       },
     },
     {
-      accessorKey: 'completion_percentage',
-      header: 'Progress',
+      accessorKey: 'start_date',
+      header: 'Start Date',
       cell: ({ row }) => {
-        const progress = row.getValue('completion_percentage') as number;
-        return (
-          <div className="space-y-1 min-w-24">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Progress</span>
-              <span className="font-medium">{progress}%</span>
-            </div>
-            <Progress value={progress} className="h-2" />
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'team_size',
-      header: 'Team',
-      cell: ({ row }) => {
-        const teamSize = row.getValue('team_size') as number;
-        return (
+        const startDate = row.getValue('start_date') as string;
+        return startDate ? (
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">{teamSize}</span>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">
+              {new Date(startDate).toLocaleDateString()}
+            </span>
           </div>
+        ) : (
+          <span className="text-muted-foreground">-</span>
         );
       },
     },
@@ -173,15 +159,22 @@ export function AdminProjects() {
                 onClick={() => navigate(`/admin/projects/${project.id}`)}
                 className="gap-2"
               >
-                <Eye className="h-4 w-4" />
                 View Details
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2">
-                <Edit className="h-4 w-4" />
-                Edit Project
-              </DropdownMenuItem>
+              <ProjectDrawer 
+                project={project}
+                trigger={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="gap-2">
+                    <Edit className="h-4 w-4" />
+                    Edit Project
+                  </DropdownMenuItem>
+                }
+              />
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2 text-destructive">
+              <DropdownMenuItem 
+                className="gap-2 text-destructive"
+                onClick={() => deleteProject.mutate(project.id)}
+              >
                 <Trash2 className="h-4 w-4" />
                 Delete Project
               </DropdownMenuItem>
@@ -192,6 +185,14 @@ export function AdminProjects() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-admin-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -199,13 +200,10 @@ export function AdminProjects() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Projects</h1>
           <p className="text-muted-foreground mt-2">
-            Manage and monitor all your projects in one place.
+            Manage your projects and track progress across teams.
           </p>
         </div>
-        <Button className="admin-button-primary gap-2">
-          <Plus className="h-4 w-4" />
-          New Project
-        </Button>
+        <ProjectDrawer />
       </div>
 
       {/* Projects Table */}

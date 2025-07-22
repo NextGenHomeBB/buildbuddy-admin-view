@@ -28,8 +28,8 @@ export function AdminLayout() {
         
         {/* Mobile Bottom Navigation */}
         {isMobile && (
-          <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50">
-            <div className="flex items-center justify-around py-2">
+          <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 pb-safe">
+            <div className="flex items-center justify-around py-2 px-4">
               {/* Mobile nav items will be added here */}
             </div>
           </div>
