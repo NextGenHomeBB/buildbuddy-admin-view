@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -24,6 +25,7 @@ import {
 } from '@/components/ui/drawer';
 import { useCreateTask, CreateTaskData } from '@/hooks/useTasks';
 import { usePhases } from '@/hooks/usePhases';
+import { useWorkers } from '@/hooks/useWorkers';
 
 const taskFormSchema = z.object({
   title: z.string().min(3, 'Task title must be at least 3 characters'),
@@ -31,6 +33,7 @@ const taskFormSchema = z.object({
   status: z.enum(['todo', 'in_progress', 'done']),
   priority: z.enum(['low', 'medium', 'high']),
   phase_id: z.string().optional(),
+  assignee: z.string().optional(),
 });
 
 type TaskFormData = z.infer<typeof taskFormSchema>;
@@ -44,6 +47,7 @@ interface TaskDrawerProps {
 export function TaskDrawer({ isOpen, onClose, projectId }: TaskDrawerProps) {
   const createTask = useCreateTask();
   const { data: phases = [] } = usePhases(projectId);
+  const { data: workers = [] } = useWorkers();
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskFormSchema),
@@ -53,6 +57,7 @@ export function TaskDrawer({ isOpen, onClose, projectId }: TaskDrawerProps) {
       status: 'todo',
       priority: 'medium',
       phase_id: 'none',
+      assignee: 'none',
     },
   });
 
@@ -64,6 +69,7 @@ export function TaskDrawer({ isOpen, onClose, projectId }: TaskDrawerProps) {
         status: data.status,
         priority: data.priority,
         phase_id: data.phase_id === 'none' ? undefined : data.phase_id,
+        assignee: data.assignee === 'none' ? undefined : data.assignee,
       };
 
       await createTask.mutateAsync({ projectId, data: taskData });
@@ -189,6 +195,26 @@ export function TaskDrawer({ isOpen, onClose, projectId }: TaskDrawerProps) {
                 </Select>
               </div>
             )}
+
+            <div className="space-y-2">
+              <Label htmlFor="assignee">Assign To (Optional)</Label>
+              <Select
+                value={form.watch('assignee')}
+                onValueChange={(value) => form.setValue('assignee', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select assignee" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Unassigned</SelectItem>
+                  {workers.map((worker) => (
+                    <SelectItem key={worker.id} value={worker.id}>
+                      {worker.full_name} ({worker.role})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="flex gap-2 pt-4">
               <Button

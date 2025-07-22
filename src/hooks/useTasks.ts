@@ -22,6 +22,7 @@ export interface CreateTaskData {
   status: 'todo' | 'in_progress' | 'done';
   priority: 'low' | 'medium' | 'high';
   phase_id?: string;
+  assignee?: string;
 }
 
 export interface UpdateTaskData extends CreateTaskData {
