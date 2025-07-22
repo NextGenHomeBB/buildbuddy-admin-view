@@ -50,7 +50,6 @@ export function TaskDetailsModal({ task, isOpen, onClose }: TaskDetailsModalProp
         status: editData.status || task.status,
         priority: editData.priority || task.priority,
         assignee: editData.assignee,
-        phase_id: task.phase_id
       });
       setIsEditing(false);
       toast({

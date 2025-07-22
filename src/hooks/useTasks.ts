@@ -26,8 +26,15 @@ export interface CreateTaskData {
   assignee?: string;
 }
 
-export interface UpdateTaskData extends CreateTaskData {
+export interface UpdateTaskData {
   id: string;
+  title?: string;
+  description?: string;
+  status?: 'todo' | 'in_progress' | 'done';
+  priority?: 'low' | 'medium' | 'high';
+  phase_id?: string;
+  project_id?: string;
+  assignee?: string;
 }
 
 export function useTasks(projectId: string) {
@@ -117,11 +124,12 @@ export function useUpdateTask() {
       // Extract id from data to avoid conflict with WHERE clause
       const { id, ...updateFields } = data;
       
-      // Set completed_at if status is being changed to 'done'
-      const updateData = {
-        ...updateFields,
-        completed_at: data.status === 'done' ? new Date().toISOString() : null
-      };
+      // Only set completed_at if status is being changed to 'done'
+      const updateData: any = { ...updateFields };
+      
+      if (data.status === 'done') {
+        updateData.completed_at = new Date().toISOString();
+      }
 
       const { data: task, error } = await supabase
         .from('tasks')
