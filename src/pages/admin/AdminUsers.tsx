@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Mail, Shield, Clock, Edit, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Plus, Mail, Shield, Clock, Edit, Trash2 } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,8 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User } from '@/types/admin';
-import { useUsers } from '@/hooks/useUsers';
-import { UserInviteModal } from '@/components/admin/UserInviteModal';
+import { mockUsers } from '@/lib/mockData';
 
 const getRoleBadgeVariant = (role: User['role']) => {
   switch (role) {
@@ -45,7 +45,7 @@ const getStatusBadgeVariant = (status: User['status']) => {
 };
 
 export function AdminUsers() {
-  const { data: users = [], isLoading } = useUsers();
+  const [users] = useState<User[]>(mockUsers);
 
   const columns: ColumnDef<User>[] = [
     {
@@ -162,14 +162,6 @@ export function AdminUsers() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-admin-primary"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -180,7 +172,10 @@ export function AdminUsers() {
             Manage team members and user permissions.
           </p>
         </div>
-        <UserInviteModal />
+        <Button className="admin-button-primary gap-2">
+          <Plus className="h-4 w-4" />
+          Invite User
+        </Button>
       </div>
 
       {/* Users Table */}

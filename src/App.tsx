@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import { RequireAdmin } from "./components/admin/RequireAdmin";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import { AdminOverview } from "./pages/admin/AdminOverview";
 import { AdminProjects } from "./pages/admin/AdminProjects";
@@ -24,7 +23,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           
-          {/* Admin Routes - Remove RequireAdmin temporarily for demo */}
+          {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="/admin/overview" replace />} />
             <Route path="overview" element={<AdminOverview />} />
