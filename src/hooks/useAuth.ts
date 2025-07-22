@@ -29,16 +29,20 @@ export const useAuth = () => {
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
+        setLoading(false);
         
+        // Defer Supabase calls to prevent deadlock
         if (session?.user) {
-          const userWithRole = await fetchUserProfile(session.user);
-          setUser(userWithRole);
+          setTimeout(() => {
+            fetchUserProfile(session.user).then(userWithRole => {
+              setUser(userWithRole);
+            });
+          }, 0);
         } else {
           setUser(null);
         }
-        setLoading(false);
       }
     );
 
@@ -46,11 +50,11 @@ export const useAuth = () => {
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
         
         if (session?.user) {
           const userWithRole = await fetchUserProfile(session.user);
           setUser(userWithRole);
-          setSession(session);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
