@@ -35,7 +35,8 @@ export function AdminOverview() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Fetching overview data...');
+        console.log('Starting to fetch overview data...');
+        console.log('Current auth state:', await supabase.auth.getUser());
         
         // Fetch projects stats
         const { data: projects, error: projectsError } = await supabase
