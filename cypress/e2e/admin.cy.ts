@@ -7,7 +7,8 @@ describe('Admin Panel E2E - Smoke Tests', () => {
         id: 'test-project-id', 
         name: 'Test Build',
         status: 'planning',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        project_phases: []
       }
     }).as('createProject');
     
@@ -18,7 +19,8 @@ describe('Admin Panel E2E - Smoke Tests', () => {
           id: '1', 
           name: 'Existing Project', 
           status: 'active',
-          created_at: '2025-01-01T00:00:00.000Z'
+          created_at: '2025-01-01T00:00:00.000Z',
+          project_phases: []
         }
       ]
     }).as('getProjects');
@@ -46,6 +48,8 @@ describe('Admin Panel E2E - Smoke Tests', () => {
     // Assert table headers are present
     cy.get('thead').should('contain', 'Name');
     cy.get('thead').should('contain', 'Status');
+    cy.get('thead').should('contain', 'Phases');
+    cy.get('thead').should('contain', 'Updated At');
   });
 
   it('should click "New Project", type "Test Build", save and show toast', () => {
@@ -55,23 +59,21 @@ describe('Admin Panel E2E - Smoke Tests', () => {
     // Get initial table row count
     cy.get('tbody tr').its('length').as('initialRowCount');
     
-    // Click new project button
+    // Click new project button to open drawer
     cy.get('[data-testid="new-project-button"]').click();
     
-    // Fill out the form with exact text "Test Build"
-    cy.get('[data-testid="project-name-input"]').type('Test Build');
-    cy.get('[data-testid="project-description-input"]').type('Test project for E2E testing');
+    // Fill out the drawer form with exact text "Test Build"
+    cy.get('#name').type('Test Build');
+    cy.get('#description').type('Test project for E2E testing');
     
     // Submit the form
-    cy.get('[data-testid="submit-project-button"]').click();
+    cy.contains('button', 'Create').click();
     
     // Verify the API call was made
     cy.wait('@createProject').should('have.property', 'response.statusCode', 201);
     
-    // Assert toast "Project created" appears
-    cy.get('[data-testid="toast"]')
-      .should('be.visible')
-      .and('contain', 'Project created');
+    // Assert toast "Project created" appears - check for the actual toast message
+    cy.contains('Project created').should('be.visible');
     
     // Assert table row count increments
     cy.get('@initialRowCount').then((initialCount) => {
