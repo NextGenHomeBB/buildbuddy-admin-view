@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, Plus, Mail, Shield, Clock, Edit, Trash2 } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
@@ -13,39 +13,57 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User } from '@/types/admin';
-import { mockUsers } from '@/lib/mockData';
+import { supabase } from '@/integrations/supabase/client';
 
-const getRoleBadgeVariant = (role: User['role']) => {
+// Define user interface to match database schema
+interface User {
+  id: string;
+  full_name: string;
+  role: string;
+  avatar_url?: string;
+  created_at: string;
+}
+
+const getRoleBadgeVariant = (role: string) => {
   switch (role) {
     case 'admin':
       return 'destructive';
-    case 'project_manager':
+    case 'manager':
       return 'default';
-    case 'developer':
+    case 'worker':
       return 'secondary';
-    case 'client':
-      return 'outline';
-    default:
-      return 'outline';
-  }
-};
-
-const getStatusBadgeVariant = (status: User['status']) => {
-  switch (status) {
-    case 'active':
-      return 'default';
-    case 'inactive':
-      return 'secondary';
-    case 'pending':
-      return 'outline';
     default:
       return 'outline';
   }
 };
 
 export function AdminUsers() {
-  const [users] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, role, avatar_url, created_at')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching users:', error);
+          return;
+        }
+
+        setUsers(data || []);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const columns: ColumnDef<User>[] = [
     {
@@ -63,7 +81,7 @@ export function AdminUsers() {
             </Avatar>
             <div>
               <div className="font-semibold text-foreground">{user.full_name}</div>
-              <div className="text-sm text-muted-foreground">{user.email}</div>
+              <div className="text-sm text-muted-foreground">{user.id}</div>
             </div>
           </div>
         );
@@ -73,41 +91,12 @@ export function AdminUsers() {
       accessorKey: 'role',
       header: 'Role',
       cell: ({ row }) => {
-        const role = row.getValue('role') as User['role'];
+        const role = row.getValue('role') as string;
         return (
           <Badge variant={getRoleBadgeVariant(role)} className="capitalize gap-1">
             {role === 'admin' && <Shield className="h-3 w-3" />}
-            {role.replace('_', ' ')}
+            {role}
           </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => {
-        const status = row.getValue('status') as User['status'];
-        return (
-          <Badge variant={getStatusBadgeVariant(status)} className="capitalize">
-            {status}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: 'last_login',
-      header: 'Last Login',
-      cell: ({ row }) => {
-        const lastLogin = row.getValue('last_login') as string;
-        return lastLogin ? (
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">
-              {new Date(lastLogin).toLocaleDateString()}
-            </span>
-          </div>
-        ) : (
-          <span className="text-muted-foreground">Never</span>
         );
       },
     },
@@ -179,11 +168,17 @@ export function AdminUsers() {
       </div>
 
       {/* Users Table */}
-      <DataTable
-        columns={columns}
-        data={users}
-        searchPlaceholder="Search users..."
-      />
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <div className="text-muted-foreground">Loading users...</div>
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={users}
+          searchPlaceholder="Search users..."
+        />
+      )}
     </div>
   );
 }
