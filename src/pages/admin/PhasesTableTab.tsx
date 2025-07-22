@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/admin/DataTable';
+import { PhaseDrawer } from '@/components/admin/PhaseDrawer';
 import { usePhases, ProjectPhase } from '@/hooks/usePhases';
 import { useBulkPhaseUpdate } from '@/hooks/useBulkPhaseUpdate';
 
@@ -45,6 +46,7 @@ const getPhaseStatusBadge = (status: string) => {
 export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
   const { data: phases = [], isLoading } = usePhases(projectId);
   const [selectedPhases, setSelectedPhases] = useState<Record<string, boolean>>({});
+  const [drawerOpen, setDrawerOpen] = useState(false);
   
   const bulkPhaseUpdate = useBulkPhaseUpdate();
 
@@ -196,7 +198,7 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
                   </Button>
                 </>
               )}
-              <Button className="gap-2">
+              <Button className="gap-2" onClick={() => setDrawerOpen(true)}>
                 <Plus className="h-4 w-4" />
                 New Phase
               </Button>
@@ -216,7 +218,7 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
           ) : (
             <div className="text-center py-8">
               <p className="text-muted-foreground">No phases found for this project.</p>
-              <Button className="mt-4 gap-2">
+              <Button className="mt-4 gap-2" onClick={() => setDrawerOpen(true)}>
                 <Plus className="h-4 w-4" />
                 Add First Phase
               </Button>
@@ -224,6 +226,13 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Phase Drawer */}
+      <PhaseDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        projectId={projectId}
+      />
     </div>
   );
 }
