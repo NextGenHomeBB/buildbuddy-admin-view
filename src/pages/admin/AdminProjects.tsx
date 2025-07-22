@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, Plus, Eye, Edit, Trash2, Calendar, DollarSign, Users } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
@@ -13,11 +13,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Project } from '@/types/admin';
-import { mockProjects } from '@/lib/mockData';
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
-const getStatusBadgeVariant = (status: Project['status']) => {
+interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  progress: number;
+  budget?: number;
+  start_date?: string;
+  location?: string;
+  created_at: string;
+  manager_id?: string;
+  company_id?: string;
+}
+
+const getStatusBadgeVariant = (status: string) => {
   switch (status) {
     case 'active':
       return 'default';
@@ -34,24 +47,34 @@ const getStatusBadgeVariant = (status: Project['status']) => {
   }
 };
 
-const getPriorityBadgeVariant = (priority: Project['priority']) => {
-  switch (priority) {
-    case 'critical':
-      return 'destructive';
-    case 'high':
-      return 'destructive';
-    case 'medium':
-      return 'default';
-    case 'low':
-      return 'secondary';
-    default:
-      return 'outline';
-  }
-};
 
 export function AdminProjects() {
   const navigate = useNavigate();
-  const [projects] = useState<Project[]>(mockProjects);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching projects:', error);
+        } else {
+          setProjects(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   const columns: ColumnDef<Project>[] = [
     {
@@ -62,7 +85,7 @@ export function AdminProjects() {
         return (
           <div className="space-y-1 min-w-0">
             <div className="font-semibold text-foreground truncate">{project.name}</div>
-            <div className="text-sm text-muted-foreground truncate">{project.client_name}</div>
+            <div className="text-sm text-muted-foreground truncate">{project.description || 'No description'}</div>
           </div>
         );
       },
@@ -71,7 +94,7 @@ export function AdminProjects() {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => {
-        const status = row.getValue('status') as Project['status'];
+        const status = row.getValue('status') as string;
         return (
           <Badge variant={getStatusBadgeVariant(status)} className="capitalize">
             {status.replace('_', ' ')}
@@ -80,42 +103,17 @@ export function AdminProjects() {
       },
     },
     {
-      accessorKey: 'priority',
-      header: 'Priority',
-      cell: ({ row }) => {
-        const priority = row.getValue('priority') as Project['priority'];
-        return (
-          <Badge variant={getPriorityBadgeVariant(priority)} className="capitalize">
-            {priority}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: 'completion_percentage',
+      accessorKey: 'progress',
       header: 'Progress',
       cell: ({ row }) => {
-        const progress = row.getValue('completion_percentage') as number;
+        const progress = row.getValue('progress') as number;
         return (
           <div className="space-y-1 min-w-24">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Progress</span>
-              <span className="font-medium">{progress}%</span>
+              <span className="font-medium">{Math.round(progress)}%</span>
             </div>
             <Progress value={progress} className="h-2" />
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'team_size',
-      header: 'Team',
-      cell: ({ row }) => {
-        const teamSize = row.getValue('team_size') as number;
-        return (
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">{teamSize}</span>
           </div>
         );
       },
@@ -138,15 +136,15 @@ export function AdminProjects() {
       },
     },
     {
-      accessorKey: 'end_date',
-      header: 'Due Date',
+      accessorKey: 'start_date',
+      header: 'Start Date',
       cell: ({ row }) => {
-        const endDate = row.getValue('end_date') as string;
-        return endDate ? (
+        const startDate = row.getValue('start_date') as string;
+        return startDate ? (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm">
-              {new Date(endDate).toLocaleDateString()}
+              {new Date(startDate).toLocaleDateString()}
             </span>
           </div>
         ) : (
@@ -209,11 +207,17 @@ export function AdminProjects() {
       </div>
 
       {/* Projects Table */}
-      <DataTable
-        columns={columns}
-        data={projects}
-        searchPlaceholder="Search projects..."
-      />
+      {loading ? (
+        <div className="flex items-center justify-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={projects}
+          searchPlaceholder="Search projects..."
+        />
+      )}
     </div>
   );
 }
