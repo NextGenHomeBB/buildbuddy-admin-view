@@ -55,8 +55,8 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-secondary-foreground" />
+              <div className="flex-shrink-0 w-10 h-10 bg-construction-accent/10 rounded-lg flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-construction-accent" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">Start Date</p>
@@ -71,8 +71,8 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
-                <MapPin className="h-5 w-5 text-accent-foreground" />
+              <div className="flex-shrink-0 w-10 h-10 bg-construction-warning/10 rounded-lg flex items-center justify-center">
+                <MapPin className="h-5 w-5 text-construction-warning" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">Location</p>
@@ -87,8 +87,8 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-10 h-10 bg-muted/50 rounded-lg flex items-center justify-center">
-                <Clock className="h-5 w-5 text-muted-foreground" />
+              <div className="flex-shrink-0 w-10 h-10 bg-construction-secondary/10 rounded-lg flex items-center justify-center">
+                <Clock className="h-5 w-5 text-construction-secondary" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">Last Updated</p>
