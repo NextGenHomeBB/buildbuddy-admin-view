@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { KanbanColumn } from '@/components/admin/KanbanColumn';
+import { TasksTable } from '@/components/admin/TasksTable';
 import { TaskDrawer } from '@/components/admin/TaskDrawer';
 import { TaskDetailsModal } from '@/components/admin/TaskDetailsModal';
 import { useTasks, Task } from '@/hooks/useTasks';
@@ -61,7 +61,7 @@ export function TasksBoardTab({ projectId }: TasksBoardTabProps) {
     };
   }, [projectId, queryClient, toast]);
 
-  const handleTaskClick = (task: Task) => {
+  const handleTaskEdit = (task: Task) => {
     setSelectedTask(task);
     setDetailsModalOpen(true);
   };
@@ -74,15 +74,11 @@ export function TasksBoardTab({ projectId }: TasksBoardTabProps) {
     });
   };
 
-  // Group tasks by status
-  const backlogTasks = tasks.filter(task => task.status === 'todo');
-  const activeTasks = tasks.filter(task => task.status === 'in_progress');
-  const doneTasks = tasks.filter(task => task.status === 'done');
-
   if (isLoading) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Loading tasks...</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="text-muted-foreground mt-4">Loading tasks...</p>
       </div>
     );
   }
@@ -105,29 +101,38 @@ export function TasksBoardTab({ projectId }: TasksBoardTabProps) {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <KanbanColumn
-          title="Backlog"
-          tasks={backlogTasks}
-          status="todo"
-          projectId={projectId}
-          onTaskClick={handleTaskClick}
-        />
-        <KanbanColumn
-          title="Active"
-          tasks={activeTasks}
-          status="in_progress"
-          projectId={projectId}
-          onTaskClick={handleTaskClick}
-        />
-        <KanbanColumn
-          title="Done"
-          tasks={doneTasks}
-          status="done"
-          projectId={projectId}
-          onTaskClick={handleTaskClick}
-        />
+      {/* Tasks Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-foreground">{tasks.length}</div>
+          <div className="text-sm text-muted-foreground">Total Tasks</div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-blue-600">
+            {tasks.filter(t => t.status === 'todo').length}
+          </div>
+          <div className="text-sm text-muted-foreground">Backlog</div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-yellow-600">
+            {tasks.filter(t => t.status === 'in_progress').length}
+          </div>
+          <div className="text-sm text-muted-foreground">Active</div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-green-600">
+            {tasks.filter(t => t.status === 'done').length}
+          </div>
+          <div className="text-sm text-muted-foreground">Done</div>
+        </div>
       </div>
+
+      {/* Tasks Table */}
+      <TasksTable
+        tasks={tasks}
+        projectId={projectId}
+        onTaskEdit={handleTaskEdit}
+      />
 
       {/* Task Drawer */}
       <TaskDrawer

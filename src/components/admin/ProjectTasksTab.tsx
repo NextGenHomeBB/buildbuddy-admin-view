@@ -1,52 +1,23 @@
+
 import { useState } from 'react';
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { KanbanColumn } from '@/components/admin/KanbanColumn';
-import { TaskCard } from '@/components/admin/TaskCard';
+import { TasksTable } from '@/components/admin/TasksTable';
 import { TaskDrawer } from '@/components/admin/TaskDrawer';
-import { useTasks, Task, useUpdateTask } from '@/hooks/useTasks';
+import { useTasks, Task } from '@/hooks/useTasks';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProjectTasksTabProps {
   projectId: string;
 }
 
 export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
-  const { data: tasks = [] } = useTasks(projectId);
-  const updateTaskMutation = useUpdateTask();
+  const { data: tasks = [], isLoading, refetch } = useTasks(projectId);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const { toast } = useToast();
 
-  const todoTasks = tasks.filter(task => task.status === 'todo');
-  const inProgressTasks = tasks.filter(task => task.status === 'in_progress');
-  const doneTasks = tasks.filter(task => task.status === 'done');
-
-  const handleDragStart = (event: DragStartEvent) => {
-    const task = tasks.find(t => t.id === event.active.id);
-    setActiveTask(task || null);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveTask(null);
-
-    if (!over) return;
-
-    const taskId = active.id as string;
-    const newStatus = over.id as Task['status'];
-    
-    const task = tasks.find(t => t.id === taskId);
-    if (!task || task.status === newStatus) return;
-
-    updateTaskMutation.mutate({
-      id: taskId,
-      status: newStatus
-    });
-  };
-
-  const handleTaskClick = (task: Task) => {
+  const handleTaskEdit = (task: Task) => {
     setEditingTask(task);
     setDrawerOpen(true);
   };
@@ -56,6 +27,23 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
     setEditingTask(null);
   };
 
+  const handleRefresh = () => {
+    refetch();
+    toast({
+      title: "Refreshed",
+      description: "Task data has been refreshed",
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="text-muted-foreground mt-4">Loading tasks...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -63,51 +51,52 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
         <div>
           <h2 className="text-2xl font-bold text-foreground">Project Tasks</h2>
           <p className="text-muted-foreground mt-1">
-            Drag and drop tasks between columns to update their status
+            Manage and track all tasks for this project
           </p>
         </div>
-        <Button onClick={() => setDrawerOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Task
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button onClick={() => setDrawerOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Task
+          </Button>
+        </div>
       </div>
 
-      {/* Kanban Board */}
-      <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <KanbanColumn
-            title="To Do"
-            tasks={todoTasks}
-            status="todo"
-            projectId={projectId}
-            onTaskClick={handleTaskClick}
-          />
-          <KanbanColumn
-            title="In Progress"
-            tasks={inProgressTasks}
-            status="in_progress"
-            projectId={projectId}
-            onTaskClick={handleTaskClick}
-          />
-          <KanbanColumn
-            title="Done"
-            tasks={doneTasks}
-            status="done"
-            projectId={projectId}
-            onTaskClick={handleTaskClick}
-          />
+      {/* Tasks Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-foreground">{tasks.length}</div>
+          <div className="text-sm text-muted-foreground">Total Tasks</div>
         </div>
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-blue-600">
+            {tasks.filter(t => t.status === 'todo').length}
+          </div>
+          <div className="text-sm text-muted-foreground">To Do</div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-yellow-600">
+            {tasks.filter(t => t.status === 'in_progress').length}
+          </div>
+          <div className="text-sm text-muted-foreground">In Progress</div>
+        </div>
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-green-600">
+            {tasks.filter(t => t.status === 'done').length}
+          </div>
+          <div className="text-sm text-muted-foreground">Done</div>
+        </div>
+      </div>
 
-        <DragOverlay>
-          {activeTask ? (
-            <TaskCard
-              task={activeTask}
-              isDragging
-              onClick={() => {}}
-            />
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+      {/* Tasks Table */}
+      <TasksTable
+        tasks={tasks}
+        projectId={projectId}
+        onTaskEdit={handleTaskEdit}
+      />
 
       {/* Task Drawer */}
       <TaskDrawer
