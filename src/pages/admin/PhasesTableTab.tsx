@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ColumnDef } from '@tanstack/react-table';
-import { Plus, Check, Calendar, CheckCircle, Clock, AlertCircle, Circle, Zap, Eye } from 'lucide-react';
+import { Plus, Check, Calendar, CheckCircle, Clock, AlertCircle, Circle, Zap, Eye, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -139,8 +139,7 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
             </div>
             <Progress 
               value={progress} 
-              className="h-1.5" 
-              indicatorClassName={progress === 100 ? 'bg-green-500' : progress > 0 ? 'bg-orange-500' : 'bg-gray-300'}
+              className="h-1.5"
             />
           </div>
         );
