@@ -6,9 +6,11 @@ import { useWorkers } from '@/hooks/useWorkers';
 
 interface TaskCardProps {
   task: Task;
+  isDragging?: boolean;
+  onClick: () => void;
 }
 
-export function TaskCard({ task }: TaskCardProps) {
+export function TaskCard({ task, isDragging = false, onClick }: TaskCardProps) {
   const { data: workers = [] } = useWorkers();
   
   const assignedWorker = workers.find(worker => worker.id === task.assignee);
@@ -27,7 +29,12 @@ export function TaskCard({ task }: TaskCardProps) {
   };
 
   return (
-    <div className="bg-card border rounded-lg p-4 space-y-3 hover:shadow-sm transition-shadow">
+    <div 
+      className={`bg-card border rounded-lg p-4 space-y-3 hover:shadow-sm transition-shadow cursor-pointer ${
+        isDragging ? 'opacity-50 rotate-1' : ''
+      }`}
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between gap-2">
         <h4 className="font-medium text-sm text-foreground leading-tight">
           {task.title}

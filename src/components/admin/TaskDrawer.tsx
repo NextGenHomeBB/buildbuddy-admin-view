@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -23,7 +23,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
-import { useCreateTask, CreateTaskData } from '@/hooks/useTasks';
+import { useCreateTask, useUpdateTask, CreateTaskData, Task } from '@/hooks/useTasks';
 import { usePhases } from '@/hooks/usePhases';
 import { useWorkers } from '@/hooks/useWorkers';
 
@@ -42,41 +42,79 @@ interface TaskDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   projectId: string;
+  editingTask?: Task | null;
 }
 
-export function TaskDrawer({ isOpen, onClose, projectId }: TaskDrawerProps) {
+export function TaskDrawer({ isOpen, onClose, projectId, editingTask }: TaskDrawerProps) {
   const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
   const { data: phases = [] } = usePhases(projectId);
   const { data: workers = [] } = useWorkers();
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
-      title: '',
-      description: '',
-      status: 'todo',
-      priority: 'medium',
-      phase_id: 'none',
-      assignee: 'none',
+      title: editingTask?.title || '',
+      description: editingTask?.description || '',
+      status: editingTask?.status || 'todo',
+      priority: editingTask?.priority || 'medium',
+      phase_id: editingTask?.phase_id || 'none',
+      assignee: editingTask?.assignee || 'none',
     },
   });
 
+  // Reset form when editingTask changes
+  useEffect(() => {
+    if (editingTask) {
+      form.reset({
+        title: editingTask.title,
+        description: editingTask.description || '',
+        status: editingTask.status,
+        priority: editingTask.priority,
+        phase_id: editingTask.phase_id || 'none',
+        assignee: editingTask.assignee || 'none',
+      });
+    } else {
+      form.reset({
+        title: '',
+        description: '',
+        status: 'todo',
+        priority: 'medium',
+        phase_id: 'none',
+        assignee: 'none',
+      });
+    }
+  }, [editingTask, form]);
+
   const handleSubmit = async (data: TaskFormData) => {
     try {
-      const taskData: CreateTaskData = {
-        title: data.title,
-        description: data.description || undefined,
-        status: data.status,
-        priority: data.priority,
-        phase_id: data.phase_id === 'none' ? undefined : data.phase_id,
-        assignee: data.assignee === 'none' ? undefined : data.assignee,
-      };
-
-      await createTask.mutateAsync({ projectId, data: taskData });
+      if (editingTask) {
+        // Update existing task
+        await updateTask.mutateAsync({
+          id: editingTask.id,
+          title: data.title,
+          description: data.description || undefined,
+          status: data.status,
+          priority: data.priority,
+          phase_id: data.phase_id === 'none' ? undefined : data.phase_id,
+          assignee: data.assignee === 'none' ? undefined : data.assignee,
+        });
+      } else {
+        // Create new task
+        const taskData: CreateTaskData = {
+          title: data.title,
+          description: data.description || undefined,
+          status: data.status,
+          priority: data.priority,
+          phase_id: data.phase_id === 'none' ? undefined : data.phase_id,
+          assignee: data.assignee === 'none' ? undefined : data.assignee,
+        };
+        await createTask.mutateAsync({ projectId, data: taskData });
+      }
       form.reset();
       onClose();
     } catch (error) {
-      console.error('Failed to create task:', error);
+      console.error('Failed to save task:', error);
     }
   };
 
@@ -92,9 +130,9 @@ export function TaskDrawer({ isOpen, onClose, projectId }: TaskDrawerProps) {
           <DrawerHeader className="px-0 pt-0">
             <div className="flex items-center justify-between">
               <div>
-                <DrawerTitle>Create New Task</DrawerTitle>
+                <DrawerTitle>{editingTask ? 'Edit Task' : 'Create New Task'}</DrawerTitle>
                 <DrawerDescription>
-                  Add a new task to your project board.
+                  {editingTask ? 'Update task details' : 'Add a new task to your project board.'}
                 </DrawerDescription>
               </div>
               <Button
@@ -227,10 +265,13 @@ export function TaskDrawer({ isOpen, onClose, projectId }: TaskDrawerProps) {
               </Button>
               <Button
                 type="submit"
-                disabled={createTask.isPending || !form.formState.isValid}
+                disabled={(createTask.isPending || updateTask.isPending) || !form.formState.isValid}
                 className="flex-1"
               >
-                {createTask.isPending ? 'Creating...' : 'Create Task'}
+                {(createTask.isPending || updateTask.isPending) 
+                  ? (editingTask ? 'Updating...' : 'Creating...') 
+                  : (editingTask ? 'Update Task' : 'Create Task')
+                }
               </Button>
             </div>
           </form>

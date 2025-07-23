@@ -15,7 +15,7 @@ import { AdminOverview } from "./pages/admin/AdminOverview";
 import { AdminProjects } from "./pages/admin/AdminProjects";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { AdminSettings } from "./pages/admin/AdminSettings";
-import { ProjectDetail } from "./pages/admin/ProjectDetail";
+import { ProjectDetailPage } from "./pages/admin/ProjectDetailPage";
 import { PhaseTemplateListPage } from "./pages/admin/PhaseTemplateListPage";
 import { PhaseTemplateDetailPage } from "./pages/admin/PhaseTemplateDetailPage";
 
@@ -50,8 +50,7 @@ function App() {
               </Route>
 
               {/* Project routes */}
-              <Route path="/admin/projects/:id/*" element={<RequireAdmin><ProjectLayout /></RequireAdmin>} />
-              <Route path="/admin/projects/:id/phase/:phaseId" element={<RequireAdmin><ProjectLayout /></RequireAdmin>} />
+              <Route path="/admin/projects/:id/*" element={<RequireAdmin><ProjectDetailPage /></RequireAdmin>} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>
