@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Users, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -58,21 +59,25 @@ export function ProjectWorkersSection({ projectId }: ProjectWorkersSectionProps)
   if (loadingProjectWorkers) {
     return (
       <div className="flex items-center gap-2 text-muted-foreground">
-        <Users className="h-4 w-4" />
-        <span>Loading workers...</span>
+        <Users className="h-5 w-5" />
+        <span>Loading team members...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Team Members</span>
-          <Badge variant="secondary" className="text-xs">
-            {projectWorkers.length}
-          </Badge>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <Users className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Team Members</h3>
+            <p className="text-sm text-muted-foreground">
+              {projectWorkers.length} member{projectWorkers.length !== 1 ? 's' : ''} assigned
+            </p>
+          </div>
         </div>
         
         <Popover open={isAddingWorker} onOpenChange={setIsAddingWorker}>
@@ -80,11 +85,11 @@ export function ProjectWorkersSection({ projectId }: ProjectWorkersSectionProps)
             <Button 
               variant="outline" 
               size="sm" 
-              className="gap-2"
+              className="gap-2 bg-white/80 backdrop-blur-sm"
               disabled={availableWorkers.length === 0}
             >
-              <Plus className="h-3 w-3" />
-              Add Worker
+              <Plus className="h-4 w-4" />
+              Add Member
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-80" align="end">
@@ -141,38 +146,41 @@ export function ProjectWorkersSection({ projectId }: ProjectWorkersSectionProps)
       </div>
 
       {projectWorkers.length === 0 ? (
-        <div className="text-sm text-muted-foreground py-2">
-          No workers assigned to this project yet.
+        <div className="text-sm text-muted-foreground py-4 text-center bg-white/40 rounded-lg border border-white/20">
+          No team members assigned yet. Click "Add Member" to get started.
         </div>
       ) : (
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {projectWorkers.map((worker) => (
             <div
               key={worker.id}
-              className="flex items-center gap-2 bg-muted/50 rounded-lg p-2 pr-1"
+              className="flex items-center gap-3 bg-white/40 backdrop-blur-sm rounded-lg p-3 border border-white/20"
             >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={worker.profiles?.avatar_url} />
-                <AvatarFallback className="text-xs">
-                  {worker.profiles?.full_name?.charAt(0) || 'W'}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={worker.profiles?.avatar_url} />
+                  <AvatarFallback className="text-sm bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                    {worker.profiles?.full_name?.charAt(0) || 'W'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+              </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">
+                <div className="text-sm font-medium truncate text-foreground">
                   {worker.profiles?.full_name || 'Unknown Worker'}
                 </div>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs mt-1">
                   {worker.role}
                 </Badge>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                className="h-8 w-8 p-0 hover:bg-destructive hover:text-destructive-foreground"
                 onClick={() => handleUnassignWorker(worker.user_id)}
                 disabled={unassignWorker.isPending}
               >
-                <X className="h-3 w-3" />
+                <X className="h-4 w-4" />
               </Button>
             </div>
           ))}
