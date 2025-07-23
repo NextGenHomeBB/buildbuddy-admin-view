@@ -147,8 +147,8 @@ export function TasksTable({ tasks, projectId, onTaskEdit, onTaskDelete }: Tasks
         
         return (
           <Select
-            value={task.assignee || ''}
-            onValueChange={(value) => handleAssigneeChange(task.id, value)}
+            value={task.assignee || 'unassigned'}
+            onValueChange={(value) => handleAssigneeChange(task.id, value === 'unassigned' ? '' : value)}
           >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Unassigned">
@@ -168,7 +168,7 @@ export function TasksTable({ tasks, projectId, onTaskEdit, onTaskDelete }: Tasks
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Unassigned</SelectItem>
+              <SelectItem value="unassigned">Unassigned</SelectItem>
               {workers.map(worker => (
                 <SelectItem key={worker.id} value={worker.id}>
                   <div className="flex items-center gap-2">
