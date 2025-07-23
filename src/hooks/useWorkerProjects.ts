@@ -23,29 +23,53 @@ export function useWorkerProjects() {
     queryFn: async (): Promise<WorkerProject[]> => {
       if (!user?.id) return [];
       
-      const { data, error } = await supabase
+      console.log('Fetching projects for user:', user.id);
+      
+      // First, get the user's project roles
+      const { data: userRoles, error: rolesError } = await supabase
         .from('user_project_role')
-        .select(`
-          role,
-          projects:project_id (
-            id,
-            name,
-            description,
-            status,
-            progress,
-            location,
-            start_date,
-            budget
-          )
-        `)
+        .select('project_id, role')
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (rolesError) {
+        console.error('Error fetching user roles:', rolesError);
+        throw rolesError;
+      }
+
+      console.log('User roles found:', userRoles);
+
+      if (!userRoles || userRoles.length === 0) {
+        console.log('No roles found for user');
+        return [];
+      }
+
+      // Get project IDs
+      const projectIds = userRoles.map(role => role.project_id);
       
-      return (data || []).map(item => ({
-        ...item.projects,
-        user_role: item.role
-      }));
+      // Then fetch the projects
+      const { data: projects, error: projectsError } = await supabase
+        .from('projects')
+        .select('id, name, description, status, progress, location, start_date, budget')
+        .in('id', projectIds);
+
+      if (projectsError) {
+        console.error('Error fetching projects:', projectsError);
+        throw projectsError;
+      }
+
+      console.log('Projects found:', projects);
+
+      // Combine projects with user roles
+      const result = projects?.map(project => {
+        const userRole = userRoles.find(role => role.project_id === project.id);
+        return {
+          ...project,
+          user_role: userRole?.role || 'worker'
+        };
+      }) || [];
+
+      console.log('Final result:', result);
+      return result;
     },
     enabled: !!user?.id,
   });
