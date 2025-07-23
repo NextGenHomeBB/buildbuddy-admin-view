@@ -63,7 +63,7 @@ export function ProjectPhasesTab({ projectId }: ProjectPhasesTabProps) {
             className="space-y-1 cursor-pointer hover:text-primary transition-colors"
             onClick={() => handlePhaseClick(phase)}
           >
-            <div className="font-medium text-foreground">{phase.name}</div>
+            <div className="font-medium text-foreground hover:underline">{phase.name}</div>
             {phase.description && (
               <div className="text-sm text-muted-foreground line-clamp-2">
                 {phase.description}
@@ -171,7 +171,7 @@ export function ProjectPhasesTab({ projectId }: ProjectPhasesTabProps) {
         <div>
           <h2 className="text-2xl font-bold text-foreground">Project Phases</h2>
           <p className="text-muted-foreground mt-1">
-            Manage and track progress of individual project phases
+            Manage and track progress of individual project phases. Click on a phase name to view its tasks.
           </p>
         </div>
         <div className="flex gap-2">
