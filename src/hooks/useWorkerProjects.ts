@@ -21,9 +21,12 @@ export function useWorkerProjects() {
   return useQuery({
     queryKey: ['worker-projects', user?.id],
     queryFn: async (): Promise<WorkerProject[]> => {
-      if (!user?.id) return [];
+      if (!user?.id) {
+        console.log('useWorkerProjects: No user ID found, returning empty array');
+        return [];
+      }
       
-      console.log('Fetching projects for user:', user.id);
+      console.log('useWorkerProjects: Fetching projects for user:', user.id);
       
       // First, get the user's project roles
       const { data: userRoles, error: rolesError } = await supabase
