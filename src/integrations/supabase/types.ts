@@ -276,6 +276,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          assigned_workers: Json | null
           budget: number | null
           company_id: string | null
           created_at: string | null
@@ -289,6 +290,7 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          assigned_workers?: Json | null
           budget?: number | null
           company_id?: string | null
           created_at?: string | null
@@ -302,6 +304,7 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          assigned_workers?: Json | null
           budget?: number | null
           company_id?: string | null
           created_at?: string | null

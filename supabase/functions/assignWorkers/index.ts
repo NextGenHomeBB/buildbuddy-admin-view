@@ -63,7 +63,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Successfully assigned ${data?.length || 0} workers`);
+    // Update the projects table's assigned_workers field to include the new workers
+    const { error: updateError } = await supabase
+      .from('projects')
+      .update({
+        assigned_workers: workerIds
+      })
+      .eq('id', projectId);
+
+    if (updateError) {
+      console.error('Error updating project assigned_workers:', updateError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to update project workers', details: updateError.message }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    console.log(`Successfully assigned ${data?.length || 0} workers and updated project`);
 
     return new Response(
       JSON.stringify({ 

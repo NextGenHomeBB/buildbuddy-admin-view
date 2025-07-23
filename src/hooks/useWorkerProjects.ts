@@ -28,50 +28,33 @@ export function useWorkerProjects() {
       
       console.log('useWorkerProjects: Fetching projects for user:', user.id);
       
-      // First, get the user's project roles
-      const { data: userRoles, error: rolesError } = await supabase
-        .from('user_project_role')
-        .select('project_id, role')
-        .eq('user_id', user.id);
-
-      if (rolesError) {
-        console.error('Error fetching user roles:', rolesError);
-        throw rolesError;
-      }
-
-      console.log('User roles found:', userRoles);
-
-      if (!userRoles || userRoles.length === 0) {
-        console.log('No roles found for user');
-        return [];
-      }
-
-      // Get project IDs
-      const projectIds = userRoles.map(role => role.project_id);
-      
-      // Then fetch the projects
+      // Directly query projects where the user is in assigned_workers array
       const { data: projects, error: projectsError } = await supabase
         .from('projects')
-        .select('id, name, description, status, progress, location, start_date, budget')
-        .in('id', projectIds);
+        .select('id, name, description, status, progress, location, start_date, budget, assigned_workers')
+        .contains('assigned_workers', [user.id]);
 
       if (projectsError) {
-        console.error('Error fetching projects:', projectsError);
+        console.error('Error fetching worker projects:', projectsError);
         throw projectsError;
       }
 
-      console.log('Projects found:', projects);
+      console.log('Projects found directly:', projects);
 
-      // Combine projects with user roles
-      const result = projects?.map(project => {
-        const userRole = userRoles.find(role => role.project_id === project.id);
-        return {
-          ...project,
-          user_role: userRole?.role || 'worker'
-        };
-      }) || [];
+      // Map to the expected format with user_role as 'worker'
+      const result = projects?.map(project => ({
+        id: project.id,
+        name: project.name,
+        description: project.description || '',
+        status: project.status || 'planning',
+        progress: project.progress || 0,
+        location: project.location,
+        start_date: project.start_date,
+        budget: project.budget,
+        user_role: 'worker' as const
+      })) || [];
 
-      console.log('Final result:', result);
+      console.log('Final worker projects result:', result);
       return result;
     },
     enabled: !!user?.id,
