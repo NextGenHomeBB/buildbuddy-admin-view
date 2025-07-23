@@ -43,9 +43,10 @@ interface TaskDrawerProps {
   onClose: () => void;
   projectId: string;
   editingTask?: Task | null;
+  phaseId?: string;
 }
 
-export function TaskDrawer({ isOpen, onClose, projectId, editingTask }: TaskDrawerProps) {
+export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }: TaskDrawerProps) {
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const { data: phases = [] } = usePhases(projectId);
@@ -58,12 +59,12 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask }: TaskDraw
       description: editingTask?.description || '',
       status: editingTask?.status || 'todo',
       priority: editingTask?.priority || 'medium',
-      phase_id: editingTask?.phase_id || 'none',
+      phase_id: editingTask?.phase_id || phaseId || 'none',
       assignee: editingTask?.assignee || 'none',
     },
   });
 
-  // Reset form when editingTask changes
+  // Reset form when editingTask or phaseId changes
   useEffect(() => {
     if (editingTask) {
       form.reset({
@@ -80,11 +81,11 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask }: TaskDraw
         description: '',
         status: 'todo',
         priority: 'medium',
-        phase_id: 'none',
+        phase_id: phaseId || 'none',
         assignee: 'none',
       });
     }
-  }, [editingTask, form]);
+  }, [editingTask, phaseId, form]);
 
   const handleSubmit = async (data: TaskFormData) => {
     try {

@@ -203,6 +203,7 @@ export function PhaseDetailTab({ phaseId, projectId }: PhaseDetailTabProps) {
         isOpen={taskDrawerOpen}
         onClose={() => setTaskDrawerOpen(false)}
         projectId={projectId}
+        phaseId={phaseId}
       />
     </div>
   );
