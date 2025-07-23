@@ -1,6 +1,8 @@
+
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ColumnDef } from '@tanstack/react-table';
-import { Plus, Check, Calendar, CheckCircle, Clock, AlertCircle, Circle, Zap } from 'lucide-react';
+import { Plus, Check, Calendar, CheckCircle, Clock, AlertCircle, Circle, Zap, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -19,9 +21,9 @@ interface PhasesTableTabProps {
 const getPhaseStatusIcon = (status: string) => {
   switch (status) {
     case 'completed':
-      return <CheckCircle className="h-4 w-4 text-success" />;
+      return <CheckCircle className="h-4 w-4 text-green-600" />;
     case 'in_progress':
-      return <Clock className="h-4 w-4 text-primary" />;
+      return <Clock className="h-4 w-4 text-orange-500" />;
     case 'blocked':
       return <AlertCircle className="h-4 w-4 text-destructive" />;
     case 'not_started':
@@ -33,9 +35,9 @@ const getPhaseStatusIcon = (status: string) => {
 const getPhaseStatusBadge = (status: string) => {
   switch (status) {
     case 'completed':
-      return <Badge variant="secondary">Completed</Badge>;
+      return <Badge variant="secondary" className="bg-green-100 text-green-800">Completed</Badge>;
     case 'in_progress':
-      return <Badge variant="default">In Progress</Badge>;
+      return <Badge variant="default" className="bg-orange-100 text-orange-800">In Progress</Badge>;
     case 'blocked':
       return <Badge variant="destructive">Blocked</Badge>;
     case 'not_started':
@@ -45,6 +47,7 @@ const getPhaseStatusBadge = (status: string) => {
 };
 
 export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
+  const navigate = useNavigate();
   const { data: phases = [], isLoading } = usePhases(projectId);
   const [selectedPhases, setSelectedPhases] = useState<Record<string, boolean>>({});
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -69,6 +72,10 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
     
     // Clear selection after successful update
     setSelectedPhases({});
+  };
+
+  const handleViewPhase = (phaseId: string) => {
+    navigate(`/admin/projects/${projectId}/phase/${phaseId}`);
   };
 
   // Define columns for the phases table
@@ -98,17 +105,11 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
       cell: ({ row }) => {
         const phase = row.original;
         return (
-          <div 
-            className="flex items-start gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
-            onClick={() => {
-              setEditingPhase(phase);
-              setDrawerOpen(true);
-            }}
-          >
+          <div className="flex items-start gap-3">
             <div className="mt-1">
               {getPhaseStatusIcon(phase.status)}
             </div>
-            <div>
+            <div className="flex-1">
               <div className="font-semibold text-foreground">{phase.name}</div>
               {phase.description && (
                 <p className="text-sm text-muted-foreground mt-1">{phase.description}</p>
@@ -136,7 +137,11 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
             <div className="flex justify-between text-sm">
               <span className="font-medium">{Math.round(progress)}%</span>
             </div>
-            <Progress value={progress} className="h-1.5" />
+            <Progress 
+              value={progress} 
+              className="h-1.5" 
+              indicatorClassName={progress === 100 ? 'bg-green-500' : progress > 0 ? 'bg-orange-500' : 'bg-gray-300'}
+            />
           </div>
         );
       },
@@ -149,7 +154,7 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
         return startDate ? (
           <div className="flex items-center gap-1 text-sm">
             <Calendar className="h-4 w-4 text-muted-foreground" />
-            {new Date(startDate).toLocaleDateString()}
+            {new Date(startDate).toLocaleDateString('en-GB')}
           </div>
         ) : (
           <span className="text-muted-foreground">-</span>
@@ -164,10 +169,42 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
         return endDate ? (
           <div className="flex items-center gap-1 text-sm">
             <Calendar className="h-4 w-4 text-muted-foreground" />
-            {new Date(endDate).toLocaleDateString()}
+            {new Date(endDate).toLocaleDateString('en-GB')}
           </div>
         ) : (
           <span className="text-muted-foreground">-</span>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => {
+        const phase = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleViewPhase(phase.id)}
+              className="gap-1"
+            >
+              <Eye className="h-4 w-4" />
+              View
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setEditingPhase(phase);
+                setDrawerOpen(true);
+              }}
+              className="gap-1"
+            >
+              <Edit className="h-4 w-4" />
+              Edit
+            </Button>
+          </div>
         );
       },
     },

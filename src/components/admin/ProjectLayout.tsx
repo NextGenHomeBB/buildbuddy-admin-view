@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, Edit, MoreHorizontal, Copy, Archive, Trash2 } from 'lucide-react';
@@ -23,10 +24,11 @@ import { ProjectOverviewTab } from '@/pages/admin/ProjectOverviewTab';
 import { PhasesTableTab } from '@/pages/admin/PhasesTableTab';
 import { TasksBoardTab } from '@/pages/admin/TasksBoardTab';
 import { ProjectFilesTab } from '@/pages/admin/ProjectFilesTab';
+import { PhaseDetailTab } from '@/pages/admin/PhaseDetailTab';
 import { useProject } from '@/hooks/useProjects';
 
 export function ProjectLayout() {
-  const { id } = useParams<{ id: string }>();
+  const { id, phaseId } = useParams<{ id: string; phaseId?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -58,6 +60,51 @@ export function ProjectLayout() {
         <Button onClick={() => navigate('/admin/projects')}>
           Back to Projects
         </Button>
+      </div>
+    );
+  }
+
+  // If we have a phaseId, show the phase detail view
+  if (phaseId) {
+    return (
+      <div className="space-y-6">
+        {/* Breadcrumb */}
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/admin/projects">Projects</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to={`/admin/projects/${id}`}>{project.name}</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Phase Detail</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => navigate(`/admin/projects/${id}/phases`)}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-foreground">Phase Detail</h1>
+            <p className="text-muted-foreground mt-1">Manage phase tasks and progress</p>
+          </div>
+        </div>
+
+        <PhaseDetailTab phaseId={phaseId} projectId={id!} />
       </div>
     );
   }
