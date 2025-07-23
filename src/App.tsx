@@ -1,4 +1,3 @@
-
 // Main App component
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ProjectLayout } from "@/components/admin/ProjectLayout";
 import { RequireAdmin } from "@/components/RequireAdmin";
+import { RequireWorker } from "@/components/RequireWorker";
+import { WorkerLayout } from "@/components/worker/WorkerLayout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { Auth } from "./pages/Auth";
@@ -18,6 +19,9 @@ import { AdminSettings } from "./pages/admin/AdminSettings";
 import { ProjectDetailPage } from "./pages/admin/ProjectDetailPage";
 import { PhaseTemplateListPage } from "./pages/admin/PhaseTemplateListPage";
 import { PhaseTemplateDetailPage } from "./pages/admin/PhaseTemplateDetailPage";
+import { WorkerDashboard } from "./pages/worker/WorkerDashboard";
+import { WorkerProjects } from "./pages/worker/WorkerProjects";
+import { WorkerProjectDetail } from "./pages/worker/WorkerProjectDetail";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,6 +55,13 @@ function App() {
 
               {/* Project routes */}
               <Route path="/admin/projects/:id/*" element={<RequireAdmin><ProjectDetailPage /></RequireAdmin>} />
+              
+              {/* Worker routes */}
+              <Route path="/worker" element={<RequireWorker><WorkerLayout /></RequireWorker>}>
+                <Route index element={<WorkerDashboard />} />
+                <Route path="projects" element={<WorkerProjects />} />
+                <Route path="projects/:id" element={<WorkerProjectDetail />} />
+              </Route>
               
               <Route path="*" element={<NotFound />} />
             </Routes>

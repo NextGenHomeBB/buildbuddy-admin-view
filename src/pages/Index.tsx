@@ -40,6 +40,15 @@ const Index = () => {
                 </Button>
               )}
               
+              {['worker', 'developer', 'project_manager'].includes(user.role) && (
+                <Button 
+                  className="w-full"
+                  onClick={() => navigate('/worker')}
+                >
+                  Access Worker Dashboard
+                </Button>
+              )}
+              
               <Button 
                 variant="outline" 
                 onClick={signOut}
