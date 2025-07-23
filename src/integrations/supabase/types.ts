@@ -456,18 +456,24 @@ export type Database = {
       }
       user_project_role: {
         Row: {
+          assigned_at: string | null
+          assigned_by: string | null
           id: string
           project_id: string | null
           role: string | null
           user_id: string | null
         }
         Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
           id?: string
           project_id?: string | null
           role?: string | null
           user_id?: string | null
         }
         Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
           id?: string
           project_id?: string | null
           role?: string | null
