@@ -25,6 +25,7 @@ import { ProjectTasksTab } from '@/components/admin/ProjectTasksTab';
 import { ProjectFilesTab } from '@/components/admin/ProjectFilesTab';
 import { ProjectPeopleTab } from './ProjectPeopleTab';
 import { PhaseDetailTab } from './PhaseDetailTab';
+import { ProjectDashboard } from './ProjectDashboard';
 import { useProject } from '@/hooks/useProjects';
 
 export function ProjectDetailPage() {
@@ -179,8 +180,8 @@ export function ProjectDetailPage() {
         {/* Tab Content */}
         <div className="flex-1 overflow-auto p-6">
           <Routes>
-            <Route path="/" element={<ProjectOverviewTab project={project} />} />
-            <Route path="/overview" element={<ProjectOverviewTab project={project} />} />
+            <Route path="/" element={<ProjectDashboard project={project} />} />
+            <Route path="/overview" element={<ProjectDashboard project={project} />} />
             <Route path="/phases" element={<ProjectPhasesTab projectId={id!} />} />
             <Route path="/phases/:phaseId" element={<PhaseDetailTab phaseId={""} projectId={id!} />} />
             <Route path="/tasks" element={<ProjectTasksTab projectId={id!} />} />

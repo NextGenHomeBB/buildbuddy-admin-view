@@ -390,6 +390,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tasks_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "project_phases_v"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -508,6 +515,39 @@ export type Database = {
       }
     }
     Views: {
+      project_phases_v: {
+        Row: {
+          completed_tasks: number | null
+          created_at: string | null
+          description: string | null
+          end_date: string | null
+          id: string | null
+          name: string | null
+          progress: number | null
+          project_budget: number | null
+          project_id: string | null
+          project_name: string | null
+          start_date: string | null
+          status: string | null
+          total_tasks: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_phases_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_summary_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_phases_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_summary_view: {
         Row: {
           budget: number | null

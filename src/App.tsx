@@ -19,6 +19,7 @@ import { AdminSettings } from "./pages/admin/AdminSettings";
 import { ProjectDetailPage } from "./pages/admin/ProjectDetailPage";
 import { PhaseTemplateListPage } from "./pages/admin/PhaseTemplateListPage";
 import { PhaseTemplateDetailPage } from "./pages/admin/PhaseTemplateDetailPage";
+import { Reports } from "./pages/admin/Reports";
 import { WorkerDashboard } from "./pages/worker/WorkerDashboard";
 import { WorkerProjects } from "./pages/worker/WorkerProjects";
 import { WorkerProjectDetail } from "./pages/worker/WorkerProjectDetail";
@@ -49,6 +50,7 @@ function App() {
                 <Route path="overview" element={<AdminOverview />} />
                 <Route path="projects" element={<AdminProjects />} />
                 <Route path="users" element={<AdminUsers />} />
+                <Route path="reports" element={<Reports />} />
                 <Route path="settings" element={<AdminSettings />} />
                 <Route path="phase-templates" element={<PhaseTemplateListPage />} />
                 <Route path="phase-templates/:id" element={<PhaseTemplateDetailPage />} />

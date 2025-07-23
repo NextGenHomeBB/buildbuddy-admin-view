@@ -6,7 +6,8 @@ import {
   BarChart3,
   Building2,
   ChevronLeft,
-  Menu
+  Menu,
+  FileText
 } from 'lucide-react';
 import {
   Sidebar,
@@ -38,6 +39,11 @@ const navigationItems = [
     title: 'Users',
     url: '/admin/users',
     icon: Users
+  },
+  {
+    title: 'Reports',
+    url: '/admin/reports',
+    icon: FileText
   },
   {
     title: 'Settings',
