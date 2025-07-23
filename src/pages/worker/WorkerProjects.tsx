@@ -1,21 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { useAuth } from '@/hooks/useAuth';
-import { useProjectWorkers } from '@/hooks/useProjectWorkers';
-import { useProjects } from '@/hooks/useProjects';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users } from 'lucide-react';
 import { useWorkerProjects } from '@/hooks/useWorkerProjects';
 
 export function WorkerProjects() {
-  const { user } = useAuth();
-  const { data: allProjects = [] } = useProjects();
-  
-  // Filter projects where the current user is assigned
-  const myProjects = allProjects.filter(project => 
-    project.user_project_roles?.some(role => role.user_id === user?.id)
-  );
+  const { data: myProjects = [], isLoading } = useWorkerProjects();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -85,12 +76,12 @@ export function WorkerProjects() {
                         <span>Started {new Date(project.start_date).toLocaleDateString()}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      <span>
-                        My Role: {project.user_project_roles?.find(role => role.user_id === user?.id)?.role || 'Worker'}
-                      </span>
-                    </div>
+                     <div className="flex items-center gap-2">
+                       <Users className="h-4 w-4" />
+                       <span>
+                         My Role: {project.user_role}
+                       </span>
+                     </div>
                   </div>
                 </CardContent>
               </Card>
