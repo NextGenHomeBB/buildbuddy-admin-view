@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -94,11 +95,26 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'construction-pulse': {
+					'0%, 100%': {
+						opacity: '1',
+						transform: 'scale(1)'
+					},
+					'50%': {
+						opacity: '0.8',
+						transform: 'scale(1.05)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'construction-pulse': 'construction-pulse 2s ease-in-out infinite'
+			},
+			boxShadow: {
+				'construction': 'var(--shadow-construction)',
+				'card': 'var(--shadow-card)'
 			}
 		}
 	},
