@@ -45,7 +45,6 @@ export function BudgetProgressBar({ budget, actual, progress }: BudgetProgressBa
           </div>
           <div className="relative">
             <Progress value={progress} className="h-3" />
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-full" />
           </div>
         </div>
 
@@ -62,11 +61,6 @@ export function BudgetProgressBar({ budget, actual, progress }: BudgetProgressBa
               value={Math.min(budgetProgress, 100)} 
               className={`h-3 ${isOverBudget ? '[&>div]:bg-destructive' : ''}`}
             />
-            <div className={`absolute inset-0 rounded-full ${
-              isOverBudget 
-                ? 'bg-gradient-to-r from-red-500/20 to-red-600/20' 
-                : 'bg-gradient-to-r from-green-500/20 to-green-600/20'
-            }`} />
           </div>
         </div>
       </div>

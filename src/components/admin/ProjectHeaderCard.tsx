@@ -20,26 +20,9 @@ interface ProjectHeaderCardProps {
 }
 
 export function ProjectHeaderCard({ project }: ProjectHeaderCardProps) {
-  const getStatusGradient = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'from-blue-50 via-blue-100 to-blue-200';
-      case 'completed':
-        return 'from-green-50 via-green-100 to-green-200';
-      case 'on_hold':
-        return 'from-red-50 via-red-100 to-red-200';
-      case 'cancelled':
-        return 'from-gray-50 via-gray-100 to-gray-200';
-      case 'planning':
-        return 'from-yellow-50 via-yellow-100 to-yellow-200';
-      default:
-        return 'from-slate-50 via-slate-100 to-slate-200';
-    }
-  };
 
   return (
     <Card className="relative overflow-hidden">
-      <div className={`absolute inset-0 bg-gradient-to-br ${getStatusGradient(project.status)} opacity-40`} />
       <CardContent className="relative p-8">
         <div className="flex items-start justify-between gap-6">
           <div className="flex-1 space-y-6">
@@ -59,7 +42,7 @@ export function ProjectHeaderCard({ project }: ProjectHeaderCardProps) {
             </div>
 
             {/* Budget Progress Section */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+            <div className="bg-background/60 rounded-lg p-4 border">
               <BudgetProgressBar 
                 budget={project.budget || 0}
                 actual={project.budget ? project.budget * (project.progress / 100) : 0}
@@ -68,20 +51,20 @@ export function ProjectHeaderCard({ project }: ProjectHeaderCardProps) {
             </div>
 
             {/* Project Workers Section */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+            <div className="bg-background/60 rounded-lg p-4 border">
               <ProjectWorkersSection projectId={project.id} />
             </div>
           </div>
 
           {/* Actions */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Button variant="outline" size="sm" className="gap-2 bg-white/80 backdrop-blur-sm">
+            <Button variant="outline" size="sm" className="gap-2">
               <Edit className="h-4 w-4" />
               <span className="hidden sm:inline">Edit</span>
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="bg-white/80 backdrop-blur-sm">
+                <Button variant="outline" size="sm">
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
