@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { StatusChip } from '@/components/admin/StatusChip';
 import { BudgetProgressBar } from '@/components/admin/BudgetProgressBar';
+import { ProjectWorkersSection } from '@/components/admin/ProjectWorkersSection';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +43,9 @@ export function ProjectHeaderCard({ project }: ProjectHeaderCardProps) {
               actual={project.budget ? project.budget * (project.progress / 100) : 0}
               progress={project.progress}
             />
+
+            {/* Project Workers */}
+            <ProjectWorkersSection projectId={project.id} />
           </div>
 
           {/* Actions */}
