@@ -46,6 +46,7 @@ function App() {
               {/* Admin routes */}
               <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
                 <Route index element={<AdminOverview />} />
+                <Route path="overview" element={<AdminOverview />} />
                 <Route path="projects" element={<AdminProjects />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="settings" element={<AdminSettings />} />
