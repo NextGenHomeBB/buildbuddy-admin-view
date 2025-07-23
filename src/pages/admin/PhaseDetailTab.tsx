@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { usePhases } from '@/hooks/usePhases';
 import { useTasks } from '@/hooks/useTasks';
 import { TaskDrawer } from '@/components/admin/TaskDrawer';
+import { PhaseCostTab } from '@/components/admin/PhaseCostTab';
 
 interface PhaseDetailTabProps {
   phaseId: string;
@@ -152,49 +153,7 @@ export function PhaseDetailTab({ phaseId, projectId }: PhaseDetailTabProps) {
         </TabsContent>
 
         <TabsContent value="costs" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Material Costs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">€0</div>
-                <p className="text-sm text-muted-foreground">No materials added</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Labour Costs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">€0</div>
-                <p className="text-sm text-muted-foreground">No labour tracked</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Total Costs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">€0</div>
-                <p className="text-sm text-muted-foreground">Phase total</p>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Cost Breakdown</CardTitle>
-              <CardDescription>Detailed cost analysis for this phase</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Cost tracking will be implemented in future updates.</p>
-              </div>
-            </CardContent>
-          </Card>
+          <PhaseCostTab phaseId={phaseId} />
         </TabsContent>
       </Tabs>
 

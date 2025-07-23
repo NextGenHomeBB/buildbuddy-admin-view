@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { PhaseDrawer } from '@/components/admin/PhaseDrawer';
 import { ApplyFastPhasesModal } from '@/components/admin/ApplyFastPhasesModal';
+import { DeletePhaseDialog } from '@/components/admin/DeletePhaseDialog';
 import { usePhases, ProjectPhase } from '@/hooks/usePhases';
 
 interface ProjectPhasesTabProps {
@@ -28,10 +29,17 @@ export function ProjectPhasesTab({ projectId }: ProjectPhasesTabProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingPhase, setEditingPhase] = useState<ProjectPhase | null>(null);
   const [fastPhasesModalOpen, setFastPhasesModalOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const handleEdit = (phase: ProjectPhase) => {
     setEditingPhase(phase);
     setDrawerOpen(true);
+  };
+
+  const handleDelete = (phase: ProjectPhase) => {
+    setPhaseToDelete({ id: phase.id, name: phase.name });
+    setDeleteDialogOpen(true);
   };
 
   const handleDrawerClose = () => {
@@ -145,7 +153,10 @@ export function ProjectPhasesTab({ projectId }: ProjectPhasesTabProps) {
                 Edit Phase
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2 text-destructive">
+              <DropdownMenuItem 
+                className="gap-2 text-destructive"
+                onClick={() => handleDelete(phase)}
+              >
                 <Trash2 className="h-4 w-4" />
                 Delete Phase
               </DropdownMenuItem>
@@ -211,6 +222,16 @@ export function ProjectPhasesTab({ projectId }: ProjectPhasesTabProps) {
         onOpenChange={setFastPhasesModalOpen}
         projectId={projectId}
       />
+
+      {/* Delete Phase Dialog */}
+      {phaseToDelete && (
+        <DeletePhaseDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          phaseId={phaseToDelete.id}
+          phaseName={phaseToDelete.name}
+        />
+      )}
     </div>
   );
 }

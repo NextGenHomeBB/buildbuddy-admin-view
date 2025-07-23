@@ -6,6 +6,7 @@ interface StatusChipProps {
 
 const getStatusConfig = (status: string) => {
   switch (status) {
+    // Project statuses
     case 'active':
       return {
         variant: 'default' as const,
@@ -30,6 +31,22 @@ const getStatusConfig = (status: string) => {
       return {
         variant: 'outline' as const,
         label: 'Planning'
+      };
+    // Phase statuses (mapped to appropriate variants)
+    case 'not_started':
+      return {
+        variant: 'outline' as const,
+        label: 'Planning'
+      };
+    case 'in_progress':
+      return {
+        variant: 'default' as const,
+        label: 'Active'
+      };
+    case 'blocked':
+      return {
+        variant: 'destructive' as const,
+        label: 'On Hold'
       };
     default:
       return {

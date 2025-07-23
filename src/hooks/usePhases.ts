@@ -32,17 +32,38 @@ export function usePhases(projectId: string) {
   return useQuery({
     queryKey: ['phases', projectId],
     queryFn: async (): Promise<ProjectPhase[]> => {
-      const { data, error } = await supabase
+      // Get phases
+      const { data: phases, error: phasesError } = await supabase
         .from('project_phases')
         .select('*')
         .eq('project_id', projectId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
-      return (data || []).map(phase => ({
-        ...phase,
-        status: phase.status as ProjectPhase['status']
-      }));
+      if (phasesError) throw phasesError;
+
+      // Calculate progress for each phase based on task completion
+      const phasesWithProgress = await Promise.all(
+        (phases || []).map(async (phase) => {
+          const { data: tasks, error: tasksError } = await supabase
+            .from('tasks')
+            .select('id, status')
+            .eq('phase_id', phase.id);
+
+          if (tasksError) throw tasksError;
+
+          const totalTasks = tasks?.length || 0;
+          const completedTasks = tasks?.filter(task => task.status === 'done').length || 0;
+          const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+          return {
+            ...phase,
+            status: phase.status as ProjectPhase['status'],
+            progress
+          };
+        })
+      );
+
+      return phasesWithProgress;
     },
     enabled: !!projectId,
   });
