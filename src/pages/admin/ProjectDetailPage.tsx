@@ -24,10 +24,11 @@ import { ProjectPhasesTab } from '@/components/admin/ProjectPhasesTab';
 import { ProjectTasksTab } from '@/components/admin/ProjectTasksTab';
 import { ProjectFilesTab } from '@/components/admin/ProjectFilesTab';
 import { ProjectPeopleTab } from './ProjectPeopleTab';
+import { PhaseDetailTab } from './PhaseDetailTab';
 import { useProject } from '@/hooks/useProjects';
 
 export function ProjectDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id, phaseId } = useParams<{ id: string; phaseId?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -60,6 +61,64 @@ export function ProjectDetailPage() {
           <Button onClick={() => navigate('/admin/projects')}>
             Back to Projects
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // If we have a phaseId, show the phase detail view
+  if (phaseId) {
+    return (
+      <div className="flex-1 flex flex-col h-full">
+        {/* Breadcrumb */}
+        <div className="flex-shrink-0 border-b bg-background p-4">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink 
+                  onClick={() => navigate('/admin/projects')}
+                  className="cursor-pointer"
+                >
+                  Projects
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink 
+                  onClick={() => navigate(`/admin/projects/${id}`)}
+                  className="cursor-pointer"
+                >
+                  {project.name}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Phase Detail</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+
+        {/* Header */}
+        <div className="flex-shrink-0 p-6">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => navigate(`/admin/projects/${id}/phases`)}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-foreground">Phase Detail</h1>
+              <p className="text-muted-foreground mt-1">Manage phase tasks and progress</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Phase Detail Content */}
+        <div className="flex-1 overflow-auto p-6">
+          <PhaseDetailTab phaseId={phaseId} projectId={id!} />
         </div>
       </div>
     );
@@ -123,6 +182,7 @@ export function ProjectDetailPage() {
             <Route path="/" element={<ProjectOverviewTab project={project} />} />
             <Route path="/overview" element={<ProjectOverviewTab project={project} />} />
             <Route path="/phases" element={<ProjectPhasesTab projectId={id!} />} />
+            <Route path="/phases/:phaseId" element={<PhaseDetailTab phaseId={""} projectId={id!} />} />
             <Route path="/tasks" element={<ProjectTasksTab projectId={id!} />} />
             <Route path="/people" element={<ProjectPeopleTab projectId={id!} />} />
             <Route path="/files" element={<ProjectFilesTab projectId={id!} />} />
