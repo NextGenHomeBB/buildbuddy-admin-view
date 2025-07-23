@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { Plus, MoreHorizontal, Edit, Trash2, Calendar, Zap } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/admin/DataTable';
 import { Progress } from '@/components/ui/progress';
@@ -23,6 +24,7 @@ interface ProjectPhasesTabProps {
 
 export function ProjectPhasesTab({ projectId }: ProjectPhasesTabProps) {
   const { data: phases = [], isLoading } = usePhases(projectId);
+  const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingPhase, setEditingPhase] = useState<ProjectPhase | null>(null);
   const [fastPhasesModalOpen, setFastPhasesModalOpen] = useState(false);
@@ -35,6 +37,10 @@ export function ProjectPhasesTab({ projectId }: ProjectPhasesTabProps) {
   const handleDrawerClose = () => {
     setDrawerOpen(false);
     setEditingPhase(null);
+  };
+
+  const handlePhaseClick = (phase: ProjectPhase) => {
+    navigate(`/admin/projects/${projectId}/phases/${phase.id}`);
   };
 
   const formatDate = (dateString?: string) => {
@@ -53,7 +59,10 @@ export function ProjectPhasesTab({ projectId }: ProjectPhasesTabProps) {
       cell: ({ row }) => {
         const phase = row.original;
         return (
-          <div className="space-y-1">
+          <div 
+            className="space-y-1 cursor-pointer hover:text-primary transition-colors"
+            onClick={() => handlePhaseClick(phase)}
+          >
             <div className="font-medium text-foreground">{phase.name}</div>
             {phase.description && (
               <div className="text-sm text-muted-foreground line-clamp-2">
