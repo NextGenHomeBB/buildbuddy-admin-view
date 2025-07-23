@@ -27,7 +27,6 @@ export function ProjectTimeline({ phases }: ProjectTimelineProps) {
 
   return (
     <Card className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-indigo-100 to-indigo-200 opacity-40" />
       <CardHeader className="relative">
         <CardTitle>Project Timeline</CardTitle>
         <CardDescription>Phase progression and status overview</CardDescription>
