@@ -44,25 +44,27 @@ export function AdminUsers() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        // Fetch profiles
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url, created_at')
-          .order('created_at', { ascending: false });
-
-        if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
+        // Get current session to pass authorization
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.access_token) {
+          console.error('No valid session found');
           return;
         }
 
-        // For now, assign default roles since we can't access user_roles table directly
-        // In production, you'd want to create a proper view or use the RPC functions
-        const usersWithRoles = (profiles || []).map(profile => ({
-          ...profile,
-          role: profile.id === '63fba0e3-f026-4eb7-8f44-1bbc10cbb598' ? 'admin' : 'worker'
-        }));
+        // Call our edge function to get users with their roles
+        const { data, error } = await supabase.functions.invoke('get_users_with_roles', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
 
-        setUsers(usersWithRoles);
+        if (error) {
+          console.error('Error fetching users with roles:', error);
+          return;
+        }
+
+        setUsers(data.users || []);
       } catch (error) {
         console.error('Error fetching users:', error);
       } finally {
