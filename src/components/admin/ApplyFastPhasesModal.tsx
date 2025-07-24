@@ -38,6 +38,14 @@ export function ApplyFastPhasesModal({
     );
   };
 
+  const handleSelectAll = () => {
+    if (selectedTemplates.length === templates?.length) {
+      setSelectedTemplates([]);
+    } else {
+      setSelectedTemplates(templates?.map(t => t.id) || []);
+    }
+  };
+
   const handleApplyPhases = async () => {
     if (selectedTemplates.length === 0) return;
 
@@ -74,38 +82,54 @@ export function ApplyFastPhasesModal({
           {isLoading ? (
             <div>Loading templates...</div>
           ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {templates?.map((template) => (
-                <div
-                  key={template.id}
-                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
-                >
-                  <div className="flex items-center space-x-3">
-                    <Checkbox
-                      id={template.id}
-                      checked={selectedTemplates.includes(template.id)}
-                      onCheckedChange={() => handleToggleTemplate(template.id)}
-                    />
-                    <div>
-                      <label
-                        htmlFor={template.id}
-                        className="font-medium cursor-pointer"
-                      >
-                        {template.name}
-                      </label>
-                      {template.description && (
-                        <p className="text-sm text-muted-foreground">
-                          {template.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <Badge variant="secondary">
-                    {template.checklist_templates?.length || 0} items
-                  </Badge>
+            <>
+              {/* Select All Checkbox */}
+              {templates && templates.length > 0 && (
+                <div className="flex items-center space-x-3 p-3 border-b mb-3">
+                  <Checkbox
+                    id="select-all"
+                    checked={selectedTemplates.length === templates.length}
+                    onCheckedChange={handleSelectAll}
+                  />
+                  <label htmlFor="select-all" className="font-medium cursor-pointer">
+                    Select All ({templates.length} phases)
+                  </label>
                 </div>
-              ))}
-            </div>
+              )}
+              
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {templates?.map((template) => (
+                  <div
+                    key={template.id}
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id={template.id}
+                        checked={selectedTemplates.includes(template.id)}
+                        onCheckedChange={() => handleToggleTemplate(template.id)}
+                      />
+                      <div>
+                        <label
+                          htmlFor={template.id}
+                          className="font-medium cursor-pointer"
+                        >
+                          {template.name}
+                        </label>
+                        {template.description && (
+                          <p className="text-sm text-muted-foreground">
+                            {template.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <Badge variant="secondary">
+                      {template.checklist_templates?.length || 0} items
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
 
           {selectedTemplates.length > 0 && (
