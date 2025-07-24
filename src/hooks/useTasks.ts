@@ -186,7 +186,8 @@ export function useUpdateTask() {
           body: { projectId: data.project_id }
         });
         
-        // Invalidate project and phases data to refresh progress
+        // Invalidate all relevant queries to refresh the UI
+        queryClient.invalidateQueries({ queryKey: ['projects'] });
         queryClient.invalidateQueries({ queryKey: ['projects', data.project_id] });
         queryClient.invalidateQueries({ queryKey: ['phases', data.project_id] });
       } catch (error) {
