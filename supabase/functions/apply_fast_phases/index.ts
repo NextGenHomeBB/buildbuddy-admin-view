@@ -45,11 +45,32 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Verify admin role using RPC function
-    const { data: userRole, error: roleError } = await supabase
-      .rpc('get_current_user_role')
+    // Set the auth context for the supabase client
+    supabase.auth.setSession({
+      access_token: token,
+      refresh_token: ''
+    })
 
-    if (roleError || userRole !== 'admin') {
+    // Verify admin role using the user_roles table directly
+    const { data: userRoles, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+
+    if (roleError) {
+      console.error('Error checking user roles:', roleError)
+      return new Response(
+        JSON.stringify({ error: 'Error verifying admin access' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    const hasAdminRole = userRoles?.some(role => role.role === 'admin')
+    
+    if (!hasAdminRole) {
       return new Response(
         JSON.stringify({ error: 'Admin access required' }),
         { 
