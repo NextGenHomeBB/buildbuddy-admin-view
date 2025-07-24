@@ -177,9 +177,21 @@ export function useUpdateTask() {
 
       return { previousTasks, projectId };
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', data.project_id] });
-      // Don't show toast here since real-time will handle it
+      
+      // Update phase and project progress
+      try {
+        await supabase.functions.invoke('updatePhaseProgress', {
+          body: { projectId: data.project_id }
+        });
+        
+        // Invalidate project and phases data to refresh progress
+        queryClient.invalidateQueries({ queryKey: ['projects', data.project_id] });
+        queryClient.invalidateQueries({ queryKey: ['phases', data.project_id] });
+      } catch (error) {
+        console.error('Failed to update progress:', error);
+      }
     },
     onError: (error, variables, context) => {
       if (context?.previousTasks && context?.projectId) {
