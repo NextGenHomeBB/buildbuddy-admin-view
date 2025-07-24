@@ -17,22 +17,19 @@ export const useAuth = () => {
     
     const fetchUserProfile = async (user: User) => {
       try {
-        console.log('useAuth - Fetching profile for user:', user.id);
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
+        console.log('useAuth - Fetching role for user:', user.id);
+        const { data: role, error } = await supabase
+          .rpc('get_current_user_role');
         
         if (error) {
-          console.error('useAuth - Error fetching user profile:', error);
+          console.error('useAuth - Error fetching user role:', error);
           return { ...user, role: 'worker' };
         }
         
-        console.log('useAuth - Profile fetched:', profile);
-        return { ...user, role: profile?.role || 'worker' };
+        console.log('useAuth - User role fetched:', role);
+        return { ...user, role: role || 'worker' };
       } catch (error) {
-        console.error('useAuth - Exception fetching user profile:', error);
+        console.error('useAuth - Exception fetching user role:', error);
         return { ...user, role: 'worker' };
       }
     };
