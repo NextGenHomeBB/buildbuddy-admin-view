@@ -47,20 +47,22 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Project Tasks</h2>
-          <p className="text-muted-foreground mt-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">Project Tasks</h2>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Manage and track all tasks for this project
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4" />
+            <span className="hidden sm:inline ml-2">Refresh</span>
           </Button>
           <Button onClick={() => setDrawerOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
-            Add Task
+            <span className="hidden sm:inline">Add Task</span>
+            <span className="sm:hidden">Add</span>
           </Button>
         </div>
       </div>
