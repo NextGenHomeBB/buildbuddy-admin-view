@@ -29,14 +29,22 @@ import { ProjectDashboard } from './ProjectDashboard';
 import { useProject } from '@/hooks/useProjects';
 
 export function ProjectDetailPage() {
-  const { id, phaseId } = useParams<{ id: string; phaseId?: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   
   const { data: project, isLoading } = useProject(id!);
   
+  // Extract phaseId from URL if present
+  const phaseId = location.pathname.includes('/phases/') && 
+    location.pathname.split('/phases/')[1] && 
+    location.pathname.split('/phases/')[1] !== '' 
+    ? location.pathname.split('/phases/')[1] 
+    : null;
+  
   // Get current tab from URL
-  const currentPath = location.pathname.split('/').pop();
+  const pathParts = location.pathname.split('/');
+  const currentPath = pathParts[pathParts.length - 1];
   const currentTab = ['overview', 'phases', 'tasks', 'people', 'files'].includes(currentPath!) 
     ? currentPath! 
     : 'overview';
@@ -183,7 +191,7 @@ export function ProjectDetailPage() {
             <Route path="/" element={<ProjectDashboard project={project} />} />
             <Route path="/overview" element={<ProjectDashboard project={project} />} />
             <Route path="/phases" element={<ProjectPhasesTab projectId={id!} />} />
-            <Route path="/phases/:phaseId" element={<PhaseDetailTab phaseId={""} projectId={id!} />} />
+            <Route path="/phases/:phaseId" element={<PhaseDetailTab phaseId={phaseId || ""} projectId={id!} />} />
             <Route path="/tasks" element={<ProjectTasksTab projectId={id!} />} />
             <Route path="/people" element={<ProjectPeopleTab projectId={id!} />} />
             <Route path="/files" element={<ProjectFilesTab projectId={id!} />} />
