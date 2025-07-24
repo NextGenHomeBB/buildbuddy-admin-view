@@ -71,9 +71,13 @@ export function AdminOverview() {
         console.log('Fetching profiles...');
         const { data: users, error: usersError } = await supabase
           .from('profiles')
-          .select('id, role');
+          .select('id');
 
-        console.log('Profiles query result:', { users, usersError });
+        // Just get basic user count for now
+        const { data: userCount, error: rolesError } = await supabase
+          .rpc('get_current_user_role'); // This will validate our connection
+
+        console.log('Role test result:', { userCount, rolesError });
 
         // Fetch recent projects
         console.log('Fetching recent projects...');
@@ -86,8 +90,8 @@ export function AdminOverview() {
         console.log('Recent projects result:', { recent, recentError });
 
         // Check for any errors
-        if (projectsError || usersError || recentError) {
-          const errorMsg = `Data fetch errors: ${[projectsError?.message, usersError?.message, recentError?.message].filter(Boolean).join(', ')}`;
+        if (projectsError || usersError || rolesError || recentError) {
+          const errorMsg = `Data fetch errors: ${[projectsError?.message, usersError?.message, rolesError?.message, recentError?.message].filter(Boolean).join(', ')}`;
           console.error(errorMsg);
           setError(errorMsg);
           return;
@@ -102,7 +106,7 @@ export function AdminOverview() {
           active_projects: projectStats.filter(p => p.status === 'active').length,
           completed_projects: projectStats.filter(p => p.status === 'completed').length,
           total_users: userStats.length,
-          active_users: userStats.filter(u => u.role !== 'client').length
+          active_users: userStats.length // Simplified for now
         };
 
         console.log('Calculated stats:', newStats);

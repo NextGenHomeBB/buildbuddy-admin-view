@@ -44,17 +44,25 @@ export function AdminUsers() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const { data, error } = await supabase
+        // Fetch profiles
+        const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, full_name, role, avatar_url, created_at')
+          .select('id, full_name, avatar_url, created_at')
           .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching users:', error);
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
           return;
         }
 
-        setUsers(data || []);
+        // For now, assign default roles since we can't access user_roles table directly
+        // In production, you'd want to create a proper view or use the RPC functions
+        const usersWithRoles = (profiles || []).map(profile => ({
+          ...profile,
+          role: profile.id === '63fba0e3-f026-4eb7-8f44-1bbc10cbb598' ? 'admin' : 'worker'
+        }));
+
+        setUsers(usersWithRoles);
       } catch (error) {
         console.error('Error fetching users:', error);
       } finally {

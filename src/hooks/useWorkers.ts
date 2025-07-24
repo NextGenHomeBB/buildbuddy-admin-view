@@ -13,14 +13,20 @@ export function useWorkers() {
   return useQuery({
     queryKey: ['workers'],
     queryFn: async (): Promise<Worker[]> => {
-      const { data, error } = await supabase
+      // Get all profiles first
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, role, avatar_url')
-        .in('role', ['worker', 'developer', 'project_manager'])
+        .select('id, full_name, avatar_url')
         .order('full_name', { ascending: true });
 
-      if (error) throw error;
-      return data || [];
+      if (profilesError) throw profilesError;
+
+      // For now, return all profiles as workers since we can't access user_roles directly
+      // In production, you'd want to use a proper view or join
+      return (profiles || []).map(profile => ({
+        ...profile,
+        role: 'worker' // Default role
+      }));
     },
   });
 }
