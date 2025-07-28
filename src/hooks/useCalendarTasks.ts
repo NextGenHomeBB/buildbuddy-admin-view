@@ -80,14 +80,20 @@ export function useWorkerCalendarTasks(startDate?: string, endDate?: string) {
   return useQuery({
     queryKey: ['worker-calendar-tasks', user?.id, startDate, endDate],
     queryFn: async (): Promise<CalendarTask[]> => {
-      if (!user?.id) return [];
+      if (!user?.id) {
+        console.log('useWorkerCalendarTasks: No user ID found');
+        return [];
+      }
+      
+      console.log('useWorkerCalendarTasks: Fetching tasks for user:', user.id, 'dateRange:', startDate, 'to', endDate);
       
       let query = supabase
         .from('tasks')
         .select(`
           *,
           projects:project_id (name),
-          project_phases:phase_id (name)
+          project_phases:phase_id (name),
+          profiles:assignee (full_name)
         `)
         .eq('assignee', user.id)
         .eq('is_scheduled', true);
@@ -102,6 +108,8 @@ export function useWorkerCalendarTasks(startDate?: string, endDate?: string) {
         .order('start_date', { ascending: true });
 
       if (error) throw error;
+      
+      console.log('useWorkerCalendarTasks: Found tasks:', data?.length || 0, data);
       
       return (data || []).map(task => ({
         id: task.id,
@@ -119,7 +127,8 @@ export function useWorkerCalendarTasks(startDate?: string, endDate?: string) {
         created_at: task.created_at,
         updated_at: task.updated_at,
         project_name: task.projects?.name,
-        phase_name: task.project_phases?.name
+        phase_name: task.project_phases?.name,
+        assignee_name: task.profiles?.full_name
       }));
     },
     enabled: !!user?.id,
