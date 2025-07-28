@@ -41,8 +41,8 @@ export function useCalendarTasks(startDate?: string, endDate?: string) {
 
       if (startDate && endDate) {
         query = query
-          .gte('start_date', startDate)
-          .lte('end_date', endDate);
+          .lte('start_date', endDate)      // Task starts before month ends
+          .gte('end_date', startDate);     // Task ends after month starts
       }
 
       const { data, error } = await query
@@ -100,8 +100,8 @@ export function useWorkerCalendarTasks(startDate?: string, endDate?: string) {
 
       if (startDate && endDate) {
         query = query
-          .gte('start_date', startDate)
-          .lte('end_date', endDate);
+          .lte('start_date', endDate)      // Task starts before month ends
+          .gte('end_date', startDate);     // Task ends after month starts
       }
 
       const { data, error } = await query
