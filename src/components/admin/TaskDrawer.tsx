@@ -1,9 +1,10 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { X } from 'lucide-react';
+import { X, Calendar as CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,9 +24,17 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 import { useCreateTask, useUpdateTask, CreateTaskData, Task } from '@/hooks/useTasks';
 import { usePhases } from '@/hooks/usePhases';
 import { useWorkers } from '@/hooks/useWorkers';
+import { useUpdateTaskSchedule } from '@/hooks/useCalendarTasks';
 
 const taskFormSchema = z.object({
   title: z.string().min(3, 'Task title must be at least 3 characters'),
@@ -34,6 +43,9 @@ const taskFormSchema = z.object({
   priority: z.enum(['low', 'medium', 'high']),
   phase_id: z.string().optional(),
   assignee: z.string().optional(),
+  start_date: z.date().optional(),
+  end_date: z.date().optional(),
+  duration_days: z.number().min(1).optional(),
 });
 
 type TaskFormData = z.infer<typeof taskFormSchema>;
@@ -49,8 +61,12 @@ interface TaskDrawerProps {
 export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }: TaskDrawerProps) {
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
+  const updateTaskSchedule = useUpdateTaskSchedule();
   const { data: phases = [] } = usePhases(projectId);
   const { data: workers = [] } = useWorkers();
+  
+  const [startDateOpen, setStartDateOpen] = useState(false);
+  const [endDateOpen, setEndDateOpen] = useState(false);
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskFormSchema),
@@ -74,6 +90,9 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }:
         priority: editingTask.priority,
         phase_id: editingTask.phase_id || 'none',
         assignee: editingTask.assignee || 'none',
+        start_date: undefined,
+        end_date: undefined,
+        duration_days: undefined,
       });
     } else {
       form.reset({
@@ -83,6 +102,9 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }:
         priority: 'medium',
         phase_id: phaseId || 'none',
         assignee: 'none',
+        start_date: undefined,
+        end_date: undefined,
+        duration_days: undefined,
       });
     }
   }, [editingTask, phaseId, form]);
@@ -100,8 +122,19 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }:
           phase_id: data.phase_id === 'none' ? undefined : data.phase_id,
           assignee: data.assignee === 'none' ? undefined : data.assignee,
         });
+        
+        // Update calendar scheduling if dates are provided
+        if (data.start_date || data.end_date || data.duration_days) {
+          await updateTaskSchedule.mutateAsync({
+            taskId: editingTask.id,
+            start_date: data.start_date ? format(data.start_date, 'yyyy-MM-dd') : undefined,
+            end_date: data.end_date ? format(data.end_date, 'yyyy-MM-dd') : undefined,
+            duration_days: data.duration_days,
+            is_scheduled: !!(data.start_date || data.end_date),
+          });
+        }
       } else {
-        // Create new task
+        // Create new task with calendar scheduling
         const taskData: CreateTaskData = {
           title: data.title,
           description: data.description || undefined,
@@ -110,7 +143,19 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }:
           phase_id: data.phase_id === 'none' ? undefined : data.phase_id,
           assignee: data.assignee === 'none' ? undefined : data.assignee,
         };
-        await createTask.mutateAsync({ projectId, data: taskData });
+        
+        const newTask = await createTask.mutateAsync({ projectId, data: taskData });
+        
+        // Add calendar scheduling if dates are provided
+        if ((data.start_date || data.end_date || data.duration_days) && newTask) {
+          await updateTaskSchedule.mutateAsync({
+            taskId: newTask.id,
+            start_date: data.start_date ? format(data.start_date, 'yyyy-MM-dd') : undefined,
+            end_date: data.end_date ? format(data.end_date, 'yyyy-MM-dd') : undefined,
+            duration_days: data.duration_days,
+            is_scheduled: !!(data.start_date || data.end_date),
+          });
+        }
       }
       form.reset();
       onClose();
@@ -253,6 +298,81 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }:
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Date (Optional)</Label>
+                <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !form.watch('start_date') && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {form.watch('start_date') ? format(form.watch('start_date'), "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={form.watch('start_date')}
+                      onSelect={(date) => {
+                        form.setValue('start_date', date);
+                        setStartDateOpen(false);
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>End Date (Optional)</Label>
+                <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !form.watch('end_date') && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {form.watch('end_date') ? format(form.watch('end_date'), "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={form.watch('end_date')}
+                      onSelect={(date) => {
+                        form.setValue('end_date', date);
+                        setEndDateOpen(false);
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="duration">Duration (Days)</Label>
+              <Input
+                id="duration"
+                type="number"
+                min="1"
+                placeholder="Enter task duration in days"
+                value={form.watch('duration_days') || ''}
+                onChange={(e) => {
+                  const value = e.target.value ? parseInt(e.target.value) : undefined;
+                  form.setValue('duration_days', value);
+                }}
+              />
             </div>
 
             <div className="flex gap-2 pt-4">
