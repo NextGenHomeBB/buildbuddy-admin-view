@@ -23,6 +23,15 @@ export function AdminCalendar() {
     format(monthStart, 'yyyy-MM-dd'),
     format(monthEnd, 'yyyy-MM-dd')
   );
+
+  // Debug logging
+  console.log('AdminCalendar Debug:', {
+    monthStart: format(monthStart, 'yyyy-MM-dd'),
+    monthEnd: format(monthEnd, 'yyyy-MM-dd'),
+    tasksCount: tasks.length,
+    tasks: tasks,
+    isLoading
+  });
   
   const { data: projects = [] } = useProjects();
   const updateTaskSchedule = useUpdateTaskSchedule();
