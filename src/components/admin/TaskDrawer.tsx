@@ -39,7 +39,7 @@ import { useUpdateTaskSchedule } from '@/hooks/useCalendarTasks';
 const taskFormSchema = z.object({
   title: z.string().min(3, 'Task title must be at least 3 characters'),
   description: z.string().optional(),
-  status: z.enum(['todo', 'in_progress', 'done']),
+  status: z.enum(['todo', 'done']),
   priority: z.enum(['low', 'medium', 'high']),
   phase_id: z.string().optional(),
   assignee: z.string().optional(),
@@ -73,7 +73,7 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }:
     defaultValues: {
       title: editingTask?.title || '',
       description: editingTask?.description || '',
-      status: editingTask?.status || 'todo',
+      status: (editingTask?.status === 'in_progress' ? 'todo' : editingTask?.status) || 'todo',
       priority: editingTask?.priority || 'medium',
       phase_id: editingTask?.phase_id || phaseId || 'none',
       assignee: editingTask?.assignee || 'none',
@@ -86,7 +86,7 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }:
       form.reset({
         title: editingTask.title,
         description: editingTask.description || '',
-        status: editingTask.status,
+        status: (editingTask.status === 'in_progress' ? 'todo' : editingTask.status) as 'todo' | 'done',
         priority: editingTask.priority,
         phase_id: editingTask.phase_id || 'none',
         assignee: editingTask.assignee || 'none',
@@ -224,15 +224,14 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }:
                 <Select
                   value={form.watch('status')}
                   onValueChange={(value) => 
-                    form.setValue('status', value as CreateTaskData['status'])
+                    form.setValue('status', value as 'todo' | 'done')
                   }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="todo">Backlog</SelectItem>
-                    <SelectItem value="in_progress">Active</SelectItem>
+                    <SelectItem value="todo">To Do</SelectItem>
                     <SelectItem value="done">Done</SelectItem>
                   </SelectContent>
                 </Select>
