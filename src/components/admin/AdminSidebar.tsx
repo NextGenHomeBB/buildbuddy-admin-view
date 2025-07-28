@@ -7,7 +7,8 @@ import {
   Building2,
   ChevronLeft,
   Menu,
-  FileText
+  FileText,
+  Calendar
 } from 'lucide-react';
 import {
   Sidebar,
@@ -34,6 +35,11 @@ const navigationItems = [
     title: 'Projects',
     url: '/admin/projects',
     icon: FolderKanban
+  },
+  {
+    title: 'Calendar',
+    url: '/admin/calendar',
+    icon: Calendar
   },
   {
     title: 'Users',

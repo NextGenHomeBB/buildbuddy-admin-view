@@ -16,6 +16,8 @@ import { AdminOverview } from "./pages/admin/AdminOverview";
 import { AdminProjects } from "./pages/admin/AdminProjects";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { AdminSettings } from "./pages/admin/AdminSettings";
+import { AdminCalendar } from "./pages/admin/AdminCalendar";
+import { WorkerCalendar } from "./pages/worker/WorkerCalendar";
 import { ProjectDetailPage } from "./pages/admin/ProjectDetailPage";
 import { PhaseTemplateListPage } from "./pages/admin/PhaseTemplateListPage";
 import { PhaseTemplateDetailPage } from "./pages/admin/PhaseTemplateDetailPage";
@@ -49,6 +51,7 @@ function App() {
                 <Route index element={<AdminOverview />} />
                 <Route path="overview" element={<AdminOverview />} />
                 <Route path="projects" element={<AdminProjects />} />
+                <Route path="calendar" element={<AdminCalendar />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="settings" element={<AdminSettings />} />
@@ -64,6 +67,7 @@ function App() {
                 <Route index element={<WorkerDashboard />} />
                 <Route path="projects" element={<WorkerProjects />} />
                 <Route path="projects/:id" element={<WorkerProjectDetail />} />
+                <Route path="calendar" element={<WorkerCalendar />} />
               </Route>
               
               <Route path="*" element={<NotFound />} />

@@ -88,6 +88,64 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_task_assignments: {
+        Row: {
+          assigned_date: string
+          completed_at: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          project_id: string | null
+          status: string | null
+          task_template_id: string | null
+          worker_id: string
+        }
+        Insert: {
+          assigned_date: string
+          completed_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          project_id?: string | null
+          status?: string | null
+          task_template_id?: string | null
+          worker_id: string
+        }
+        Update: {
+          assigned_date?: string
+          completed_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          project_id?: string | null
+          status?: string | null
+          task_template_id?: string | null
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_task_assignments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_task_assignments_task_template_id_fkey"
+            columns: ["task_template_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_task_assignments_task_template_id_fkey"
+            columns: ["task_template_id"]
+            isOneToOne: false
+            referencedRelation: "worker.my_tasks_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       materials: {
         Row: {
           category: string | null
@@ -149,7 +207,7 @@ export type Database = {
           created_at: string | null
           full_name: string | null
           id: string
-          role: string | null
+          work_role: Json | null
         }
         Insert: {
           avatar_url?: string | null
@@ -157,7 +215,7 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id: string
-          role?: string | null
+          work_role?: Json | null
         }
         Update: {
           avatar_url?: string | null
@@ -165,7 +223,7 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
-          role?: string | null
+          work_role?: Json | null
         }
         Relationships: [
           {
@@ -211,13 +269,6 @@ export type Database = {
             foreignKeyName: "project_materials_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
-            referencedRelation: "project_summary_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_materials_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -228,6 +279,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           end_date: string | null
+          estimated_days: number | null
           id: string
           name: string | null
           progress: number | null
@@ -239,6 +291,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           end_date?: string | null
+          estimated_days?: number | null
           id?: string
           name?: string | null
           progress?: number | null
@@ -250,6 +303,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           end_date?: string | null
+          estimated_days?: number | null
           id?: string
           name?: string | null
           progress?: number | null
@@ -258,13 +312,6 @@ export type Database = {
           status?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "project_phases_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_summary_view"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "project_phases_project_id_fkey"
             columns: ["project_id"]
@@ -334,16 +381,216 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          attempt_count: number | null
+          created_at: string | null
+          id: string
+          operation: string
+          user_id: string
+          window_start: string | null
+        }
+        Insert: {
+          attempt_count?: number | null
+          created_at?: string | null
+          id?: string
+          operation: string
+          user_id: string
+          window_start?: string | null
+        }
+        Update: {
+          attempt_count?: number | null
+          created_at?: string | null
+          id?: string
+          operation?: string
+          user_id?: string
+          window_start?: string | null
+        }
+        Relationships: []
+      }
+      security_audit_log: {
+        Row: {
+          action: string
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          table_name: string
+          timestamp: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name: string
+          timestamp?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string
+          timestamp?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      task_completion_history: {
+        Row: {
+          completed_at: string
+          completion_date: string
+          created_at: string | null
+          daily_assignment_id: string | null
+          id: string
+          project_id: string | null
+          task_description: string | null
+          task_title: string
+          worker_id: string
+        }
+        Insert: {
+          completed_at: string
+          completion_date: string
+          created_at?: string | null
+          daily_assignment_id?: string | null
+          id?: string
+          project_id?: string | null
+          task_description?: string | null
+          task_title: string
+          worker_id: string
+        }
+        Update: {
+          completed_at?: string
+          completion_date?: string
+          created_at?: string | null
+          daily_assignment_id?: string | null
+          id?: string
+          project_id?: string | null
+          task_description?: string | null
+          task_title?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_completion_history_daily_assignment_id_fkey"
+            columns: ["daily_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "daily_task_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_completion_history_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_lists: {
+        Row: {
+          color_hex: string | null
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          color_hex?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          color_hex?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      task_relations: {
+        Row: {
+          created_at: string | null
+          dest_task: string | null
+          id: string
+          relation: string | null
+          src_task: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dest_task?: string | null
+          id?: string
+          relation?: string | null
+          src_task?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dest_task?: string | null
+          id?: string
+          relation?: string | null
+          src_task?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_relations_dest_task_fkey"
+            columns: ["dest_task"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_relations_dest_task_fkey"
+            columns: ["dest_task"]
+            isOneToOne: false
+            referencedRelation: "worker.my_tasks_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_relations_src_task_fkey"
+            columns: ["src_task"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_relations_src_task_fkey"
+            columns: ["src_task"]
+            isOneToOne: false
+            referencedRelation: "worker.my_tasks_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assignee: string | null
           completed_at: string | null
           created_at: string | null
           description: string | null
+          duration_days: number | null
+          end_date: string | null
           id: string
+          is_scheduled: boolean | null
+          list_id: string | null
           phase_id: string | null
+          position: number | null
           priority: string | null
           project_id: string | null
+          start_date: string | null
           status: string | null
           title: string
           updated_at: string | null
@@ -353,10 +600,16 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           description?: string | null
+          duration_days?: number | null
+          end_date?: string | null
           id?: string
+          is_scheduled?: boolean | null
+          list_id?: string | null
           phase_id?: string | null
+          position?: number | null
           priority?: string | null
           project_id?: string | null
+          start_date?: string | null
           status?: string | null
           title: string
           updated_at?: string | null
@@ -366,10 +619,16 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           description?: string | null
+          duration_days?: number | null
+          end_date?: string | null
           id?: string
+          is_scheduled?: boolean | null
+          list_id?: string | null
           phase_id?: string | null
+          position?: number | null
           priority?: string | null
           project_id?: string | null
+          start_date?: string | null
           status?: string | null
           title?: string
           updated_at?: string | null
@@ -383,24 +642,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tasks_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "task_lists"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tasks_phase_id_fkey"
             columns: ["phase_id"]
             isOneToOne: false
             referencedRelation: "project_phases"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_phase_id_fkey"
-            columns: ["phase_id"]
-            isOneToOne: false
-            referencedRelation: "project_phases_v"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_summary_view"
             referencedColumns: ["id"]
           },
           {
@@ -441,13 +693,6 @@ export type Database = {
           work_date?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "time_sheets_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_summary_view"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "time_sheets_project_id_fkey"
             columns: ["project_id"]
@@ -494,13 +739,6 @@ export type Database = {
             foreignKeyName: "user_project_role_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
-            referencedRelation: "project_summary_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_project_role_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -513,53 +751,32 @@ export type Database = {
           },
         ]
       }
-    }
-    Views: {
-      project_phases_v: {
+      user_roles: {
         Row: {
-          completed_tasks: number | null
-          created_at: string | null
-          description: string | null
-          end_date: string | null
-          id: string | null
-          name: string | null
-          progress: number | null
-          project_budget: number | null
-          project_id: string | null
-          project_name: string | null
-          start_date: string | null
-          status: string | null
-          total_tasks: number | null
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "project_phases_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_summary_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_phases_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      project_summary_view: {
-        Row: {
-          budget: number | null
-          company_name: string | null
-          id: string | null
-          name: string | null
-          progress: number | null
-          start_date: string | null
-          status: string | null
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
+    }
+    Views: {
       "worker.my_tasks_view": {
         Row: {
           assigned_worker_id: string | null
@@ -606,13 +823,43 @@ export type Database = {
       }
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          operation_name: string
+          max_attempts?: number
+          window_minutes?: number
+        }
+        Returns: boolean
+      }
+      complete_daily_task: {
+        Args: { assignment_id: string }
+        Returns: Json
+      }
       create_user_profile: {
         Args: { user_id: string; user_email?: string }
         Returns: Json
       }
+      expire_old_daily_tasks: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_my_tasks: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          title: string
+          description: string
+          status: string
+          priority: string
+          assigned_worker_id: string
+          due_date: string
+          created_at: string
+          updated_at: string
+        }[]
       }
       setup_demo_data: {
         Args: { manager_id: string; worker_id: string }
@@ -626,9 +873,16 @@ export type Database = {
         Args: { proj: string }
         Returns: undefined
       }
+      user_has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "manager" | "worker"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -755,6 +1009,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "manager", "worker"],
+    },
   },
 } as const

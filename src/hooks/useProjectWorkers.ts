@@ -10,7 +10,6 @@ export interface ProjectWorker {
   profiles: {
     full_name: string;
     avatar_url?: string;
-    role: string;
   };
 }
 
@@ -24,8 +23,7 @@ export function useProjectWorkers(projectId: string) {
           *,
           profiles:user_id (
             full_name,
-            avatar_url,
-            role
+            avatar_url
           )
         `)
         .eq('project_id', projectId);
@@ -58,8 +56,7 @@ export function useAssignWorkerToProject() {
           *,
           profiles:user_id (
             full_name,
-            avatar_url,
-            role
+            avatar_url
           )
         `)
         .single();
