@@ -96,15 +96,18 @@ export function AdminCalendar() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Calendar</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold">Calendar</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Schedule and manage tasks across projects
           </p>
         </div>
-        <Button onClick={() => setIsTaskDrawerOpen(true)}>
+        <Button 
+          onClick={() => setIsTaskDrawerOpen(true)}
+          className="w-full sm:w-auto"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Task
         </Button>

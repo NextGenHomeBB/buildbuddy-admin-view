@@ -59,28 +59,31 @@ export function CalendarView({
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-bold">
+      <CardHeader className="pb-2 sm:pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
+          <CardTitle className="text-xl sm:text-2xl font-bold text-center sm:text-left">
             {format(currentDate, 'MMMM yyyy')}
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <Button variant="outline" size="sm" onClick={handlePrevMonth}>
               <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only sm:not-sr-only sm:ml-1">Previous</span>
             </Button>
             <Button variant="outline" size="sm" onClick={handleNextMonth}>
+              <span className="sr-only sm:not-sr-only sm:mr-1">Next</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-2 sm:p-6">
         {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
           {/* Day headers */}
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
-              {day}
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+            <div key={day} className="p-1 sm:p-2 text-center text-xs sm:text-sm font-medium text-muted-foreground">
+              <span className="hidden sm:inline">{day}</span>
+              <span className="sm:hidden">{day.slice(0, 1)}</span>
             </div>
           ))}
           
@@ -94,7 +97,7 @@ export function CalendarView({
               <div
                 key={day.toISOString()}
                 className={cn(
-                  "min-h-[120px] p-1 border border-border cursor-pointer transition-colors",
+                  "min-h-[80px] sm:min-h-[120px] p-0.5 sm:p-1 border border-border cursor-pointer transition-colors",
                   !isCurrentMonth && "bg-muted/30 text-muted-foreground",
                   isToday && "bg-primary/10 border-primary",
                   "hover:bg-accent/50"
@@ -103,9 +106,9 @@ export function CalendarView({
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, day)}
               >
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                   <span className={cn(
-                    "text-sm font-medium",
+                    "text-xs sm:text-sm font-medium",
                     isToday && "text-primary font-bold"
                   )}>
                     {format(day, 'd')}
@@ -114,19 +117,19 @@ export function CalendarView({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100"
+                      className="h-4 w-4 sm:h-5 sm:w-5 p-0 opacity-0 group-hover:opacity-100"
                       onClick={(e) => {
                         e.stopPropagation();
                         onDateClick?.(day);
                       }}
                     >
-                      <Plus className="h-3 w-3" />
+                      <Plus className="h-2 w-2 sm:h-3 sm:w-3" />
                     </Button>
                   )}
                 </div>
                 
-                <div className="space-y-1">
-                  {dayTasks.slice(0, 3).map(task => (
+                <div className="space-y-0.5 sm:space-y-1">
+                  {dayTasks.slice(0, isAdmin ? 3 : 2).map(task => (
                     <TaskCalendarItem
                       key={task.id}
                       task={task}
@@ -134,9 +137,9 @@ export function CalendarView({
                       isDraggable={isAdmin}
                     />
                   ))}
-                  {dayTasks.length > 3 && (
-                    <div className="text-xs text-muted-foreground px-1">
-                      +{dayTasks.length - 3} more
+                  {dayTasks.length > (isAdmin ? 3 : 2) && (
+                    <div className="text-xs text-muted-foreground px-0.5 sm:px-1">
+                      +{dayTasks.length - (isAdmin ? 3 : 2)} more
                     </div>
                   )}
                 </div>
