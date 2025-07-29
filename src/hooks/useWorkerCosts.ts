@@ -369,3 +369,35 @@ export function useDeleteWorkerRate() {
     },
   });
 }
+
+// Hook to delete worker payment
+export function useDeleteWorkerPayment() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('worker_payments')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['worker-payments'] });
+      toast({
+        title: "Success",
+        description: "Payment record deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete payment record",
+        variant: "destructive",
+      });
+      console.error('Error deleting payment:', error);
+    },
+  });
+}

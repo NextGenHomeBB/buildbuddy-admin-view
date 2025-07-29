@@ -3,10 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Plus, Eye, DollarSign, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Eye, DollarSign, Calendar, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { WorkerPayment } from '@/hooks/useWorkerCosts';
 import { format } from 'date-fns';
-import { useUpdatePaymentStatus } from '@/hooks/useWorkerCosts';
+import { useUpdatePaymentStatus, useDeleteWorkerPayment } from '@/hooks/useWorkerCosts';
 import { PaymentDialog } from './PaymentDialog';
 import { PaymentDetailsModal } from './PaymentDetailsModal';
 
@@ -19,6 +19,13 @@ export function PaymentsTab({ payments, isLoading }: PaymentsTabProps) {
   const [selectedPayment, setSelectedPayment] = useState<WorkerPayment | null>(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const updateStatus = useUpdatePaymentStatus();
+  const deletePayment = useDeleteWorkerPayment();
+
+  const handleDelete = (payment: WorkerPayment) => {
+    if (confirm(`Are you sure you want to delete the payment record for ${payment.profiles?.full_name}?`)) {
+      deletePayment.mutate(payment.id);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -177,6 +184,14 @@ export function PaymentsTab({ payments, isLoading }: PaymentsTabProps) {
                   >
                     <Eye className="mr-1 h-3 w-3" />
                     Details
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDelete(payment)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
