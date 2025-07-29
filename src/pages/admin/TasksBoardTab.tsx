@@ -9,6 +9,7 @@ import { useTasks, Task } from '@/hooks/useTasks';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/utils/logger';
 
 interface TasksBoardTabProps {
   projectId: string;
@@ -35,7 +36,7 @@ export function TasksBoardTab({ projectId }: TasksBoardTabProps) {
           filter: `project_id=eq.${projectId}`
         },
         (payload) => {
-          console.log('Task change detected:', payload);
+          logger.info('Task change detected:', payload);
           
           // Invalidate and refetch tasks
           queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });

@@ -30,6 +30,7 @@ import {
 import { DataTable } from '@/components/admin/DataTable';
 import { supabase } from '@/integrations/supabase/client';
 import { useBulkPhaseUpdate } from '@/hooks/useBulkPhaseUpdate';
+import { logger } from '@/utils/logger';
 
 const getPhaseStatusIcon = (status: string) => {
   switch (status) {
@@ -74,7 +75,7 @@ export function ProjectDetail() {
       if (!id) return;
 
       try {
-        console.log('Fetching project with ID:', id);
+        logger.info('Fetching project with ID:', id);
         
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
@@ -88,7 +89,7 @@ export function ProjectDetail() {
           return;
         }
 
-        console.log('Project data:', projectData);
+        logger.info('Project data:', projectData);
         setProject(projectData);
 
         // Fetch project phases

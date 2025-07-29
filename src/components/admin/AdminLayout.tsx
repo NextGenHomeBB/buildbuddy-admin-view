@@ -10,6 +10,8 @@ import { useContextMenu } from '@/hooks/useContextMenu';
 import { MobileBottomNav } from '@/components/ui/mobile-bottom-nav';
 import { ContextMenuOverlay } from '@/components/ui/context-menu-overlay';
 import { KeyboardShortcutsHelp } from '@/components/ui/keyboard-shortcuts-help';
+import { GlobalSearch } from '@/components/admin/GlobalSearch';
+import { NewProjectDialog } from '@/components/admin/NewProjectDialog';
 import { Home, Users, FolderOpen, Calendar, DollarSign, Settings, BarChart3, Plus, Search, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +21,8 @@ export function AdminLayout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   
   // Keyboard shortcuts
   useAdminKeyboardShortcuts();
@@ -31,10 +35,10 @@ export function AdminLayout() {
     const handleCustomEvents = (event: Event) => {
       switch (event.type) {
         case 'admin:new-project':
-          // TODO: Implement new project creation
+          setShowNewProjectDialog(true);
           break;
         case 'admin:search':
-          // TODO: Implement search functionality
+          setShowGlobalSearch(true);
           break;
         case 'admin:show-shortcuts':
           setShowShortcutsHelp(true);
@@ -64,17 +68,13 @@ export function AdminLayout() {
   const contextMenuItems = [
     { 
       label: 'New Project', 
-      action: () => {
-        // TODO: Implement new project creation
-      }, 
+      action: () => setShowNewProjectDialog(true), 
       icon: Plus, 
       shortcut: 'Ctrl+N' 
     },
     { 
       label: 'Search', 
-      action: () => {
-        // TODO: Implement search functionality
-      }, 
+      action: () => setShowGlobalSearch(true), 
       icon: Search, 
       shortcut: 'Ctrl+K' 
     },
@@ -130,6 +130,18 @@ export function AdminLayout() {
         <KeyboardShortcutsHelp
           isOpen={showShortcutsHelp}
           onClose={() => setShowShortcutsHelp(false)}
+        />
+        
+        {/* Global Search */}
+        <GlobalSearch
+          isOpen={showGlobalSearch}
+          onClose={() => setShowGlobalSearch(false)}
+        />
+        
+        {/* New Project Dialog */}
+        <NewProjectDialog
+          isOpen={showNewProjectDialog}
+          onClose={() => setShowNewProjectDialog(false)}
         />
       </div>
     </SidebarProvider>

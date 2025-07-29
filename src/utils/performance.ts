@@ -1,4 +1,5 @@
 // Performance monitoring utilities
+import { logger } from './logger';
 
 export function measurePerformance<T>(name: string, fn: () => T): T {
   const start = performance.now();
@@ -6,7 +7,7 @@ export function measurePerformance<T>(name: string, fn: () => T): T {
   const end = performance.now();
   
   if (import.meta.env.DEV) {
-    console.log(`Performance: ${name} took ${end - start} milliseconds`);
+    logger.debug(`Performance: ${name} took ${end - start} milliseconds`);
   }
   
   return result;
@@ -69,7 +70,7 @@ export function initPerformanceMonitoring() {
     const observer = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
         if (entry.entryType === 'measure' && import.meta.env.DEV) {
-          console.log(`Performance measure: ${entry.name} - ${entry.duration}ms`);
+          logger.debug(`Performance measure: ${entry.name} - ${entry.duration}ms`);
         }
       }
     });

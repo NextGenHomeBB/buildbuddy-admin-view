@@ -10,12 +10,13 @@ import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { SkeletonCard } from '@/components/ui/skeleton-card';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { FolderOpen, CheckSquare, Clock, AlertCircle } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 export function WorkerDashboard() {
   const { user } = useAuth();
   const { triggerHaptic } = useHapticFeedback();
   
-  console.log('WorkerDashboard: Current user:', { 
+  logger.info('WorkerDashboard: Current user:', { 
     id: user?.id, 
     email: user?.email, 
     role: user?.role 
@@ -27,7 +28,7 @@ export function WorkerDashboard() {
   // Get tasks assigned to the current user
   const { data: myTasks = [], isLoading: tasksLoading, refetch: refetchTasks } = useWorkerTasks();
   
-  console.log('WorkerDashboard: Tasks data:', { 
+  logger.info('WorkerDashboard: Tasks data:', { 
     tasksCount: myTasks.length, 
     tasks: myTasks 
   });
