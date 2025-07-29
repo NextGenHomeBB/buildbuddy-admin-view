@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { logger } from '@/utils/logger';
 
 interface RequireWorkerProps {
   children: React.ReactNode;
@@ -18,7 +19,7 @@ export const RequireWorker = ({ children }: RequireWorkerProps) => {
   const navigate = useNavigate();
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
-  console.log('RequireWorker - State:', { 
+  logger.debug('RequireWorker - State', { 
     loading, 
     hasSession: !!session, 
     hasUser: !!user, 
@@ -28,25 +29,25 @@ export const RequireWorker = ({ children }: RequireWorkerProps) => {
 
   useEffect(() => {
     if (!loading && hasCheckedAuth) {
-      console.log('RequireWorker - Checking access:', { 
+      logger.debug('RequireWorker - Checking access', { 
         hasSession: !!session, 
         userRole: user?.role 
       });
 
       if (!session) {
-        console.log('RequireWorker - No session, redirecting to auth');
+        logger.debug('RequireWorker - No session, redirecting to auth');
         navigate('/auth');
         return;
       }
 
       if (session && user && user.role === 'admin') {
-        console.log('RequireWorker - Admin user, redirecting to admin dashboard');
+        logger.debug('RequireWorker - Admin user, redirecting to admin dashboard');
         navigate('/admin');
         return;
       }
 
       if (session && user && !['worker', 'developer', 'project_manager'].includes(user.role)) {
-        console.log('RequireWorker - User not a worker, redirecting to home');
+        logger.debug('RequireWorker - User not a worker, redirecting to home');
         navigate('/');
         return;
       }
@@ -60,20 +61,15 @@ export const RequireWorker = ({ children }: RequireWorkerProps) => {
   }, [loading]);
 
   if (loading || !hasCheckedAuth) {
-    console.log('RequireWorker - Showing loader');
     return <Loader />;
   }
 
   if (!session) {
-    console.log('RequireWorker - No session after loading, showing loader');
     return <Loader />;
   }
 
   if (!user || !['worker', 'developer', 'project_manager'].includes(user.role)) {
-    console.log('RequireWorker - User not worker after loading, showing loader');
     return <Loader />;
   }
-
-  console.log('RequireWorker - Rendering worker content');
   return <>{children}</>;
 };

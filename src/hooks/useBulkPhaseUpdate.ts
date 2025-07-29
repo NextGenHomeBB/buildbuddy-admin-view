@@ -28,7 +28,7 @@ export function useBulkPhaseUpdate() {
       });
 
       if (error) {
-        console.error('Edge function error:', error);
+        // Error handling is done by react-query
         throw error;
       }
 

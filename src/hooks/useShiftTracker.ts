@@ -102,7 +102,7 @@ export function useShiftTracker() {
       toast.success('Shift recorded successfully');
     },
     onError: (error) => {
-      console.error('Error creating timesheet:', error);
+      // Error handling is done by react-query
       toast.error(`Failed to record shift: ${error.message}`);
     },
   });

@@ -13,31 +13,25 @@ export function useWorkers() {
   return useQuery({
     queryKey: ['workers'],
     queryFn: async (): Promise<Worker[]> => {
-      try {
-        // Get all profiles that have worker or admin roles
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select(`
-            id, 
-            full_name, 
-            avatar_url
-          `)
-          .order('full_name', { ascending: true });
+      // Get all profiles that have worker or admin roles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select(`
+          id, 
+          full_name, 
+          avatar_url
+        `)
+        .order('full_name', { ascending: true });
 
-        if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
-          throw profilesError;
-        }
-
-        return (profiles || []).map(profile => ({
-          ...profile,
-          role: 'worker', // Default role
-          full_name: profile.full_name || 'Unknown User'
-        }));
-      } catch (error) {
-        console.error('Error in useWorkers:', error);
-        return [];
+      if (profilesError) {
+        throw profilesError;
       }
+
+      return (profiles || []).map(profile => ({
+        ...profile,
+        role: 'worker', // Default role
+        full_name: profile.full_name || 'Unknown User'
+      }));
     },
   });
 }

@@ -29,7 +29,6 @@ export interface UpdateProjectData extends CreateProjectData {
 }
 
 export function useProjects() {
-  console.log('useProjects hook called');
   return useQuery({
     queryKey: ['projects'],
     queryFn: async (): Promise<Project[]> => {

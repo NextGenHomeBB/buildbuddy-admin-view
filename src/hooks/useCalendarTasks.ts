@@ -81,11 +81,8 @@ export function useWorkerCalendarTasks(startDate?: string, endDate?: string) {
     queryKey: ['worker-calendar-tasks', user?.id, startDate, endDate],
     queryFn: async (): Promise<CalendarTask[]> => {
       if (!user?.id) {
-        console.log('useWorkerCalendarTasks: No user ID found');
         return [];
       }
-      
-      console.log('useWorkerCalendarTasks: Fetching tasks for user:', user.id, 'dateRange:', startDate, 'to', endDate);
       
       let query = supabase
         .from('tasks')
@@ -109,7 +106,7 @@ export function useWorkerCalendarTasks(startDate?: string, endDate?: string) {
 
       if (error) throw error;
       
-      console.log('useWorkerCalendarTasks: Found tasks:', data?.length || 0, data);
+      
       
       return (data || []).map(task => ({
         id: task.id,
@@ -178,7 +175,7 @@ export function useUpdateTaskSchedule() {
       });
     },
     onError: (error) => {
-      console.error('Error updating task schedule:', error);
+      // Error handling is done by react-query
       toast({
         title: "Error updating schedule",
         description: "Failed to update the task schedule. Please try again.",

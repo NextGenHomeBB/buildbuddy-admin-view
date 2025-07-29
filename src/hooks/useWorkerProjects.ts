@@ -22,11 +22,8 @@ export function useWorkerProjects() {
     queryKey: ['worker-projects', user?.id],
     queryFn: async (): Promise<WorkerProject[]> => {
       if (!user?.id) {
-        console.log('useWorkerProjects: No user ID found, returning empty array');
         return [];
       }
-      
-      console.log('useWorkerProjects: Fetching projects for user:', user.id);
       
       // Directly query projects where the user is in assigned_workers array
       const { data: projects, error: projectsError } = await supabase
@@ -35,14 +32,11 @@ export function useWorkerProjects() {
         .contains('assigned_workers', [user.id]);
 
       if (projectsError) {
-        console.error('Error fetching worker projects:', projectsError);
         throw projectsError;
       }
 
-      console.log('Projects found directly:', projects);
-
       // Map to the expected format with user_role as 'worker'
-      const result = projects?.map(project => ({
+      return projects?.map(project => ({
         id: project.id,
         name: project.name,
         description: project.description || '',
@@ -53,9 +47,6 @@ export function useWorkerProjects() {
         budget: project.budget,
         user_role: 'worker' as const
       })) || [];
-
-      console.log('Final worker projects result:', result);
-      return result;
     },
     enabled: !!user?.id,
   });

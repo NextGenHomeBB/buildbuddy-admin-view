@@ -191,7 +191,7 @@ export function useUpdateTask() {
         queryClient.invalidateQueries({ queryKey: ['projects', data.project_id] });
         queryClient.invalidateQueries({ queryKey: ['phases', data.project_id] });
       } catch (error) {
-        console.error('Failed to update progress:', error);
+        // Error handling is done by react-query
       }
     },
     onError: (error, variables, context) => {

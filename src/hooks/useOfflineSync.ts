@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { logger } from '@/utils/logger';
 
 export interface OfflineAction {
   id: string;
@@ -43,7 +44,7 @@ export function useOfflineSync() {
         setPendingActions(JSON.parse(stored));
       }
     } catch (error) {
-      console.error('Failed to load offline actions:', error);
+      logger.error('Failed to load offline actions', error);
     }
   };
 
@@ -52,7 +53,7 @@ export function useOfflineSync() {
       localStorage.setItem('offlineActions', JSON.stringify(actions));
       setPendingActions(actions);
     } catch (error) {
-      console.error('Failed to save offline actions:', error);
+      logger.error('Failed to save offline actions', error);
     }
   };
 
@@ -72,16 +73,16 @@ export function useOfflineSync() {
 
     try {
       // In a real implementation, you would sync these with your backend
-      console.log('Syncing offline actions:', pendingActions);
+      logger.debug('Syncing offline actions', { count: pendingActions.length });
       
       // For now, just clear the actions and invalidate queries
       savePendingActions([]);
       queryClient.invalidateQueries();
       
       // Show success message
-      console.log('Offline actions synced successfully');
+      logger.debug('Offline actions synced successfully');
     } catch (error) {
-      console.error('Failed to sync offline actions:', error);
+      logger.error('Failed to sync offline actions', error);
     }
   };
 

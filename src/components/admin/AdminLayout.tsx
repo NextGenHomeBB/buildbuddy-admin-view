@@ -31,10 +31,10 @@ export function AdminLayout() {
     const handleCustomEvents = (event: Event) => {
       switch (event.type) {
         case 'admin:new-project':
-          console.log('New project shortcut triggered');
+          // TODO: Implement new project creation
           break;
         case 'admin:search':
-          console.log('Search shortcut triggered');
+          // TODO: Implement search functionality
           break;
         case 'admin:show-shortcuts':
           setShowShortcutsHelp(true);
@@ -64,13 +64,17 @@ export function AdminLayout() {
   const contextMenuItems = [
     { 
       label: 'New Project', 
-      action: () => console.log('New project'), 
+      action: () => {
+        // TODO: Implement new project creation
+      }, 
       icon: Plus, 
       shortcut: 'Ctrl+N' 
     },
     { 
       label: 'Search', 
-      action: () => console.log('Search'), 
+      action: () => {
+        // TODO: Implement search functionality
+      }, 
       icon: Search, 
       shortcut: 'Ctrl+K' 
     },

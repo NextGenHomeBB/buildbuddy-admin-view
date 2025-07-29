@@ -5,7 +5,9 @@ export function measurePerformance<T>(name: string, fn: () => T): T {
   const result = fn();
   const end = performance.now();
   
-  console.log(`Performance: ${name} took ${end - start} milliseconds`);
+  if (import.meta.env.DEV) {
+    console.log(`Performance: ${name} took ${end - start} milliseconds`);
+  }
   
   return result;
 }
@@ -66,7 +68,7 @@ export function initPerformanceMonitoring() {
   if ('PerformanceObserver' in window) {
     const observer = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        if (entry.entryType === 'measure') {
+        if (entry.entryType === 'measure' && import.meta.env.DEV) {
           console.log(`Performance measure: ${entry.name} - ${entry.duration}ms`);
         }
       }

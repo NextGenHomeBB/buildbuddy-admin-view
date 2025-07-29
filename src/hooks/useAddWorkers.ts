@@ -37,7 +37,7 @@ export function useAddWorkers() {
       });
     },
     onError: (error: any) => {
-      console.error('Failed to assign workers:', error);
+      // Error handling is done by react-query
       toast({
         title: "Error",
         description: error.message || "Failed to assign workers. Please try again.",

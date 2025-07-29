@@ -23,9 +23,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // In production, you would send this to an error reporting service
-    if (import.meta.env.DEV) {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
-    }
+    import('@/utils/logger').then(({ logger }) => {
+      logger.error('ErrorBoundary caught an error', { error: error.message, stack: error.stack, errorInfo });
+    });
   }
 
   private handleReset = () => {

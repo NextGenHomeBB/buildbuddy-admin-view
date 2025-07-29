@@ -3,6 +3,9 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { initPerformanceMonitoring } from './utils/performance';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { PerformanceMonitor } from './components/PerformanceMonitor';
+import { logger } from './utils/logger';
 
 // Initialize performance monitoring
 initPerformanceMonitoring();
@@ -12,16 +15,20 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
-        console.log('SW registered: ', registration);
+        logger.debug('Service worker registered', { scope: registration.scope });
       })
       .catch((registrationError) => {
-        console.log('SW registration failed: ', registrationError);
+        logger.error('Service worker registration failed', registrationError);
       });
   });
 }
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <PerformanceMonitor>
+        <App />
+      </PerformanceMonitor>
+    </ErrorBoundary>
   </StrictMode>
 );
