@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -101,7 +101,7 @@ export function ChangeUserRoleDialog({
   });
 
   // Reset form when user changes
-  useState(() => {
+  useEffect(() => {
     if (user) {
       form.reset({
         newRole: (user.role as 'admin' | 'manager' | 'worker') || 'worker',

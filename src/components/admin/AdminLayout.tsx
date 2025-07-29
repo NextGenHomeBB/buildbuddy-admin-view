@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminHeader } from './AdminHeader';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -12,13 +12,14 @@ import { ContextMenuOverlay } from '@/components/ui/context-menu-overlay';
 import { KeyboardShortcutsHelp } from '@/components/ui/keyboard-shortcuts-help';
 import { GlobalSearch } from '@/components/admin/GlobalSearch';
 import { NewProjectDialog } from '@/components/admin/NewProjectDialog';
-import { Home, Users, FolderOpen, Calendar, DollarSign, Settings, BarChart3, Plus, Search, HelpCircle } from 'lucide-react';
+import { Home, Users, FolderOpen, Calendar, DollarSign, Settings, BarChart3, Plus, Search, HelpCircle, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function AdminLayout() {
   const isMobile = useIsMobile();
   const deviceType = useDeviceType();
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);

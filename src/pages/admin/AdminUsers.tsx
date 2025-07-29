@@ -20,6 +20,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
+import { UserInviteDialog } from '@/components/admin/UserInviteDialog';
+import { ChangeUserRoleDialog } from '@/components/admin/ChangeUserRoleDialog';
+import { EditUserDialog } from '@/components/admin/EditUserDialog';
 
 // Define user interface to match database schema
 interface User {
@@ -28,6 +31,8 @@ interface User {
   role: string;
   avatar_url?: string;
   created_at: string;
+  bio?: string;
+  work_role?: string;
 }
 
 const getRoleBadgeVariant = (role: string) => {
@@ -47,6 +52,10 @@ export function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const isMobile = useIsMobile();
 
   const fetchUsers = async (isRefresh = false) => {
@@ -121,19 +130,31 @@ export function AdminUsers() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2">
-                <Mail className="h-4 w-4" />
-                Send Message
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2">
+              <DropdownMenuItem 
+                className="gap-2"
+                onClick={() => {
+                  setSelectedUser(user);
+                  setShowEditDialog(true);
+                }}
+              >
                 <Edit className="h-4 w-4" />
                 Edit User
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2">
+              <DropdownMenuItem 
+                className="gap-2"
+                onClick={() => {
+                  setSelectedUser(user);
+                  setShowRoleDialog(true);
+                }}
+              >
                 <Shield className="h-4 w-4" />
                 Change Role
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuItem className="gap-2">
+                <Mail className="h-4 w-4" />
+                Send Message
+              </DropdownMenuItem>
               <DropdownMenuItem className="gap-2 text-destructive">
                 <Trash2 className="h-4 w-4" />
                 Remove User
@@ -207,19 +228,31 @@ export function AdminUsers() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2">
-                <Mail className="h-4 w-4" />
-                Send Message
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2">
+              <DropdownMenuItem 
+                className="gap-2"
+                onClick={() => {
+                  setSelectedUser(user);
+                  setShowEditDialog(true);
+                }}
+              >
                 <Edit className="h-4 w-4" />
                 Edit User
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2">
+              <DropdownMenuItem 
+                className="gap-2"
+                onClick={() => {
+                  setSelectedUser(user);
+                  setShowRoleDialog(true);
+                }}
+              >
                 <Shield className="h-4 w-4" />
                 Change Role
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuItem className="gap-2">
+                <Mail className="h-4 w-4" />
+                Send Message
+              </DropdownMenuItem>
               <DropdownMenuItem className="gap-2 text-destructive">
                 <Trash2 className="h-4 w-4" />
                 Remove User
@@ -241,7 +274,10 @@ export function AdminUsers() {
             Manage team members and user permissions.
           </p>
         </div>
-        <Button className="admin-button-primary gap-2">
+        <Button 
+          className="admin-button-primary gap-2"
+          onClick={() => setShowInviteDialog(true)}
+        >
           <Plus className="h-4 w-4" />
           Invite User
         </Button>
@@ -281,7 +317,7 @@ export function AdminUsers() {
           description="There are no users in your organization yet. Invite team members to get started."
           action={{
             label: "Invite User",
-            onClick: () => logger.debug("Invite user clicked")
+            onClick: () => setShowInviteDialog(true)
           }}
         />
       ) : (
@@ -296,6 +332,38 @@ export function AdminUsers() {
           />
         </PullToRefresh>
       )}
+
+      {/* Dialogs */}
+      <UserInviteDialog
+        open={showInviteDialog}
+        onOpenChange={setShowInviteDialog}
+        onUserInvited={() => {
+          fetchUsers();
+          setShowInviteDialog(false);
+        }}
+      />
+
+      <ChangeUserRoleDialog
+        open={showRoleDialog}
+        onOpenChange={setShowRoleDialog}
+        user={selectedUser}
+        onRoleChanged={() => {
+          fetchUsers();
+          setShowRoleDialog(false);
+          setSelectedUser(null);
+        }}
+      />
+
+      <EditUserDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        user={selectedUser}
+        onUserUpdated={() => {
+          fetchUsers();
+          setShowEditDialog(false);
+          setSelectedUser(null);
+        }}
+      />
     </div>
   );
 }
