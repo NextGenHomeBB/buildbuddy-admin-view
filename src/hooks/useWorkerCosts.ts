@@ -329,3 +329,35 @@ export function useUpdateExpenseStatus() {
     },
   });
 }
+
+// Hook to delete worker rate
+export function useDeleteWorkerRate() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('worker_rates')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['worker-rates'] });
+      toast({
+        title: "Success",
+        description: "Worker rate deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete worker rate",
+        variant: "destructive",
+      });
+      console.error('Error deleting worker rate:', error);
+    },
+  });
+}

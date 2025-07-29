@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Plus, Edit, DollarSign } from 'lucide-react';
-import { WorkerRate } from '@/hooks/useWorkerCosts';
+import { Plus, Edit, DollarSign, Trash2 } from 'lucide-react';
+import { WorkerRate, useDeleteWorkerRate } from '@/hooks/useWorkerCosts';
 import { format } from 'date-fns';
 import { WorkerRateDialog } from './WorkerRateDialog';
 
@@ -16,6 +16,7 @@ interface WorkerRatesTabProps {
 export function WorkerRatesTab({ rates, isLoading }: WorkerRatesTabProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRate, setSelectedRate] = useState<WorkerRate | null>(null);
+  const deleteRate = useDeleteWorkerRate();
 
   const handleEdit = (rate: WorkerRate) => {
     setSelectedRate(rate);
@@ -25,6 +26,12 @@ export function WorkerRatesTab({ rates, isLoading }: WorkerRatesTabProps) {
   const handleAdd = () => {
     setSelectedRate(null);
     setIsDialogOpen(true);
+  };
+
+  const handleDelete = (rate: WorkerRate) => {
+    if (confirm(`Are you sure you want to delete the rate for ${rate.profiles?.full_name}?`)) {
+      deleteRate.mutate(rate.id);
+    }
   };
 
   const getPaymentTypeColor = (type: string) => {
@@ -106,13 +113,23 @@ export function WorkerRatesTab({ rates, isLoading }: WorkerRatesTabProps) {
                     }
                   </span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleEdit(rate)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
+                <div className="flex space-x-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(rate)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(rate)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               {rate.end_date && (
                 <div className="mt-2 text-xs text-amber-600">
