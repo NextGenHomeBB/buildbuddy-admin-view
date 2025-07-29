@@ -24,6 +24,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useCreateProject, useUpdateProject, Project } from '@/hooks/useProjects';
 import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { logger } from '@/utils/logger';
 
 const projectSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
@@ -40,7 +41,7 @@ interface ProjectDrawerProps {
 }
 
 export function ProjectDrawer({ isOpen, onClose, project }: ProjectDrawerProps) {
-  console.log('ProjectDrawer component rendering, props:', { isOpen, onClose: !!onClose, project: !!project });
+  logger.debug('ProjectDrawer component rendering', { isOpen, hasOnClose: !!onClose, hasProject: !!project });
   const isMobile = useIsMobile();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();

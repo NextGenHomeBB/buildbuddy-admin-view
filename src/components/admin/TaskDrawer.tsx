@@ -36,6 +36,7 @@ import { useCreateTask, useUpdateTask, CreateTaskData, Task } from '@/hooks/useT
 import { usePhases } from '@/hooks/usePhases';
 import { useWorkers } from '@/hooks/useWorkers';
 import { useUpdateTaskSchedule } from '@/hooks/useCalendarTasks';
+import { logger } from '@/utils/logger';
 
 const taskFormSchema = z.object({
   title: z.string().min(3, 'Task title must be at least 3 characters'),
@@ -162,7 +163,7 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }:
       form.reset();
       onClose();
     } catch (error) {
-      console.error('Failed to save task:', error);
+      logger.error('Failed to save task:', error);
     }
   };
 

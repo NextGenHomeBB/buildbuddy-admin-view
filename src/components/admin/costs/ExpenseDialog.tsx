@@ -9,6 +9,7 @@ import { useWorkers } from '@/hooks/useWorkers';
 import { useProjects } from '@/hooks/useProjects';
 import { useCreateWorkerExpense } from '@/hooks/useWorkerCosts';
 import { Upload, FileText } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface ExpenseDialogProps {
   open: boolean;
@@ -78,7 +79,7 @@ export function ExpenseDialog({ open, onOpenChange }: ExpenseDialogProps) {
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error('Upload error:', uploadError);
+        logger.error('Upload error:', uploadError);
         return null;
       }
 
@@ -88,7 +89,7 @@ export function ExpenseDialog({ open, onOpenChange }: ExpenseDialogProps) {
 
       return data.publicUrl;
     } catch (error) {
-      console.error('Error uploading file:', error);
+      logger.error('Error uploading file:', error);
       return null;
     } finally {
       setUploading(false);

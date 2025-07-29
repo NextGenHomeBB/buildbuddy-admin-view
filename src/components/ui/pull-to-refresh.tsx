@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, ReactNode } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { logger } from '@/utils/logger';
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void> | void;
@@ -59,7 +60,7 @@ export function PullToRefresh({
       try {
         await onRefresh();
       } catch (error) {
-        console.error('Refresh failed:', error);
+        logger.error('Refresh failed:', error);
       } finally {
         setIsRefreshing(false);
       }

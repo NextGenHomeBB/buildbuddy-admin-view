@@ -1,5 +1,6 @@
 /// <reference types="cypress" />
 import '@testing-library/cypress/add-commands';
+import './accessibility';
 
 // Custom command for admin login using Supabase REST API
 Cypress.Commands.add('loginAsAdmin', () => {
@@ -41,11 +42,36 @@ Cypress.Commands.add('loginAsAdminUI', () => {
   cy.url().should('not.include', '/auth');
 });
 
+// Add worker login command
+Cypress.Commands.add('loginAsWorker', () => {
+  const workerEmail = Cypress.env('WORKER_EMAIL') || 'worker@buildbuddy.com';
+  const workerPassword = Cypress.env('WORKER_PASSWORD') || 'worker123';
+  
+  cy.request({
+    method: 'POST',
+    url: 'https://ppsjrqfgsznnlojpyjvu.supabase.co/auth/v1/token?grant_type=password',
+    body: {
+      email: workerEmail,
+      password: workerPassword
+    },
+    headers: {
+      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwc2pycWZnc3pubmxvanB5anZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwOTY3NTgsImV4cCI6MjA2ODY3Mjc1OH0.dO08bUqr9XqMk3fVkDK1OxpnzY_S5pPzUPAicnpTURE',
+      'Content-Type': 'application/json'
+    }
+  }).then((response) => {
+    window.localStorage.setItem(
+      `supabase.auth.token.ppsjrqfgsznnlojpyjvu`,
+      JSON.stringify(response.body)
+    );
+  });
+});
+
 declare global {
   namespace Cypress {
     interface Chainable {
       loginAsAdmin(): Chainable<void>
       loginAsAdminUI(): Chainable<void>
+      loginAsWorker(): Chainable<void>
     }
   }
 }

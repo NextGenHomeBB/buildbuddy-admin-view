@@ -4,25 +4,25 @@ const isDevelopment = import.meta.env.DEV;
 export const logger = {
   log: (message: string, data?: any) => {
     if (isDevelopment) {
-      console.log(message, data);
+      console.log(`[LOG]`, message, data);
+    }
+  },
+  info: (message: string, data?: any) => {
+    if (isDevelopment) {
+      console.info(`[INFO]`, message, data);
     }
   },
   error: (message: string, error?: any) => {
-    if (isDevelopment) {
-      console.error(message, error);
-    } else {
-      // In production, you might want to send errors to a logging service
-      // console.error(message);
-    }
+    console.error(`[ERROR]`, message, error);
   },
   warn: (message: string, data?: any) => {
     if (isDevelopment) {
-      console.warn(message, data);
+      console.warn(`[WARN]`, message, data);
     }
   },
   debug: (message: string, data?: any) => {
     if (isDevelopment) {
-      console.debug(message, data);
+      console.log(`[DEBUG]`, message, data);
     }
   }
 };

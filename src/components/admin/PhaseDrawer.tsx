@@ -32,6 +32,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useCreatePhase, useUpdatePhase, CreatePhaseData, ProjectPhase } from '@/hooks/usePhases';
+import { logger } from '@/utils/logger';
 
 const phaseFormSchema = z.object({
   name: z.string().min(3, 'Phase name must be at least 3 characters'),
@@ -118,7 +119,7 @@ export function PhaseDrawer({ isOpen, onClose, projectId, editingPhase }: PhaseD
       form.reset();
       onClose();
     } catch (error) {
-      console.error(`Failed to ${isEditing ? 'update' : 'create'} phase:`, error);
+      logger.error(`Failed to ${isEditing ? 'update' : 'create'} phase:`, error);
     }
   };
 
