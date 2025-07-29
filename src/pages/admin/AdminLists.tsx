@@ -34,17 +34,15 @@ export function AdminLists() {
     task_count: workerTasks && selectedWorkerId === worker.id ? workerTasks.length : 0
   }));
 
-  // Separate tasks based on context - simplified for now
+  // Separate tasks based on context - prioritize list membership
   const adminAssignedTasks = workerTasks?.filter(task => 
-    // Task is in a project phase (created by admin/manager in project management)
-    task.phase_id ||
-    // Task has project_id but no list (project-related task)
-    (task.project_id && !task.task_list)
+    // Admin tasks: have phase_id OR have project_id but NO list_id
+    (task.phase_id || task.project_id) && !task.list_id
   ) || [];
   
   const workerCreatedTasks = workerTasks?.filter(task => 
-    // Task is in a task list (worker-created lists) OR has no project/phase context
-    task.task_list || (!task.phase_id && !task.project_id)
+    // Worker tasks: have list_id OR have neither phase_id nor project_id
+    task.list_id || (!task.phase_id && !task.project_id)
   ) || [];
 
   // Group tasks by status
