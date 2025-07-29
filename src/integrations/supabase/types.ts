@@ -775,6 +775,164 @@ export type Database = {
         }
         Relationships: []
       }
+      worker_expenses: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          description: string
+          expense_date: string
+          expense_type: string
+          id: string
+          project_id: string | null
+          receipt_url: string | null
+          status: string
+          updated_at: string
+          worker_id: string
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          description: string
+          expense_date: string
+          expense_type: string
+          id?: string
+          project_id?: string | null
+          receipt_url?: string | null
+          status?: string
+          updated_at?: string
+          worker_id: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          description?: string
+          expense_date?: string
+          expense_type?: string
+          id?: string
+          project_id?: string | null
+          receipt_url?: string | null
+          status?: string
+          updated_at?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worker_expenses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      worker_payments: {
+        Row: {
+          bonuses: number | null
+          created_at: string
+          created_by: string | null
+          deductions: number | null
+          gross_pay: number | null
+          hours_worked: number | null
+          id: string
+          net_pay: number | null
+          notes: string | null
+          overtime_hours: number | null
+          overtime_pay: number | null
+          pay_period_end: string
+          pay_period_start: string
+          payment_date: string | null
+          regular_pay: number | null
+          status: string
+          updated_at: string
+          worker_id: string
+        }
+        Insert: {
+          bonuses?: number | null
+          created_at?: string
+          created_by?: string | null
+          deductions?: number | null
+          gross_pay?: number | null
+          hours_worked?: number | null
+          id?: string
+          net_pay?: number | null
+          notes?: string | null
+          overtime_hours?: number | null
+          overtime_pay?: number | null
+          pay_period_end: string
+          pay_period_start: string
+          payment_date?: string | null
+          regular_pay?: number | null
+          status?: string
+          updated_at?: string
+          worker_id: string
+        }
+        Update: {
+          bonuses?: number | null
+          created_at?: string
+          created_by?: string | null
+          deductions?: number | null
+          gross_pay?: number | null
+          hours_worked?: number | null
+          id?: string
+          net_pay?: number | null
+          notes?: string | null
+          overtime_hours?: number | null
+          overtime_pay?: number | null
+          pay_period_end?: string
+          pay_period_start?: string
+          payment_date?: string | null
+          regular_pay?: number | null
+          status?: string
+          updated_at?: string
+          worker_id?: string
+        }
+        Relationships: []
+      }
+      worker_rates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          effective_date: string
+          end_date: string | null
+          hourly_rate: number | null
+          id: string
+          monthly_salary: number | null
+          payment_type: string
+          updated_at: string
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          end_date?: string | null
+          hourly_rate?: number | null
+          id?: string
+          monthly_salary?: number | null
+          payment_type?: string
+          updated_at?: string
+          worker_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          end_date?: string | null
+          hourly_rate?: number | null
+          id?: string
+          monthly_salary?: number | null
+          payment_type?: string
+          updated_at?: string
+          worker_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       "worker.my_tasks_view": {

@@ -9,7 +9,8 @@ import {
   Menu,
   FileText,
   Calendar,
-  List
+  List,
+  DollarSign
 } from 'lucide-react';
 import {
   Sidebar,
@@ -51,6 +52,11 @@ const navigationItems = [
     title: 'Users',
     url: '/admin/users',
     icon: Users
+  },
+  {
+    title: 'Costs',
+    url: '/admin/costs',
+    icon: DollarSign
   },
   {
     title: 'Reports',
