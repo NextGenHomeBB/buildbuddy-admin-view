@@ -222,10 +222,6 @@
       @apply hover:shadow-lg hover:scale-[1.02] transition-all duration-200;
     }
     
-    .desktop-grid-auto {
-      @apply grid-cols-auto;
-    }
-    
     /* Enhanced desktop interactions */
     .desktop-context-menu {
       @apply cursor-context-menu;
