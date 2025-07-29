@@ -1,4 +1,6 @@
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 interface Task {
   id: string;
@@ -15,38 +17,45 @@ interface WorkerTaskItemProps {
 }
 
 export function WorkerTaskItem({ task }: WorkerTaskItemProps) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'todo': return 'bg-secondary';
-      case 'in_progress': return 'bg-blue-500';
-      case 'done': return 'bg-green-500';
-      default: return 'bg-secondary';
-    }
-  };
-
+  const isCompleted = task.status === 'done';
+  const isInProgress = task.status === 'in_progress';
+  
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'text-red-600';
-      case 'medium': return 'text-yellow-600';
+      case 'high': return 'text-destructive';
+      case 'medium': return 'text-orange-500';
       case 'low': return 'text-green-600';
       default: return 'text-muted-foreground';
     }
   };
 
   return (
-    <div className="flex items-center justify-between p-3 border border-border rounded-lg bg-card hover:shadow-sm transition-shadow">
+    <div className={cn(
+      "flex items-start gap-3 p-4 border border-border rounded-lg bg-card hover:shadow-sm transition-all duration-200",
+      isCompleted && "opacity-75"
+    )}>
+      <Checkbox 
+        checked={isCompleted}
+        className="mt-0.5"
+        disabled
+      />
+      
       <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-card-foreground truncate mb-2">{task.title}</h4>
+        <h4 className={cn(
+          "font-medium text-card-foreground mb-2 leading-tight",
+          isCompleted && "line-through text-muted-foreground"
+        )}>
+          {task.title}
+        </h4>
         
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge 
-            variant="secondary" 
-            className={`text-xs ${getStatusColor(task.status)} text-white`}
-          >
-            {task.status.replace('_', ' ')}
-          </Badge>
+          {isInProgress && (
+            <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+              In Progress
+            </Badge>
+          )}
           
-          <Badge variant="outline" className={`text-xs ${getPriorityColor(task.priority)}`}>
+          <Badge variant="outline" className={cn("text-xs", getPriorityColor(task.priority))}>
             {task.priority}
           </Badge>
           

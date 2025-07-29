@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ArrowLeft, Plus, Users, List } from 'lucide-react';
+import { ArrowLeft, Plus, Users, List, CheckCircle2, Clock, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTaskLists, useListTasks, useUnassignedTasks, useWorkerTasks } from '@/hooks/useTaskLists';
@@ -45,6 +46,104 @@ export function AdminLists() {
     task.task_list || (!task.phase_id && !task.project_id)
   ) || [];
 
+  // Group tasks by status
+  const groupTasksByStatus = (tasks: any[]) => {
+    return {
+      todo: tasks.filter(task => task.status === 'todo'),
+      in_progress: tasks.filter(task => task.status === 'in_progress'),
+      done: tasks.filter(task => task.status === 'done')
+    };
+  };
+
+  const adminGrouped = groupTasksByStatus(adminAssignedTasks);
+  const workerGrouped = groupTasksByStatus(workerCreatedTasks);
+
+  // Calculate progress
+  const calculateProgress = (tasks: any[]) => {
+    if (tasks.length === 0) return 0;
+    const completed = tasks.filter(task => task.status === 'done').length;
+    return Math.round((completed / tasks.length) * 100);
+  };
+
+  const adminProgress = calculateProgress(adminAssignedTasks);
+  const workerProgress = calculateProgress(workerCreatedTasks);
+
+  // Render task section
+  const renderTaskSection = (title: string, icon: any, tasks: any[], color: string, progress: number) => {
+    const grouped = groupTasksByStatus(tasks);
+    
+    return (
+      <Card className="mb-6">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {icon}
+              {title} ({tasks.length})
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {progress}% complete
+            </div>
+          </CardTitle>
+          <Progress value={progress} className="h-2" />
+        </CardHeader>
+        <CardContent>
+          {tasks.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No tasks found
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* To Do Tasks */}
+              {grouped.todo.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Circle className="h-4 w-4 text-muted-foreground" />
+                    <h4 className="font-medium text-muted-foreground">To Do ({grouped.todo.length})</h4>
+                  </div>
+                  <div className="space-y-3 pl-6">
+                    {grouped.todo.map((task) => (
+                      <WorkerTaskItem key={task.id} task={task} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* In Progress Tasks */}
+              {grouped.in_progress.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Clock className="h-4 w-4 text-blue-500" />
+                    <h4 className="font-medium text-blue-700">In Progress ({grouped.in_progress.length})</h4>
+                  </div>
+                  <div className="space-y-3 pl-6">
+                    {grouped.in_progress.map((task) => (
+                      <WorkerTaskItem key={task.id} task={task} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Done Tasks */}
+              {grouped.done.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <h4 className="font-medium text-green-700">Done ({grouped.done.length})</h4>
+                  </div>
+                  <div className="space-y-3 pl-6">
+                    {grouped.done.map((task) => (
+                      <WorkerTaskItem key={task.id} task={task} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
   // Worker view
   if (selectedWorkerId && selectedWorker) {
     return (
@@ -64,59 +163,31 @@ export function AdminLists() {
           </div>
         </div>
 
-        {/* Admin Assigned Tasks */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary"></div>
-              Admin Assigned Tasks ({adminAssignedTasks.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoadingWorkerTasks ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Loading tasks...
-              </div>
-            ) : adminAssignedTasks.length > 0 ? (
-              <div className="space-y-3">
-                {adminAssignedTasks.map((task) => (
-                  <WorkerTaskItem key={task.id} task={task} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No admin-assigned tasks yet.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Self-Created Tasks */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              Worker Created Tasks ({workerCreatedTasks.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoadingWorkerTasks ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Loading tasks...
-              </div>
-            ) : workerCreatedTasks.length > 0 ? (
-              <div className="space-y-3">
-                {workerCreatedTasks.map((task) => (
-                  <WorkerTaskItem key={task.id} task={task} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No self-created tasks yet.
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          {!workerTasks ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Loading tasks...
+            </div>
+          ) : (
+            <>
+              {renderTaskSection(
+                "Admin Assigned Tasks",
+                <div className="w-2 h-2 rounded-full bg-blue-500"></div>,
+                adminAssignedTasks,
+                "blue",
+                adminProgress
+              )}
+              
+              {renderTaskSection(
+                "Worker Created Tasks", 
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>,
+                workerCreatedTasks,
+                "green", 
+                workerProgress
+              )}
+            </>
+          )}
+        </div>
       </div>
     );
   }
