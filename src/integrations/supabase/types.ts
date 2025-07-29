@@ -823,6 +823,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_worker_expenses_worker_id"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "worker_expenses_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -892,7 +899,15 @@ export type Database = {
           updated_at?: string
           worker_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_worker_payments_worker_id"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       worker_rates: {
         Row: {
