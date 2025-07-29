@@ -8,6 +8,7 @@ import { WorkerPayment } from '@/hooks/useWorkerCosts';
 import { format } from 'date-fns';
 import { useUpdatePaymentStatus } from '@/hooks/useWorkerCosts';
 import { PaymentDialog } from './PaymentDialog';
+import { PaymentDetailsModal } from './PaymentDetailsModal';
 
 interface PaymentsTabProps {
   payments: WorkerPayment[];
@@ -169,7 +170,11 @@ export function PaymentsTab({ payments, isLoading }: PaymentsTabProps) {
                       Mark as Paid
                     </Button>
                   )}
-                  <Button size="sm" variant="ghost">
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => setSelectedPayment(payment)}
+                  >
                     <Eye className="mr-1 h-3 w-3" />
                     Details
                   </Button>
@@ -199,6 +204,12 @@ export function PaymentsTab({ payments, isLoading }: PaymentsTabProps) {
       <PaymentDialog 
         open={isPaymentDialogOpen} 
         onOpenChange={setIsPaymentDialogOpen} 
+      />
+      
+      <PaymentDetailsModal
+        open={!!selectedPayment}
+        onOpenChange={(open) => !open && setSelectedPayment(null)}
+        payment={selectedPayment}
       />
     </div>
   );

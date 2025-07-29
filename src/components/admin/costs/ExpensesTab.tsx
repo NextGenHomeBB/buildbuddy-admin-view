@@ -8,6 +8,7 @@ import { WorkerExpense } from '@/hooks/useWorkerCosts';
 import { format } from 'date-fns';
 import { useUpdateExpenseStatus } from '@/hooks/useWorkerCosts';
 import { ExpenseDialog } from './ExpenseDialog';
+import { ExpenseDetailsModal } from './ExpenseDetailsModal';
 
 interface ExpensesTabProps {
   expenses: WorkerExpense[];
@@ -16,6 +17,7 @@ interface ExpensesTabProps {
 
 export function ExpensesTab({ expenses, isLoading }: ExpensesTabProps) {
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<WorkerExpense | null>(null);
   const updateStatus = useUpdateExpenseStatus();
 
   const getStatusColor = (status: string) => {
@@ -163,7 +165,11 @@ export function ExpensesTab({ expenses, isLoading }: ExpensesTabProps) {
                         Mark as Paid
                       </Button>
                     )}
-                    <Button size="sm" variant="ghost">
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      onClick={() => setSelectedExpense(expense)}
+                    >
                       <Eye className="mr-1 h-3 w-3" />
                       Details
                     </Button>
@@ -194,6 +200,12 @@ export function ExpensesTab({ expenses, isLoading }: ExpensesTabProps) {
       <ExpenseDialog 
         open={isExpenseDialogOpen} 
         onOpenChange={setIsExpenseDialogOpen} 
+      />
+      
+      <ExpenseDetailsModal
+        open={!!selectedExpense}
+        onOpenChange={(open) => !open && setSelectedExpense(null)}
+        expense={selectedExpense}
       />
     </div>
   );
