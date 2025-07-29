@@ -76,14 +76,18 @@ export function useWorkerRates() {
         .from('worker_rates')
         .select(`
           *,
-          profiles:worker_id (
+          profiles!worker_id (
             full_name,
             avatar_url
           )
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching worker rates:', error);
+        throw error;
+      }
+      
       return (data || []) as unknown as WorkerRate[];
     },
   });
