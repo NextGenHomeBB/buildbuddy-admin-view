@@ -191,6 +191,52 @@
     padding-top: env(safe-area-inset-top);
   }
 
+  /* Tablet optimizations */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .tablet-grid-2 {
+      @apply grid-cols-2;
+    }
+    
+    .tablet-grid-3 {
+      @apply grid-cols-3;
+    }
+    
+    .tablet-sidebar {
+      @apply w-64;
+    }
+    
+    .tablet-split-view {
+      @apply flex-row;
+    }
+    
+    /* Tablet touch targets */
+    button, .touch-target {
+      min-height: 48px;
+      min-width: 48px;
+    }
+  }
+
+  /* Desktop optimizations */
+  @media (min-width: 1024px) {
+    .desktop-hover-effects {
+      @apply hover:shadow-lg hover:scale-[1.02] transition-all duration-200;
+    }
+    
+    .desktop-grid-auto {
+      @apply grid-cols-auto;
+    }
+    
+    /* Enhanced desktop interactions */
+    .desktop-context-menu {
+      @apply cursor-context-menu;
+    }
+    
+    /* Keyboard navigation styles */
+    .keyboard-focus {
+      @apply focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none;
+    }
+  }
+
   /* Mobile touch optimizations */
   .touch-card {
     @apply transition-all duration-200 hover:shadow-md active:scale-95 cursor-pointer;
@@ -294,5 +340,43 @@
     25% { transform: scale(0.92); }
     75% { transform: scale(1.02); }
     100% { transform: scale(1); }
+  }
+
+  /* Cross-device performance optimizations */
+  .will-change-transform {
+    will-change: transform;
+  }
+  
+  .will-change-opacity {
+    will-change: opacity;
+  }
+  
+  .gpu-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+  
+  /* Advanced animations for desktop */
+  @media (min-width: 1024px) {
+    .desktop-micro-interaction {
+      @apply transition-all duration-150 ease-out hover:brightness-110;
+    }
+    
+    .desktop-button-hover {
+      @apply hover:shadow-md hover:-translate-y-0.5 transition-all duration-200;
+    }
+  }
+  
+  /* Lazy loading placeholder */
+  .lazy-loading {
+    background: linear-gradient(90deg, hsl(var(--muted)) 25%, transparent 37%, hsl(var(--muted)) 63%);
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes skeleton-shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: -100% 50%; }
   }
 }

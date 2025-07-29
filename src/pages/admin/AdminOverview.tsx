@@ -6,6 +6,8 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useDeviceType } from '@/hooks/useDeviceType';
+import { cn } from '@/lib/utils';
 
 interface Stats {
   total_projects: number;
@@ -25,6 +27,7 @@ interface Project {
 
 export function AdminOverview() {
   const { user, session, loading: authLoading, isAdmin } = useAuth();
+  const deviceType = useDeviceType();
   const [stats, setStats] = useState<Stats>({
     total_projects: 0,
     active_projects: 0,
@@ -216,9 +219,17 @@ export function AdminOverview() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className={cn(
+        "grid gap-6",
+        deviceType === 'mobile' && "grid-cols-1",
+        deviceType === 'tablet' && "tablet-grid-2 lg:grid-cols-4",
+        deviceType === 'desktop' && "md:grid-cols-2 lg:grid-cols-4"
+      )}>
         {statCards.map((stat) => (
-          <Card key={stat.title} className="admin-card hover:admin-shadow transition-all duration-200">
+          <Card key={stat.title} className={cn(
+            "admin-card transition-all duration-200",
+            deviceType === 'desktop' && "desktop-hover-effects desktop-micro-interaction hover:admin-shadow"
+          )}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.title}
@@ -239,8 +250,15 @@ export function AdminOverview() {
       </div>
 
       {/* Recent Projects */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="admin-card">
+      <div className={cn(
+        "grid gap-6",
+        deviceType === 'tablet' && "tablet-grid-2",
+        deviceType === 'desktop' && "lg:grid-cols-2"
+      )}>
+        <Card className={cn(
+          "admin-card",
+          deviceType === 'desktop' && "desktop-hover-effects"
+        )}>
           <CardHeader>
             <CardTitle className="text-xl text-foreground">Recent Projects</CardTitle>
             <CardDescription>Latest project updates and progress</CardDescription>
