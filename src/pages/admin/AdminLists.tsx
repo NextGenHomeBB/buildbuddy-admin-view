@@ -104,15 +104,25 @@ export function AdminLists() {
               {/* To Do Tasks */}
               {grouped.todo.length > 0 && (
                 <div>
-                  <div className="flex items-center gap-2 mb-3">
+                  <button
+                    onClick={() => toggleDoneSection(`todo-${sectionKey}`)}
+                    className="flex items-center gap-2 mb-3 p-2 rounded-lg hover:bg-muted/50 transition-colors w-full text-left group"
+                  >
+                    {expandedDoneSections[`todo-${sectionKey}`] ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    )}
                     <Circle className="h-4 w-4 text-muted-foreground" />
                     <h4 className="font-medium text-muted-foreground">To Do ({grouped.todo.length})</h4>
-                  </div>
-                  <div className="space-y-3 pl-6">
-                    {grouped.todo.map((task) => (
-                      <WorkerTaskItem key={task.id} task={task} />
-                    ))}
-                  </div>
+                  </button>
+                  {expandedDoneSections[`todo-${sectionKey}`] && (
+                    <div className="space-y-3 pl-6 animate-fade-in">
+                      {grouped.todo.map((task) => (
+                        <WorkerTaskItem key={task.id} task={task} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
