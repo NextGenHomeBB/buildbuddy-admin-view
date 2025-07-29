@@ -18,6 +18,7 @@ import { AdminLists } from "./pages/admin/AdminLists";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { AdminSettings } from "./pages/admin/AdminSettings";
 import { AdminCalendar } from "./pages/admin/AdminCalendar";
+import AdminCosts from "./pages/admin/AdminCosts";
 import { WorkerCalendar } from "./pages/worker/WorkerCalendar";
 import { ProjectDetailPage } from "./pages/admin/ProjectDetailPage";
 import { PhaseTemplateListPage } from "./pages/admin/PhaseTemplateListPage";
@@ -56,6 +57,7 @@ function App() {
                 <Route path="lists" element={<AdminLists />} />
                 <Route path="calendar" element={<AdminCalendar />} />
                 <Route path="users" element={<AdminUsers />} />
+                <Route path="costs" element={<AdminCosts />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="settings" element={<AdminSettings />} />
                 <Route path="phase-templates" element={<PhaseTemplateListPage />} />
