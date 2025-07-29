@@ -3,6 +3,7 @@ import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CalendarView } from '@/components/calendar/CalendarView';
+import { logger } from '@/utils/logger';
 import { TaskDrawer } from '@/components/admin/TaskDrawer';
 import { TaskDetailsModal } from '@/components/admin/TaskDetailsModal';
 import { useCalendarTasks, useUpdateTaskSchedule, CalendarTask } from '@/hooks/useCalendarTasks';
@@ -25,7 +26,7 @@ export function AdminCalendar() {
   );
 
   // Debug logging
-  console.log('AdminCalendar Debug:', {
+  logger.debug('AdminCalendar Debug:', {
     monthStart: format(monthStart, 'yyyy-MM-dd'),
     monthEnd: format(monthEnd, 'yyyy-MM-dd'),
     tasksCount: tasks.length,

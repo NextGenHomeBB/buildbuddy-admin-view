@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, Plus, Mail, Shield, Clock, Edit, Trash2, Users } from 'lucide-react';
+import { logger } from '@/utils/logger';
 import { DataTable } from '@/components/admin/DataTable';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -280,7 +281,7 @@ export function AdminUsers() {
           description="There are no users in your organization yet. Invite team members to get started."
           action={{
             label: "Invite User",
-            onClick: () => console.log("Invite user clicked")
+            onClick: () => logger.debug("Invite user clicked")
           }}
         />
       ) : (

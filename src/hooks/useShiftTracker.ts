@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { logger } from '@/utils/logger';
 
 export interface ShiftSession {
   startTime: Date | null;
@@ -73,7 +74,7 @@ export function useShiftTracker() {
     }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      console.log('Creating timesheet entry:', {
+      logger.debug('Creating timesheet entry:', {
         user_id: user.id,
         project_id: data.project_id,
         work_date: new Date().toISOString().split('T')[0],
@@ -97,7 +98,7 @@ export function useShiftTracker() {
       }
     },
     onSuccess: () => {
-      console.log('Shift recorded successfully');
+      logger.debug('Shift recorded successfully');
       queryClient.invalidateQueries({ queryKey: ['today-shifts'] });
       toast.success('Shift recorded successfully');
     },

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/utils/logger';
 
 export interface WorkerRate {
   id: string;
@@ -155,7 +156,7 @@ export function useCreateWorkerRate() {
 
   return useMutation({
     mutationFn: async (data: Omit<WorkerRate, 'id' | 'created_at' | 'updated_at' | 'profiles'>) => {
-      console.log('Creating worker rate with data:', data);
+      logger.debug('Creating worker rate with data:', data);
       
       try {
         const { data: result, error } = await supabase
@@ -164,14 +165,14 @@ export function useCreateWorkerRate() {
           .select()
           .single();
 
-        console.log('Supabase response:', { result, error });
+        logger.debug('Supabase response:', { result, error });
 
         if (error) {
           console.error('Supabase error:', error);
           throw error;
         }
         
-        console.log('Worker rate created successfully:', result);
+        logger.debug('Worker rate created successfully:', result);
         return result;
       } catch (err) {
         console.error('Mutation function error:', err);
@@ -179,7 +180,7 @@ export function useCreateWorkerRate() {
       }
     },
     onSuccess: (result) => {
-      console.log('Mutation onSuccess called with:', result);
+      logger.debug('Mutation onSuccess called with:', result);
       queryClient.invalidateQueries({ queryKey: ['worker-rates'] });
       toast({
         title: "Success",

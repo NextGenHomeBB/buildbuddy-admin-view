@@ -6,9 +6,19 @@ import { initPerformanceMonitoring } from './utils/performance';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PerformanceMonitor } from './components/PerformanceMonitor';
 import { logger } from './utils/logger';
+import { initProductionMonitoring } from './utils/production';
+import { initBuildOptimizations } from './utils/buildOptimization';
+import { logDeploymentReadiness } from './utils/deploymentCheck';
 
 // Initialize performance monitoring
 initPerformanceMonitoring();
+
+// Initialize production optimizations
+if (import.meta.env.PROD) {
+  initProductionMonitoring();
+  initBuildOptimizations();
+  logDeploymentReadiness();
+}
 
 // Register service worker for PWA functionality
 if ('serviceWorker' in navigator) {

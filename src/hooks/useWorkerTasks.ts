@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { logger } from '@/utils/logger';
 
 export interface WorkerTask {
   id: string;
@@ -31,11 +32,11 @@ export function useWorkerTasks() {
     queryKey: ['worker-tasks', user?.id],
     queryFn: async (): Promise<WorkerTask[]> => {
       if (!user?.id) {
-        console.log('useWorkerTasks: No user ID found');
+        logger.warn('useWorkerTasks: No user ID found');
         return [];
       }
       
-      console.log('useWorkerTasks: Fetching tasks for user:', user.id);
+      logger.debug('useWorkerTasks: Fetching tasks for user:', user.id);
       
       const { data, error } = await supabase
         .from('tasks')
@@ -67,11 +68,11 @@ export function useWorkerTasks() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('useWorkerTasks: Query error:', error);
+        logger.error('useWorkerTasks: Query error:', error);
         throw error;
       }
       
-      console.log('useWorkerTasks: Raw query result:', { data, count: data?.length || 0 });
+      logger.debug('useWorkerTasks: Raw query result:', { data, count: data?.length || 0 });
       
       const mappedTasks = (data || []).map(task => ({
         ...task,
@@ -79,7 +80,7 @@ export function useWorkerTasks() {
         phase_name: task.project_phases?.name
       }));
       
-      console.log('useWorkerTasks: Mapped tasks:', mappedTasks);
+      logger.debug('useWorkerTasks: Mapped tasks:', mappedTasks);
       
       return mappedTasks;
     },

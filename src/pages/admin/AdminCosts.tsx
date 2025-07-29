@@ -12,6 +12,7 @@ import { WorkerRatesTab } from '@/components/admin/costs/WorkerRatesTab';
 import { PaymentsTab } from '@/components/admin/costs/PaymentsTab';
 import { ExpensesTab } from '@/components/admin/costs/ExpensesTab';
 import { CostOverviewTab } from '@/components/admin/costs/CostOverviewTab';
+import { logger } from '@/utils/logger';
 
 export default function AdminCosts() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -33,7 +34,7 @@ export default function AdminCosts() {
           table: 'worker_payments'
         },
         (payload) => {
-          console.log('New payment created:', payload);
+          logger.debug('New payment created:', payload);
           
           // Mark this payment as "recent" for highlighting
           if (payload.new?.id) {

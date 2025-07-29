@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, Plus, Eye, Edit, Trash2, Filter } from 'lucide-react';
+import { logger } from '@/utils/logger';
 import { DataTable } from '@/components/admin/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,13 +42,13 @@ const getStatusBadgeVariant = (status: string) => {
 
 
 export function AdminProjects() {
-  console.log('AdminProjects component rendering...');
+  logger.debug('AdminProjects component rendering...');
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  console.log('useNavigate hook called');
+  logger.debug('useNavigate hook called');
   
   const { data: projects = [], isLoading } = useProjects();
-  console.log('useProjects hook called, data:', { projects, isLoading });
+  logger.debug('useProjects hook called, data:', { projects, isLoading });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

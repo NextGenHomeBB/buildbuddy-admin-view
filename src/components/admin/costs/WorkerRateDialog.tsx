@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { WorkerRate, useCreateWorkerRate } from '@/hooks/useWorkerCosts';
 import { useWorkers } from '@/hooks/useWorkers';
+import { logger } from '@/utils/logger';
 
 interface WorkerRateDialogProps {
   open: boolean;
@@ -28,7 +29,7 @@ export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogP
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted with data:', formData);
+    logger.debug('Form submitted with data:', formData);
     
     if (!formData.worker_id) {
       console.error('No worker selected');
@@ -46,11 +47,11 @@ export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogP
       created_by: null, // Add created_by field
     };
 
-    console.log('Processed data for mutation:', data);
+    logger.debug('Processed data for mutation:', data);
 
     createRate.mutate(data, {
       onSuccess: () => {
-        console.log('Dialog onSuccess callback');
+        logger.debug('Dialog onSuccess callback');
         onOpenChange(false);
         setFormData({
           worker_id: '',

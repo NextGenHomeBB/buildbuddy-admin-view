@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { cn } from '@/lib/utils';
+import { logger } from '@/utils/logger';
 
 interface Stats {
   total_projects: number;
@@ -43,7 +44,7 @@ export function AdminOverview() {
     const fetchData = async () => {
       // Don't fetch data until auth is ready and user is confirmed admin
       if (authLoading || !session || !user || !isAdmin) {
-        console.log('AdminOverview: Waiting for auth...', { 
+        logger.debug('AdminOverview: Waiting for auth...', { 
           authLoading, 
           hasSession: !!session, 
           hasUser: !!user, 
@@ -53,25 +54,25 @@ export function AdminOverview() {
         return;
       }
 
-      console.log('AdminOverview: Starting data fetch for admin user:', user.id);
+      logger.debug('AdminOverview: Starting data fetch for admin user:', user.id);
       setLoading(true);
       setError(null);
 
       try {
         // Test the current user role function first
         const { data: roleTest, error: roleError } = await supabase.rpc('get_current_user_role');
-        console.log('Role test result:', { roleTest, roleError });
+        logger.debug('Role test result:', { roleTest, roleError });
 
         // Fetch projects stats
-        console.log('Fetching projects...');
+        logger.debug('Fetching projects...');
         const { data: projects, error: projectsError } = await supabase
           .from('projects')
           .select('status');
         
-        console.log('Projects query result:', { projects, projectsError });
+        logger.debug('Projects query result:', { projects, projectsError });
 
         // Fetch users stats  
-        console.log('Fetching profiles...');
+        logger.debug('Fetching profiles...');
         const { data: users, error: usersError } = await supabase
           .from('profiles')
           .select('id');
@@ -80,22 +81,22 @@ export function AdminOverview() {
         const { data: userCount, error: rolesError } = await supabase
           .rpc('get_current_user_role'); // This will validate our connection
 
-        console.log('Role test result:', { userCount, rolesError });
+        logger.debug('Role test result:', { userCount, rolesError });
 
         // Fetch recent projects
-        console.log('Fetching recent projects...');
+        logger.debug('Fetching recent projects...');
         const { data: recent, error: recentError } = await supabase
           .from('projects')
           .select('id, name, description, status, progress')
           .order('created_at', { ascending: false })
           .limit(3);
 
-        console.log('Recent projects result:', { recent, recentError });
+        logger.debug('Recent projects result:', { recent, recentError });
 
         // Check for any errors
         if (projectsError || usersError || rolesError || recentError) {
           const errorMsg = `Data fetch errors: ${[projectsError?.message, usersError?.message, rolesError?.message, recentError?.message].filter(Boolean).join(', ')}`;
-          console.error(errorMsg);
+          logger.error(errorMsg);
           setError(errorMsg);
           return;
         }
@@ -112,12 +113,12 @@ export function AdminOverview() {
           active_users: userStats.length // Simplified for now
         };
 
-        console.log('Calculated stats:', newStats);
+        logger.debug('Calculated stats:', newStats);
         setStats(newStats);
         setRecentProjects(recent || []);
 
       } catch (error) {
-        console.error('Error fetching overview data:', error);
+        logger.error('Error fetching overview data:', error);
         setError(`Failed to load dashboard data: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
         setLoading(false);
