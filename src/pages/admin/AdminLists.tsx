@@ -51,10 +51,12 @@ export function AdminLists() {
           </div>
         </div>
 
+        {/* Admin Assigned Tasks */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-lg">
-              Assigned Tasks ({workerTasks?.length || 0})
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary"></div>
+              Admin Assigned Tasks ({workerTasks?.filter(task => task.task_list).length || 0})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -62,15 +64,42 @@ export function AdminLists() {
               <div className="text-center py-8 text-muted-foreground">
                 Loading tasks...
               </div>
-            ) : workerTasks && workerTasks.length > 0 ? (
+            ) : workerTasks?.filter(task => task.task_list).length > 0 ? (
               <div className="space-y-3">
-                {workerTasks.map((task) => (
+                {workerTasks.filter(task => task.task_list).map((task) => (
                   <WorkerTaskItem key={task.id} task={task} />
                 ))}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                No tasks assigned to this worker yet.
+                No admin-assigned tasks yet.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Self-Created Tasks */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              Self-Created Tasks ({workerTasks?.filter(task => !task.task_list).length || 0})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingWorkerTasks ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Loading tasks...
+              </div>
+            ) : workerTasks?.filter(task => !task.task_list).length > 0 ? (
+              <div className="space-y-3">
+                {workerTasks.filter(task => !task.task_list).map((task) => (
+                  <WorkerTaskItem key={task.id} task={task} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No self-created tasks yet.
               </div>
             )}
           </CardContent>
