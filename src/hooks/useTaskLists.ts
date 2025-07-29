@@ -214,6 +214,7 @@ export function useAssignTaskToList() {
       queryClient.invalidateQueries({ queryKey: ['list-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['unassigned-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['worker-tasks'] });
     },
     onError: () => {
       toast({
@@ -222,5 +223,27 @@ export function useAssignTaskToList() {
         variant: "destructive",
       });
     },
+  });
+}
+
+export function useWorkerTasks(workerId: string) {
+  return useQuery({
+    queryKey: ['worker-tasks', workerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select(`
+          *,
+          project:projects(name),
+          phase:project_phases(name),
+          task_list:task_lists(name, color_hex)
+        `)
+        .eq('assignee', workerId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!workerId,
   });
 }
