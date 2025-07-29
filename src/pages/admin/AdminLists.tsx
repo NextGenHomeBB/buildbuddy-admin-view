@@ -32,6 +32,18 @@ export function AdminLists() {
     task_count: workerTasks && selectedWorkerId === worker.id ? workerTasks.length : 0
   }));
 
+  // Separate tasks based on who created them vs who they're assigned to
+  const adminAssignedTasks = workerTasks?.filter(task => 
+    // Task is assigned to this worker but has a task_list (indicating admin organization)
+    // OR task is in a project context (project_id exists) which typically means admin/manager created
+    task.task_list || task.project_id
+  ) || [];
+  
+  const selfCreatedTasks = workerTasks?.filter(task => 
+    // Task has no task_list AND no project_id (worker created it independently)
+    !task.task_list && !task.project_id
+  ) || [];
+
   // Worker view
   if (selectedWorkerId && selectedWorker) {
     return (
@@ -56,7 +68,7 @@ export function AdminLists() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-primary"></div>
-              Admin Assigned Tasks ({workerTasks?.filter(task => task.task_list).length || 0})
+              Admin Assigned Tasks ({adminAssignedTasks.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -64,9 +76,9 @@ export function AdminLists() {
               <div className="text-center py-8 text-muted-foreground">
                 Loading tasks...
               </div>
-            ) : workerTasks?.filter(task => task.task_list).length > 0 ? (
+            ) : adminAssignedTasks.length > 0 ? (
               <div className="space-y-3">
-                {workerTasks.filter(task => task.task_list).map((task) => (
+                {adminAssignedTasks.map((task) => (
                   <WorkerTaskItem key={task.id} task={task} />
                 ))}
               </div>
@@ -83,7 +95,7 @@ export function AdminLists() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              Self-Created Tasks ({workerTasks?.filter(task => !task.task_list).length || 0})
+              Self-Created Tasks ({selfCreatedTasks.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -91,9 +103,9 @@ export function AdminLists() {
               <div className="text-center py-8 text-muted-foreground">
                 Loading tasks...
               </div>
-            ) : workerTasks?.filter(task => !task.task_list).length > 0 ? (
+            ) : selfCreatedTasks.length > 0 ? (
               <div className="space-y-3">
-                {workerTasks.filter(task => !task.task_list).map((task) => (
+                {selfCreatedTasks.map((task) => (
                   <WorkerTaskItem key={task.id} task={task} />
                 ))}
               </div>
