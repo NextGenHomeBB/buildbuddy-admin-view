@@ -3,6 +3,9 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useWorkerProjects } from '@/hooks/useWorkerProjects';
 import { useWorkerTasks } from '@/hooks/useWorkerTasks';
+import { ShiftTracker } from '@/components/worker/ShiftTracker';
+import { WeeklyEarnings } from '@/components/worker/WeeklyEarnings';
+import { PaymentHistory } from '@/components/worker/PaymentHistory';
 import { FolderOpen, CheckSquare, Clock, AlertCircle } from 'lucide-react';
 
 export function WorkerDashboard() {
@@ -70,6 +73,16 @@ export function WorkerDashboard() {
         )}
       </div>
 
+      {/* Shift Tracker - Prominent Section */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <ShiftTracker />
+        </div>
+        <div>
+          <WeeklyEarnings />
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.name}>
@@ -86,7 +99,7 @@ export function WorkerDashboard() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>Recent Tasks</CardTitle>
@@ -132,6 +145,8 @@ export function WorkerDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        <PaymentHistory />
       </div>
     </div>
   );

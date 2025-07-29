@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, DollarSign, Users, TrendingUp } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, DollarSign, Users, TrendingUp, Clock } from 'lucide-react';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { useWorkerRates, useWorkerPayments, useWorkerExpenses } from '@/hooks/useWorkerCosts';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { WorkerRatesTab } from '@/components/admin/costs/WorkerRatesTab';
 import { PaymentsTab } from '@/components/admin/costs/PaymentsTab';
 import { ExpensesTab } from '@/components/admin/costs/ExpensesTab';
@@ -12,10 +15,44 @@ import { CostOverviewTab } from '@/components/admin/costs/CostOverviewTab';
 
 export default function AdminCosts() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [recentPayments, setRecentPayments] = useState<string[]>([]);
   
   const { data: rates = [], isLoading: ratesLoading } = useWorkerRates();
   const { data: payments = [], isLoading: paymentsLoading } = useWorkerPayments();
   const { data: expenses = [], isLoading: expensesLoading } = useWorkerExpenses();
+
+  // Set up real-time listener for new payments
+  useEffect(() => {
+    const channel = supabase
+      .channel('worker-payments-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'worker_payments'
+        },
+        (payload) => {
+          console.log('New payment created:', payload);
+          
+          // Mark this payment as "recent" for highlighting
+          if (payload.new?.id) {
+            setRecentPayments(prev => [...prev, payload.new.id]);
+            toast.success('New automatic payment generated from shift');
+            
+            // Remove the "recent" status after 30 seconds
+            setTimeout(() => {
+              setRecentPayments(prev => prev.filter(id => id !== payload.new.id));
+            }, 30000);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   // Calculate totals for overview cards
   const totalMonthlyPayroll = rates.reduce((sum, rate) => {
@@ -120,7 +157,11 @@ export default function AdminCosts() {
         </TabsContent>
 
         <TabsContent value="payments" className="space-y-4">
-          <PaymentsTab payments={payments} isLoading={paymentsLoading} />
+          <PaymentsTab 
+            payments={payments} 
+            isLoading={paymentsLoading} 
+            recentPayments={recentPayments}
+          />
         </TabsContent>
 
         <TabsContent value="expenses" className="space-y-4">
