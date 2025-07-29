@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/utils/logger';
+import { useInputValidation } from '@/hooks/useInputValidation';
+import { useRateLimit } from '@/hooks/useRateLimit';
 
 export const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -14,20 +17,74 @@ export const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { validateEmail, validatePassword, validateText } = useInputValidation();
+  const { checkRateLimit, isBlocked } = useRateLimit();
+
+  // Input sanitization helper
+  const sanitizeInput = (input: string): string => {
+    return input.replace(/[<>&"']/g, (char) => {
+      const entities: { [key: string]: string } = {
+        '<': '&lt;',
+        '>': '&gt;',
+        '&': '&amp;',
+        '"': '&quot;',
+        "'": '&#x27;'
+      };
+      return entities[char];
+    });
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      // Check rate limiting for auth attempts
+      const operation = isSignUp ? 'signup' : 'signin';
+      const rateLimitAllowed = await checkRateLimit(operation, {
+        maxAttempts: 5,
+        windowMinutes: 15
+      });
+
+      if (!rateLimitAllowed) {
+        throw new Error('Too many attempts. Please wait 15 minutes before trying again.');
+      }
+
+      // Validate inputs
+      const emailValidation = validateEmail(email);
+      const passwordValidation = validatePassword(password);
+      
+      if (!emailValidation.isValid) {
+        throw new Error(emailValidation.errors[0]);
+      }
+      
+      if (!passwordValidation.isValid) {
+        throw new Error(passwordValidation.errors[0]);
+      }
+
+      let fullNameValidation;
+      if (isSignUp) {
+        fullNameValidation = validateText(fullName, {
+          required: true,
+          minLength: 2,
+          maxLength: 100,
+          allowSpecialChars: false,
+          fieldName: 'Full name'
+        });
+        
+        if (!fullNameValidation.isValid) {
+          throw new Error(fullNameValidation.errors[0]);
+        }
+      }
+
       if (isSignUp) {
         const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
+          email: emailValidation.sanitizedValue,
+          password: passwordValidation.sanitizedValue,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
             data: {
-              full_name: fullName,
+              full_name: fullNameValidation!.sanitizedValue,
             }
           }
         });
@@ -35,16 +92,17 @@ export const Auth = () => {
         if (error) throw error;
 
         if (data.user) {
-          // Create profile
+          // Create profile without role - roles are managed through user_roles table
           await supabase
             .from('profiles')
             .insert([
               {
                 id: data.user.id,
-                full_name: fullName,
-                role: 'worker'
+                full_name: fullNameValidation!.sanitizedValue
               }
             ]);
+
+          logger.log('User profile created', { userId: data.user.id });
 
           toast({
             title: "Account created!",
@@ -54,11 +112,13 @@ export const Auth = () => {
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+          email: emailValidation.sanitizedValue,
+          password: passwordValidation.sanitizedValue,
         });
 
         if (error) throw error;
+
+        logger.log('User signed in', { email: emailValidation.sanitizedValue });
 
         toast({
           title: "Welcome back!",
@@ -67,9 +127,21 @@ export const Auth = () => {
         navigate('/');
       }
     } catch (error: any) {
+      logger.error('Authentication error', error);
+      
+      // Provide user-friendly error messages
+      let errorMessage = error.message;
+      if (error.message.includes('Invalid login credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials.';
+      } else if (error.message.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and confirm your account before signing in.';
+      } else if (error.message.includes('User already registered')) {
+        errorMessage = 'An account with this email already exists. Please sign in instead.';
+      }
+
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Authentication Error",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -102,6 +174,9 @@ export const Auth = () => {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
+                  maxLength={100}
+                  pattern="[a-zA-Z\s]+"
+                  title="Full name should only contain letters and spaces"
                 />
               </div>
             )}
@@ -116,6 +191,9 @@ export const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                maxLength={254}
+                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                title="Please enter a valid email address"
                 data-testid="email-input"
               />
             </div>
@@ -130,6 +208,8 @@ export const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={8}
+                title="Password must be at least 8 characters long"
                 data-testid="password-input"
               />
             </div>
@@ -137,11 +217,17 @@ export const Auth = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={loading}
+              disabled={loading || isBlocked}
               data-testid={isSignUp ? "signup-button" : "login-button"}
             >
-              {loading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
+              {loading ? 'Loading...' : isBlocked ? 'Too many attempts - Please wait' : (isSignUp ? 'Create Account' : 'Sign In')}
             </Button>
+
+            {isBlocked && (
+              <p className="text-sm text-destructive text-center mt-2">
+                Too many failed attempts. Please wait 15 minutes before trying again.
+              </p>
+            )}
 
             <div className="text-center">
               <button
