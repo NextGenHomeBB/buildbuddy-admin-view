@@ -20,8 +20,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { X } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useCreateProject, useUpdateProject, Project } from '@/hooks/useProjects';
 import { useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 const projectSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
@@ -39,6 +41,7 @@ interface ProjectDrawerProps {
 
 export function ProjectDrawer({ isOpen, onClose, project }: ProjectDrawerProps) {
   console.log('ProjectDrawer component rendering, props:', { isOpen, onClose: !!onClose, project: !!project });
+  const isMobile = useIsMobile();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const isEditing = !!project;
@@ -107,30 +110,63 @@ export function ProjectDrawer({ isOpen, onClose, project }: ProjectDrawerProps) 
 
   return (
     <Drawer open={isOpen} onOpenChange={handleClose}>
-      <DrawerContent className="w-full max-w-[400px] sm:max-w-[480px] mx-auto">
-        <DrawerHeader className="flex items-center justify-between border-b border-border pb-4">
-          <DrawerTitle className="text-lg font-semibold">
+      <DrawerContent className={cn(
+        "w-full mx-auto",
+        isMobile ? "max-w-full h-[90vh]" : "max-w-[400px] sm:max-w-[480px]"
+      )}>
+        <DrawerHeader className={cn(
+          "flex items-center justify-between border-b border-border",
+          isMobile ? "p-4 pb-3" : "pb-4"
+        )}>
+          <DrawerTitle className={cn(
+            "font-semibold",
+            isMobile ? "text-base" : "text-lg"
+          )}>
             {isEditing ? 'Edit Project' : 'New Project'}
           </DrawerTitle>
           <DrawerClose asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className={cn(
+                "p-0 touch-manipulation",
+                isMobile ? "h-10 w-10" : "h-8 w-8"
+              )}
+            >
               <X className="h-4 w-4" />
               <span className="sr-only">Close</span>
             </Button>
           </DrawerClose>
         </DrawerHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+        <form 
+          onSubmit={handleSubmit(onSubmit)} 
+          className={cn(
+            "space-y-6 overflow-y-auto",
+            isMobile ? "p-4 flex-1" : "p-6"
+          )}
+        >
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium">
+            <Label 
+              htmlFor="name" 
+              className={cn(
+                "font-medium",
+                isMobile ? "text-base" : "text-sm"
+              )}
+            >
               Name *
             </Label>
             <Input
               id="name"
               {...register('name')}
               placeholder="Enter project name"
-              className="h-11"
-              autoFocus
+              className={cn(
+                "touch-manipulation",
+                isMobile ? "h-12 text-base" : "h-11"
+              )}
+              autoFocus={!isMobile}
+              autoComplete="off"
+              autoCapitalize="words"
             />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
@@ -138,21 +174,40 @@ export function ProjectDrawer({ isOpen, onClose, project }: ProjectDrawerProps) 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium">
+            <Label 
+              htmlFor="description" 
+              className={cn(
+                "font-medium",
+                isMobile ? "text-base" : "text-sm"
+              )}
+            >
               Description
             </Label>
             <Textarea
               id="description"
               {...register('description')}
               placeholder="Enter project description"
-              className="min-h-[80px] resize-none"
+              className={cn(
+                "resize-none touch-manipulation",
+                isMobile ? "min-h-[120px] text-base" : "min-h-[80px]"
+              )}
+              autoComplete="off"
+              autoCapitalize="sentences"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Status</Label>
+            <Label className={cn(
+              "font-medium",
+              isMobile ? "text-base" : "text-sm"
+            )}>
+              Status
+            </Label>
             <Select value={statusValue} onValueChange={(value) => setValue('status', value as any)}>
-              <SelectTrigger className="h-11">
+              <SelectTrigger className={cn(
+                "touch-manipulation",
+                isMobile ? "h-12 text-base" : "h-11"
+              )}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -165,19 +220,29 @@ export function ProjectDrawer({ isOpen, onClose, project }: ProjectDrawerProps) 
             </Select>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+          <div className={cn(
+            "flex gap-3 pt-4",
+            isMobile ? "justify-stretch" : "justify-end"
+          )}>
             <Button
               type="button"
               variant="outline"
               onClick={handleClose}
               disabled={isSubmitting}
+              className={cn(
+                "touch-manipulation",
+                isMobile ? "flex-1 h-12 text-base" : "min-w-[80px]"
+              )}
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="min-w-[80px]"
+              className={cn(
+                "touch-manipulation",
+                isMobile ? "flex-1 h-12 text-base" : "min-w-[80px]"
+              )}
             >
               {isSubmitting ? 'Saving...' : isEditing ? 'Update' : 'Create'}
             </Button>

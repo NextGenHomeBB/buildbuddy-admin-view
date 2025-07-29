@@ -148,8 +148,36 @@
     box-shadow: var(--shadow-elegant);
   }
   
+  /* Enhanced animations for mobile */
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  /* Touch optimization */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   /* Mobile Safe Area */
   .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Enhanced mobile interactions */
+  @media (max-width: 768px) {
+    /* Larger touch targets */
+    button, 
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Better mobile typography */
+    input, 
+    textarea, 
+    select {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
   }
 }
