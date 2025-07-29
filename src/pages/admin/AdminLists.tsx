@@ -63,9 +63,14 @@ export function AdminLists() {
                 Loading tasks...
               </div>
             ) : workerTasks && workerTasks.length > 0 ? (
-              <div className="space-y-3">
-                {workerTasks.map((task) => (
-                  <WorkerTaskItem key={task.id} task={task} />
+              <div className="space-y-4">
+                {workerTasks.map((task, index) => (
+                  <div key={task.id} className="relative">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary/20 to-primary/5 rounded-full"></div>
+                    <div className="pl-6">
+                      <WorkerTaskItem task={task} />
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
