@@ -23,7 +23,12 @@ export function useWorkerTasks() {
   return useQuery({
     queryKey: ['worker-tasks', user?.id],
     queryFn: async (): Promise<WorkerTask[]> => {
-      if (!user?.id) return [];
+      if (!user?.id) {
+        console.log('useWorkerTasks: No user ID found');
+        return [];
+      }
+      
+      console.log('useWorkerTasks: Fetching tasks for user:', user.id);
       
       const { data, error } = await supabase
         .from('tasks')
@@ -37,6 +42,7 @@ export function useWorkerTasks() {
           phase_id,
           created_at,
           updated_at,
+          assignee,
           projects:project_id (
             name
           ),
@@ -47,13 +53,22 @@ export function useWorkerTasks() {
         .eq('assignee', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('useWorkerTasks: Query error:', error);
+        throw error;
+      }
       
-      return (data || []).map(task => ({
+      console.log('useWorkerTasks: Raw query result:', { data, count: data?.length || 0 });
+      
+      const mappedTasks = (data || []).map(task => ({
         ...task,
         project_name: task.projects?.name,
         phase_name: task.project_phases?.name
       }));
+      
+      console.log('useWorkerTasks: Mapped tasks:', mappedTasks);
+      
+      return mappedTasks;
     },
     enabled: !!user?.id,
   });

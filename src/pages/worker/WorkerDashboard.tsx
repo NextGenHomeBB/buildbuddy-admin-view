@@ -8,11 +8,22 @@ import { FolderOpen, CheckSquare, Clock, AlertCircle } from 'lucide-react';
 export function WorkerDashboard() {
   const { user } = useAuth();
   
+  console.log('WorkerDashboard: Current user:', { 
+    id: user?.id, 
+    email: user?.email, 
+    role: user?.role 
+  });
+  
   // Get projects assigned to the current user
   const { data: myProjects = [] } = useWorkerProjects();
   
   // Get tasks assigned to the current user
   const { data: myTasks = [] } = useWorkerTasks();
+  
+  console.log('WorkerDashboard: Tasks data:', { 
+    tasksCount: myTasks.length, 
+    tasks: myTasks 
+  });
 
   const stats = [
     {
@@ -41,13 +52,22 @@ export function WorkerDashboard() {
     },
   ];
 
+  // Debug info for the issue
+  const isAdmin = user?.role === 'admin';
+  const currentUserName = user?.email?.split('@')[0] || 'User';
+  
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Welcome back, {user?.email}!</h1>
+        <h1 className="text-2xl font-bold">Hi, {currentUserName}</h1>
         <p className="text-muted-foreground">
-          Here's an overview of your current work
+          {myTasks.length} tasks assigned
         </p>
+        {isAdmin && (
+          <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm">
+            You are viewing as admin. To see worker tasks, please log in as a worker or use the admin calendar.
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
