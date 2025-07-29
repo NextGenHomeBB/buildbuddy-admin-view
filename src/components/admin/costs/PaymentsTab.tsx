@@ -63,14 +63,14 @@ export function PaymentsTab({ payments, isLoading }: PaymentsTabProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h3 className="text-lg font-medium">Payment Records</h3>
           <p className="text-sm text-muted-foreground">
             Track and manage worker payments and payroll
           </p>
         </div>
-        <Button onClick={() => setIsPaymentDialogOpen(true)}>
+        <Button onClick={() => setIsPaymentDialogOpen(true)} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Create Payment
         </Button>
@@ -79,8 +79,8 @@ export function PaymentsTab({ payments, isLoading }: PaymentsTabProps) {
       <div className="space-y-4">
         {payments.map((payment) => (
           <Card key={payment.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex items-center justify-between">
+            <CardHeader className="pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center space-x-3">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={payment.profiles?.avatar_url} />
@@ -90,7 +90,7 @@ export function PaymentsTab({ payments, isLoading }: PaymentsTabProps) {
                   </Avatar>
                   <div>
                     <CardTitle className="text-base">{payment.profiles?.full_name || 'Unknown Worker'}</CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-sm">
                       Pay Period: {format(new Date(payment.pay_period_start), 'MMM dd')} - {format(new Date(payment.pay_period_end), 'MMM dd, yyyy')}
                     </CardDescription>
                   </div>
@@ -132,19 +132,19 @@ export function PaymentsTab({ payments, isLoading }: PaymentsTabProps) {
                 </div>
               )}
 
-              <div className="flex justify-between items-center mt-4">
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-4 gap-3">
+                <div className="flex items-center flex-wrap gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   <span>Created {format(new Date(payment.created_at), 'MMM dd, yyyy')}</span>
                   {payment.payment_date && (
                     <>
-                      <span>•</span>
+                      <span className="hidden sm:inline">•</span>
                       <span>Paid {format(new Date(payment.payment_date), 'MMM dd, yyyy')}</span>
                     </>
                   )}
                 </div>
                 
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap gap-2">
                   {payment.status === 'pending' && (
                     <>
                       <Button
@@ -152,18 +152,22 @@ export function PaymentsTab({ payments, isLoading }: PaymentsTabProps) {
                         variant="outline"
                         onClick={() => handleStatusUpdate(payment.id, 'approved')}
                         disabled={updateStatus.isPending}
+                        className="flex-1 sm:flex-none"
                       >
                         <CheckCircle className="mr-1 h-3 w-3" />
-                        Approve
+                        <span className="hidden sm:inline">Approve</span>
+                        <span className="sm:hidden">✓</span>
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleStatusUpdate(payment.id, 'cancelled')}
                         disabled={updateStatus.isPending}
+                        className="flex-1 sm:flex-none"
                       >
                         <XCircle className="mr-1 h-3 w-3" />
-                        Cancel
+                        <span className="hidden sm:inline">Cancel</span>
+                        <span className="sm:hidden">✕</span>
                       </Button>
                     </>
                   )}
@@ -172,18 +176,22 @@ export function PaymentsTab({ payments, isLoading }: PaymentsTabProps) {
                       size="sm"
                       onClick={() => handleStatusUpdate(payment.id, 'paid')}
                       disabled={updateStatus.isPending}
+                      className="flex-1 sm:flex-none"
                     >
                       <DollarSign className="mr-1 h-3 w-3" />
-                      Mark as Paid
+                      <span className="hidden sm:inline">Mark as Paid</span>
+                      <span className="sm:hidden">Pay</span>
                     </Button>
                   )}
                   <Button 
                     size="sm" 
                     variant="ghost"
                     onClick={() => setSelectedPayment(payment)}
+                    className="flex-1 sm:flex-none"
                   >
                     <Eye className="mr-1 h-3 w-3" />
-                    Details
+                    <span className="hidden sm:inline">Details</span>
+                    <span className="sm:hidden">View</span>
                   </Button>
                   <Button
                     size="sm"

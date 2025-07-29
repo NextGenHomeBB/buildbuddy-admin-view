@@ -36,21 +36,21 @@ export default function AdminCosts() {
     .reduce((sum, e) => sum + e.amount, 0);
 
   return (
-    <div className="flex-1 space-y-6 p-8 pt-6">
+    <div className="flex-1 space-y-4 sm:space-y-6 p-4 sm:p-6 lg:p-8 pt-4 sm:pt-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Cost Management</h1>
-        <p className="text-muted-foreground">Manage worker payments, salaries, and team finances</p>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Cost Management</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">Manage worker payments, salaries, and team finances</p>
       </div>
 
       {/* Overview Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Monthly Payroll</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalMonthlyPayroll.toLocaleString()}</div>
+            <div className="text-xl sm:text-2xl font-bold">${totalMonthlyPayroll.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               Total monthly salaries
             </p>
@@ -63,7 +63,7 @@ export default function AdminCosts() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{rates.length}</div>
+            <div className="text-xl sm:text-2xl font-bold">{rates.length}</div>
             <p className="text-xs text-muted-foreground">
               Workers with rates set
             </p>
@@ -76,7 +76,7 @@ export default function AdminCosts() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingPayments + pendingExpenses}</div>
+            <div className="text-xl sm:text-2xl font-bold">{pendingPayments + pendingExpenses}</div>
             <p className="text-xs text-muted-foreground">
               {pendingPayments} payments, {pendingExpenses} expenses
             </p>
@@ -89,7 +89,7 @@ export default function AdminCosts() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalPendingAmount.toLocaleString()}</div>
+            <div className="text-xl sm:text-2xl font-bold">${totalPendingAmount.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               Awaiting approval/payment
             </p>
@@ -99,11 +99,11 @@ export default function AdminCosts() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="rates">Worker Rates</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="expenses">Expenses</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="rates" className="text-xs sm:text-sm">Rates</TabsTrigger>
+          <TabsTrigger value="payments" className="text-xs sm:text-sm">Payments</TabsTrigger>
+          <TabsTrigger value="expenses" className="text-xs sm:text-sm">Expenses</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">

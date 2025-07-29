@@ -45,7 +45,7 @@ export function WorkerRatesTab({ rates, isLoading }: WorkerRatesTabProps) {
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {[...Array(6)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader>
@@ -63,20 +63,20 @@ export function WorkerRatesTab({ rates, isLoading }: WorkerRatesTabProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h3 className="text-lg font-medium">Worker Rates</h3>
           <p className="text-sm text-muted-foreground">
             Manage hourly rates, salaries, and payment types for your team
           </p>
         </div>
-        <Button onClick={handleAdd}>
+        <Button onClick={handleAdd} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Add Rate
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {rates.map((rate) => (
           <Card key={rate.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
