@@ -7,7 +7,7 @@ interface Task {
   priority: string;
   project?: { name: string };
   phase?: { name: string };
-  task_list?: { name: string; color_hex: string };
+  task_list?: { name: string; color_hex: string; owner_id?: string };
 }
 
 interface WorkerTaskItemProps {

@@ -11,10 +11,17 @@ export interface WorkerTask {
   priority: string;
   project_id: string;
   phase_id?: string;
+  list_id?: string;
+  assignee?: string;
   created_at: string;
   updated_at: string;
   project_name?: string;
   phase_name?: string;
+  task_list?: {
+    name: string;
+    color_hex: string;
+    owner_id: string;
+  };
 }
 
 export function useWorkerTasks() {
@@ -43,11 +50,17 @@ export function useWorkerTasks() {
           created_at,
           updated_at,
           assignee,
+          list_id,
           projects:project_id (
             name
           ),
           project_phases:phase_id (
             name
+          ),
+          task_lists:list_id (
+            name,
+            color_hex,
+            owner_id
           )
         `)
         .eq('assignee', user.id)

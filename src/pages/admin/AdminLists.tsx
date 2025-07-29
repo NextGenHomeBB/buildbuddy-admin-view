@@ -32,16 +32,17 @@ export function AdminLists() {
     task_count: workerTasks && selectedWorkerId === worker.id ? workerTasks.length : 0
   }));
 
-  // Separate tasks based on who created them vs who they're assigned to
+  // Separate tasks based on context - simplified for now
   const adminAssignedTasks = workerTasks?.filter(task => 
-    // Task is assigned to this worker but has a task_list (indicating admin organization)
-    // OR task is in a project context (project_id exists) which typically means admin/manager created
-    task.task_list || task.project_id
+    // Task is in a project phase (created by admin/manager in project management)
+    task.phase_id ||
+    // Task has project_id but no list (project-related task)
+    (task.project_id && !task.task_list)
   ) || [];
   
-  const selfCreatedTasks = workerTasks?.filter(task => 
-    // Task has no task_list AND no project_id (worker created it independently)
-    !task.task_list && !task.project_id
+  const workerCreatedTasks = workerTasks?.filter(task => 
+    // Task is in a task list (worker-created lists) OR has no project/phase context
+    task.task_list || (!task.phase_id && !task.project_id)
   ) || [];
 
   // Worker view
@@ -95,7 +96,7 @@ export function AdminLists() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              Self-Created Tasks ({selfCreatedTasks.length})
+              Worker Created Tasks ({workerCreatedTasks.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -103,9 +104,9 @@ export function AdminLists() {
               <div className="text-center py-8 text-muted-foreground">
                 Loading tasks...
               </div>
-            ) : selfCreatedTasks.length > 0 ? (
+            ) : workerCreatedTasks.length > 0 ? (
               <div className="space-y-3">
-                {selfCreatedTasks.map((task) => (
+                {workerCreatedTasks.map((task) => (
                   <WorkerTaskItem key={task.id} task={task} />
                 ))}
               </div>
