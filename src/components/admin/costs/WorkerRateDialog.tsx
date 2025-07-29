@@ -23,11 +23,16 @@ export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogP
     end_date: rate?.end_date || '',
   });
 
-  const { data: workers = [] } = useWorkers();
+  const { data: workers = [], isLoading: workersLoading } = useWorkers();
   const createRate = useCreateWorkerRate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.worker_id) {
+      alert('Please select a worker');
+      return;
+    }
     
     const data = {
       worker_id: formData.worker_id,
@@ -49,6 +54,10 @@ export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogP
           effective_date: new Date().toISOString().split('T')[0],
           end_date: '',
         });
+      },
+      onError: (error) => {
+        console.error('Error creating rate:', error);
+        alert('Failed to create worker rate. Please try again.');
       }
     });
   };
@@ -75,11 +84,17 @@ export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogP
                 <SelectValue placeholder="Select a worker" />
               </SelectTrigger>
               <SelectContent>
-                {workers.map((worker) => (
-                  <SelectItem key={worker.id} value={worker.id}>
-                    {worker.full_name}
-                  </SelectItem>
-                ))}
+                {workersLoading ? (
+                  <SelectItem value="" disabled>Loading workers...</SelectItem>
+                ) : workers.length === 0 ? (
+                  <SelectItem value="" disabled>No workers available</SelectItem>
+                ) : (
+                  workers.map((worker) => (
+                    <SelectItem key={worker.id} value={worker.id}>
+                      {worker.full_name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -160,7 +175,10 @@ export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogP
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createRate.isPending}>
+            <Button 
+              type="submit" 
+              disabled={createRate.isPending || workersLoading || !formData.worker_id}
+            >
               {createRate.isPending ? 'Saving...' : rate ? 'Update Rate' : 'Add Rate'}
             </Button>
           </DialogFooter>

@@ -13,20 +13,31 @@ export function useWorkers() {
   return useQuery({
     queryKey: ['workers'],
     queryFn: async (): Promise<Worker[]> => {
-      // Get all profiles first
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .order('full_name', { ascending: true });
+      try {
+        // Get all profiles that have worker or admin roles
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select(`
+            id, 
+            full_name, 
+            avatar_url
+          `)
+          .order('full_name', { ascending: true });
 
-      if (profilesError) throw profilesError;
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          throw profilesError;
+        }
 
-      // For now, return all profiles as workers since we can't access user_roles directly
-      // In production, you'd want to use a proper view or join
-      return (profiles || []).map(profile => ({
-        ...profile,
-        role: 'worker' // Default role
-      }));
+        return (profiles || []).map(profile => ({
+          ...profile,
+          role: 'worker', // Default role
+          full_name: profile.full_name || 'Unknown User'
+        }));
+      } catch (error) {
+        console.error('Error in useWorkers:', error);
+        return [];
+      }
     },
   });
 }
