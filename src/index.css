@@ -180,4 +180,33 @@
       font-size: 16px; /* Prevents zoom on iOS */
     }
   }
+
+  /* PWA & Mobile Optimizations */
+  .slide-transition {
+    @apply transition-transform duration-300 ease-in-out;
+  }
+
+  .mobile-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* Enhanced animations for mobile */
+  @keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+
+  @keyframes slideOutRight {
+    from { transform: translateX(0); }
+    to { transform: translateX(100%); }
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  .animate-slide-out-right {
+    animation: slideOutRight 0.3s ease-out;
+  }
 }

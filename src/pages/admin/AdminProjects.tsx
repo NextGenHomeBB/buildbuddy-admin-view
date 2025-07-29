@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Plus, Eye, Edit, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Plus, Eye, Edit, Trash2, Filter } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +16,10 @@ import { useNavigate } from 'react-router-dom';
 import { useProjects, Project } from '@/hooks/useProjects';
 import { ProjectDrawer } from '@/components/admin/ProjectDrawer';
 import { DeleteProjectDialog } from '@/components/admin/DeleteProjectDialog';
+import { FloatingActionButton } from '@/components/ui/floating-action-button';
+import { SlidePanel } from '@/components/ui/slide-panel';
+import { NetworkStatus } from '@/components/ui/network-status';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 const getStatusBadgeVariant = (status: string) => {
@@ -39,6 +43,7 @@ const getStatusBadgeVariant = (status: string) => {
 export function AdminProjects() {
   console.log('AdminProjects component rendering...');
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   console.log('useNavigate hook called');
   
   const { data: projects = [], isLoading } = useProjects();
@@ -47,6 +52,7 @@ export function AdminProjects() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
 
   const handleEdit = (project: Project) => {
     setSelectedProject(project);
@@ -170,6 +176,8 @@ export function AdminProjects() {
 
   return (
     <div className="space-y-6">
+      <NetworkStatus />
+      
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -180,14 +188,26 @@ export function AdminProjects() {
             Manage and monitor all your projects in one place.
           </p>
         </div>
-        <Button
-          data-testid="new-project-button"
-          onClick={() => setDrawerOpen(true)}
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          New Project
-        </Button>
+        {!isMobile && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsFilterPanelOpen(true)}
+              className="gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              Filter
+            </Button>
+            <Button
+              data-testid="new-project-button"
+              onClick={() => setDrawerOpen(true)}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Projects Table */}
@@ -219,6 +239,57 @@ export function AdminProjects() {
         }}
         project={projectToDelete}
       />
+
+      {/* Mobile FAB */}
+      {isMobile && (
+        <FloatingActionButton onClick={() => setDrawerOpen(true)}>
+          <Plus className="h-6 w-6" />
+        </FloatingActionButton>
+      )}
+
+      {/* Mobile Filter Panel */}
+      <SlidePanel
+        isOpen={isFilterPanelOpen}
+        onClose={() => setIsFilterPanelOpen(false)}
+        title="Filter Projects"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium">Status</label>
+            <div className="mt-2 space-y-2">
+              <label className="flex items-center space-x-2">
+                <input type="checkbox" className="rounded" />
+                <span className="text-sm">Active</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input type="checkbox" className="rounded" />
+                <span className="text-sm">Completed</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input type="checkbox" className="rounded" />
+                <span className="text-sm">On Hold</span>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium">Priority</label>
+            <div className="mt-2 space-y-2">
+              <label className="flex items-center space-x-2">
+                <input type="checkbox" className="rounded" />
+                <span className="text-sm">High</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input type="checkbox" className="rounded" />
+                <span className="text-sm">Medium</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input type="checkbox" className="rounded" />
+                <span className="text-sm">Low</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </SlidePanel>
     </div>
   );
 }
