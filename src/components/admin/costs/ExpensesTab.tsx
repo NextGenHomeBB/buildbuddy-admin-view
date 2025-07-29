@@ -7,6 +7,7 @@ import { Plus, Eye, DollarSign, Calendar, CheckCircle, XCircle, FileText } from 
 import { WorkerExpense } from '@/hooks/useWorkerCosts';
 import { format } from 'date-fns';
 import { useUpdateExpenseStatus } from '@/hooks/useWorkerCosts';
+import { ExpenseDialog } from './ExpenseDialog';
 
 interface ExpensesTabProps {
   expenses: WorkerExpense[];
@@ -14,6 +15,7 @@ interface ExpensesTabProps {
 }
 
 export function ExpensesTab({ expenses, isLoading }: ExpensesTabProps) {
+  const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
   const updateStatus = useUpdateExpenseStatus();
 
   const getStatusColor = (status: string) => {
@@ -59,7 +61,7 @@ export function ExpensesTab({ expenses, isLoading }: ExpensesTabProps) {
             Review and approve worker expense claims and reimbursements
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setIsExpenseDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Expense
         </Button>
@@ -181,13 +183,18 @@ export function ExpensesTab({ expenses, isLoading }: ExpensesTabProps) {
             <p className="text-sm text-muted-foreground mb-4">
               Worker expense claims will appear here for review and approval
             </p>
-            <Button>
+            <Button onClick={() => setIsExpenseDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add Expense
             </Button>
           </CardContent>
         </Card>
       )}
+
+      <ExpenseDialog 
+        open={isExpenseDialogOpen} 
+        onOpenChange={setIsExpenseDialogOpen} 
+      />
     </div>
   );
 }

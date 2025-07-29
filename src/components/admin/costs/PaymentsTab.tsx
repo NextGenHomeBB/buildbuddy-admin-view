@@ -7,6 +7,7 @@ import { Plus, Eye, DollarSign, Calendar, CheckCircle, XCircle } from 'lucide-re
 import { WorkerPayment } from '@/hooks/useWorkerCosts';
 import { format } from 'date-fns';
 import { useUpdatePaymentStatus } from '@/hooks/useWorkerCosts';
+import { PaymentDialog } from './PaymentDialog';
 
 interface PaymentsTabProps {
   payments: WorkerPayment[];
@@ -15,6 +16,7 @@ interface PaymentsTabProps {
 
 export function PaymentsTab({ payments, isLoading }: PaymentsTabProps) {
   const [selectedPayment, setSelectedPayment] = useState<WorkerPayment | null>(null);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const updateStatus = useUpdatePaymentStatus();
 
   const getStatusColor = (status: string) => {
@@ -60,7 +62,7 @@ export function PaymentsTab({ payments, isLoading }: PaymentsTabProps) {
             Track and manage worker payments and payroll
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setIsPaymentDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Create Payment
         </Button>
@@ -186,13 +188,18 @@ export function PaymentsTab({ payments, isLoading }: PaymentsTabProps) {
             <p className="text-sm text-muted-foreground mb-4">
               Payment records will appear here once you create them
             </p>
-            <Button>
+            <Button onClick={() => setIsPaymentDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Create First Payment
             </Button>
           </CardContent>
         </Card>
       )}
+
+      <PaymentDialog 
+        open={isPaymentDialogOpen} 
+        onOpenChange={setIsPaymentDialogOpen} 
+      />
     </div>
   );
 }

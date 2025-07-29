@@ -239,6 +239,40 @@ export function useUpdatePaymentStatus() {
   });
 }
 
+// Hook to create worker expense
+export function useCreateWorkerExpense() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (data: Omit<WorkerExpense, 'id' | 'created_at' | 'updated_at' | 'profiles' | 'projects' | 'approved_by' | 'approved_at'>) => {
+      const { data: result, error } = await supabase
+        .from('worker_expenses')
+        .insert(data)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['worker-expenses'] });
+      toast({
+        title: "Success",
+        description: "Expense claim created successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create expense claim",
+        variant: "destructive",
+      });
+      console.error('Error creating expense:', error);
+    },
+  });
+}
+
 // Hook to update expense status
 export function useUpdateExpenseStatus() {
   const queryClient = useQueryClient();
