@@ -37,7 +37,7 @@ export function WorkerCard({ worker, onClick }: WorkerCardProps) {
       </CardHeader>
       <CardContent>
         <Badge variant="secondary" className="text-xs">
-          {worker.task_count || 0} tasks
+          {worker.task_count || 0} {(worker.task_count || 0) === 1 ? 'task' : 'tasks'}
         </Badge>
       </CardContent>
     </Card>
