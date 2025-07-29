@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useCreatePhase, useUpdatePhase, CreatePhaseData, ProjectPhase } from '@/hooks/usePhases';
 
 const phaseFormSchema = z.object({
@@ -52,6 +53,7 @@ interface PhaseDrawerProps {
 export function PhaseDrawer({ isOpen, onClose, projectId, editingPhase }: PhaseDrawerProps) {
   const createPhase = useCreatePhase();
   const updatePhase = useUpdatePhase();
+  const isMobile = useIsMobile();
   const [startDateOpen, setStartDateOpen] = useState(false);
   const [endDateOpen, setEndDateOpen] = useState(false);
 
@@ -219,7 +221,7 @@ export function PhaseDrawer({ isOpen, onClose, projectId, editingPhase }: PhaseD
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0" align="start" side={isMobile ? "top" : "bottom"}>
                     <Calendar
                       mode="single"
                       selected={form.watch('start_date') ? new Date(form.watch('start_date')) : undefined}
@@ -228,6 +230,7 @@ export function PhaseDrawer({ isOpen, onClose, projectId, editingPhase }: PhaseD
                         setStartDateOpen(false);
                       }}
                       initialFocus
+                      className={cn("p-3 pointer-events-auto")}
                     />
                   </PopoverContent>
                 </Popover>
@@ -252,7 +255,7 @@ export function PhaseDrawer({ isOpen, onClose, projectId, editingPhase }: PhaseD
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0" align="start" side={isMobile ? "top" : "bottom"}>
                     <Calendar
                       mode="single"
                       selected={form.watch('end_date') ? new Date(form.watch('end_date')) : undefined}
@@ -261,6 +264,7 @@ export function PhaseDrawer({ isOpen, onClose, projectId, editingPhase }: PhaseD
                         setEndDateOpen(false);
                       }}
                       initialFocus
+                      className={cn("p-3 pointer-events-auto")}
                     />
                   </PopoverContent>
                 </Popover>

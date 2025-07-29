@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useCreateTask, useUpdateTask, CreateTaskData, Task } from '@/hooks/useTasks';
 import { usePhases } from '@/hooks/usePhases';
 import { useWorkers } from '@/hooks/useWorkers';
@@ -64,6 +65,7 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }:
   const updateTaskSchedule = useUpdateTaskSchedule();
   const { data: phases = [] } = usePhases(projectId);
   const { data: workers = [] } = useWorkers();
+  const isMobile = useIsMobile();
   
   const [startDateOpen, setStartDateOpen] = useState(false);
   const [endDateOpen, setEndDateOpen] = useState(false);
@@ -315,7 +317,7 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }:
                       {form.watch('start_date') ? format(form.watch('start_date'), "PPP") : "Pick a date"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className="w-auto p-0" side={isMobile ? "top" : "bottom"}>
                     <Calendar
                       mode="single"
                       selected={form.watch('start_date')}
@@ -324,6 +326,7 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }:
                         setStartDateOpen(false);
                       }}
                       initialFocus
+                      className={cn("p-3 pointer-events-auto")}
                     />
                   </PopoverContent>
                 </Popover>
@@ -344,7 +347,7 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }:
                       {form.watch('end_date') ? format(form.watch('end_date'), "PPP") : "Pick a date"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className="w-auto p-0" side={isMobile ? "top" : "bottom"}>
                     <Calendar
                       mode="single"
                       selected={form.watch('end_date')}
@@ -353,6 +356,7 @@ export function TaskDrawer({ isOpen, onClose, projectId, editingTask, phaseId }:
                         setEndDateOpen(false);
                       }}
                       initialFocus
+                      className={cn("p-3 pointer-events-auto")}
                     />
                   </PopoverContent>
                 </Popover>

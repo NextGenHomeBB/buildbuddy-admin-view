@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Plus, Mail, Shield, Clock, Edit, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Plus, Mail, Shield, Clock, Edit, Trash2, Users } from 'lucide-react';
 import { DataTable } from '@/components/admin/DataTable';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { SkeletonCard } from '@/components/ui/skeleton-card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,38 +45,43 @@ const getRoleBadgeVariant = (role: string) => {
 export function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const isMobile = useIsMobile();
+
+  const fetchUsers = async (isRefresh = false) => {
+    try {
+      if (isRefresh) setRefreshing(true);
+      
+      // Get current session to pass authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        console.error('No valid session found');
+        return;
+      }
+
+      // Call our edge function to get users with their roles
+      const { data, error } = await supabase.functions.invoke('get_users_with_roles', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        console.error('Error fetching users with roles:', error);
+        return;
+      }
+
+      setUsers(data.users || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+      if (isRefresh) setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        // Get current session to pass authorization
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session?.access_token) {
-          console.error('No valid session found');
-          return;
-        }
-
-        // Call our edge function to get users with their roles
-        const { data, error } = await supabase.functions.invoke('get_users_with_roles', {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        });
-
-        if (error) {
-          console.error('Error fetching users with roles:', error);
-          return;
-        }
-
-        setUsers(data.users || []);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
   }, []);
 
@@ -237,18 +246,54 @@ export function AdminUsers() {
         </Button>
       </div>
 
-      {/* Users Table */}
+      {/* Users Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-8">
-          <div className="text-muted-foreground">Loading users...</div>
+        <div className="space-y-4">
+          {isMobile ? (
+            // Mobile skeleton cards
+            Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonCard key={i} showAvatar showBadge />
+            ))
+          ) : (
+            // Desktop skeleton table
+            <div className="space-y-4">
+              <div className="flex gap-4 p-4 border-b">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-4 bg-muted animate-pulse rounded w-24" />
+                ))}
+              </div>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex gap-4 p-4 border-b border-border/50">
+                  <div className="h-4 bg-muted animate-pulse rounded w-32" />
+                  <div className="h-4 bg-muted animate-pulse rounded w-20" />
+                  <div className="h-4 bg-muted animate-pulse rounded w-24" />
+                  <div className="h-4 bg-muted animate-pulse rounded w-16" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      ) : (
-        <DataTable
-          columns={columns}
-          data={users}
-          searchPlaceholder="Search users..."
-          mobileCardRender={renderMobileCard}
+      ) : users.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          title="No users found"
+          description="There are no users in your organization yet. Invite team members to get started."
+          action={{
+            label: "Invite User",
+            onClick: () => console.log("Invite user clicked")
+          }}
         />
+      ) : (
+        <PullToRefresh 
+          onRefresh={() => fetchUsers(true)}
+        >
+          <DataTable
+            columns={columns}
+            data={users}
+            searchPlaceholder="Search users..."
+            mobileCardRender={renderMobileCard}
+          />
+        </PullToRefresh>
       )}
     </div>
   );
