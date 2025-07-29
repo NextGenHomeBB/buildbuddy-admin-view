@@ -1,29 +1,54 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ArrowLeft, Plus, Users, List, CheckCircle2, Clock, Circle, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useTaskLists, useListTasks, useUnassignedTasks, useWorkerTasks } from '@/hooks/useTaskLists';
+import { useTaskLists, useListTasks, useUnassignedTasks, useWorkerTasks, useAssignTaskToList } from '@/hooks/useTaskLists';
 import { useWorkers } from '@/hooks/useWorkers';
+import { useProjects } from '@/hooks/useProjects';
 import { TaskListCard } from '@/components/lists/TaskListCard';
 import { CreateTaskListDialog } from '@/components/lists/CreateTaskListDialog';
-import { TaskListItem } from '@/components/lists/TaskListItem';
+import { DraggableTaskListItem } from '@/components/lists/DraggableTaskListItem';
 import { WorkerCard } from '@/components/lists/WorkerCard';
 import { WorkerTaskItem } from '@/components/lists/WorkerTaskItem';
+import { DragDropProvider } from '@/components/lists/DragDropProvider';
+import { DroppableListContainer } from '@/components/lists/DroppableListContainer';
+import { AdvancedFilter, FilterState } from '@/components/lists/AdvancedFilter';
+import { BulkActions } from '@/components/lists/BulkActions';
+import { useBulkTaskActions } from '@/hooks/useBulkTaskActions';
+import { useTaskFiltering } from '@/hooks/useTaskFiltering';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
 export function AdminLists() {
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'lists' | 'workers'>('workers');
   const [expandedDoneSections, setExpandedDoneSections] = useState<Record<string, boolean>>({});
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  const [filters, setFilters] = useState<FilterState>({
+    search: '',
+    status: [],
+    priority: [],
+    assignee: [],
+    project: [],
+  });
   
+  // Setup realtime sync
+  useRealtimeSync();
+  
+  // Queries
   const { data: taskLists, isLoading: isLoadingLists } = useTaskLists();
   const { data: listTasks, isLoading: isLoadingListTasks } = useListTasks(selectedListId || '');
   const { data: unassignedTasks, isLoading: isLoadingUnassigned } = useUnassignedTasks();
   const { data: workers, isLoading: isLoadingWorkers } = useWorkers();
   const { data: workerTasks, isLoading: isLoadingWorkerTasks } = useWorkerTasks(selectedWorkerId || '');
+  const { data: projects } = useProjects();
+  
+  // Mutations
+  const assignTaskToList = useAssignTaskToList();
+  const { bulkUpdateTasks, bulkDeleteTasks } = useBulkTaskActions();
 
   const selectedList = taskLists?.find(list => list.id === selectedListId);
   const selectedWorker = workers?.find(worker => worker.id === selectedWorkerId);
@@ -67,12 +92,110 @@ export function AdminLists() {
   const adminProgress = calculateProgress(adminAssignedTasks);
   const workerProgress = calculateProgress(workerCreatedTasks);
 
+  // Filter data
+  const filteredListTasks = useTaskFiltering(listTasks || [], filters);
+  const filteredUnassignedTasks = useTaskFiltering(unassignedTasks || [], filters);
+  const filteredWorkerTasks = useTaskFiltering(workerTasks || [], filters);
+
+  // Available options for filters
+  const availableAssignees = useMemo(() => {
+    const uniqueAssignees = new Map();
+    [...(listTasks || []), ...(unassignedTasks || []), ...(workerTasks || [])].forEach(task => {
+      if ((task as any).assignee_profile) {
+        uniqueAssignees.set(task.assignee, {
+          id: task.assignee,
+          name: (task as any).assignee_profile.full_name
+        });
+      }
+    });
+    return Array.from(uniqueAssignees.values());
+  }, [listTasks, unassignedTasks, workerTasks]);
+
+  const availableProjects = useMemo(() => {
+    return projects?.map(p => ({ id: p.id, name: p.name })) || [];
+  }, [projects]);
+
+  const availableLists = useMemo(() => {
+    return taskLists?.map(l => ({ id: l.id, name: l.name, color_hex: l.color_hex })) || [];
+  }, [taskLists]);
+
   // Toggle done section visibility
   const toggleDoneSection = (sectionKey: string) => {
     setExpandedDoneSections(prev => ({
       ...prev,
       [sectionKey]: !prev[sectionKey]
     }));
+  };
+
+  // Selection handlers
+  const handleTaskSelect = (taskId: string, isSelected: boolean) => {
+    setSelectedTaskIds(prev => 
+      isSelected 
+        ? [...prev, taskId]
+        : prev.filter(id => id !== taskId)
+    );
+  };
+
+  const handleSelectAll = (taskIds: string[], isSelected: boolean) => {
+    setSelectedTaskIds(prev => 
+      isSelected
+        ? [...new Set([...prev, ...taskIds])]
+        : prev.filter(id => !taskIds.includes(id))
+    );
+  };
+
+  const clearSelection = () => {
+    setSelectedTaskIds([]);
+  };
+
+  // Drag and drop handlers
+  const handleTaskMove = (taskId: string, newListId: string | null, newPosition: number) => {
+    assignTaskToList.mutate({ taskId, listId: newListId });
+  };
+
+  const handleTaskReorder = (taskId: string, newPosition: number) => {
+    // For now, we'll just update the position in the database
+    // This could be enhanced to update a position field if added to the schema
+  };
+
+  // Bulk action handlers
+  const handleBulkAssign = (assigneeId: string) => {
+    bulkUpdateTasks.mutate({
+      taskIds: selectedTaskIds,
+      updates: { assignee: assigneeId }
+    });
+    clearSelection();
+  };
+
+  const handleBulkMoveToList = (listId: string) => {
+    bulkUpdateTasks.mutate({
+      taskIds: selectedTaskIds,
+      updates: { list_id: listId }
+    });
+    clearSelection();
+  };
+
+  const handleBulkStatusChange = (status: string) => {
+    bulkUpdateTasks.mutate({
+      taskIds: selectedTaskIds,
+      updates: { status }
+    });
+    clearSelection();
+  };
+
+  const handleBulkDelete = () => {
+    bulkDeleteTasks.mutate(selectedTaskIds);
+    clearSelection();
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      search: '',
+      status: [],
+      priority: [],
+      assignee: [],
+      project: [],
+    });
   };
 
   // Render task section
@@ -117,11 +240,16 @@ export function AdminLists() {
                     <h4 className="font-medium text-muted-foreground">To Do ({grouped.todo.length})</h4>
                   </button>
                   {expandedDoneSections[`todo-${sectionKey}`] && (
-                    <div className="space-y-3 pl-6 animate-fade-in">
-                      {grouped.todo.map((task) => (
-                        <WorkerTaskItem key={task.id} task={task} />
-                      ))}
-                    </div>
+                     <div className="space-y-3 pl-6 animate-fade-in">
+                       {grouped.todo.map((task) => (
+                         <DraggableTaskListItem 
+                           key={task.id} 
+                           task={task}
+                           isSelected={selectedTaskIds.includes(task.id)}
+                           onSelect={handleTaskSelect}
+                         />
+                       ))}
+                     </div>
                   )}
                 </div>
               )}
@@ -133,11 +261,16 @@ export function AdminLists() {
                     <Clock className="h-4 w-4 text-blue-500" />
                     <h4 className="font-medium text-blue-700">In Progress ({grouped.in_progress.length})</h4>
                   </div>
-                  <div className="space-y-3 pl-6">
-                    {grouped.in_progress.map((task) => (
-                      <WorkerTaskItem key={task.id} task={task} />
-                    ))}
-                  </div>
+                   <div className="space-y-3 pl-6">
+                     {grouped.in_progress.map((task) => (
+                       <DraggableTaskListItem 
+                         key={task.id} 
+                         task={task}
+                         isSelected={selectedTaskIds.includes(task.id)}
+                         onSelect={handleTaskSelect}
+                       />
+                     ))}
+                   </div>
                 </div>
               )}
 
@@ -157,11 +290,16 @@ export function AdminLists() {
                     <h4 className="font-medium text-green-700">Done ({grouped.done.length})</h4>
                   </button>
                   {isDoneExpanded && (
-                    <div className="space-y-3 pl-6 animate-fade-in">
-                      {grouped.done.map((task) => (
-                        <WorkerTaskItem key={task.id} task={task} />
-                      ))}
-                    </div>
+                     <div className="space-y-3 pl-6 animate-fade-in">
+                       {grouped.done.map((task) => (
+                         <DraggableTaskListItem 
+                           key={task.id} 
+                           task={task}
+                           isSelected={selectedTaskIds.includes(task.id)}
+                           onSelect={handleTaskSelect}
+                         />
+                       ))}
+                     </div>
                   )}
                 </div>
               )}
@@ -198,23 +336,41 @@ export function AdminLists() {
             </div>
           ) : (
             <>
-              {renderTaskSection(
-                "Admin Assigned Tasks",
-                <div className="w-2 h-2 rounded-full bg-blue-500"></div>,
-                adminAssignedTasks,
-                "blue",
-                adminProgress,
-                `admin-${selectedWorkerId}`
-              )}
-              
-              {renderTaskSection(
-                "Worker Created Tasks", 
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>,
-                workerCreatedTasks,
-                "green", 
-                workerProgress,
-                `worker-${selectedWorkerId}`
-              )}
+              <DragDropProvider
+                tasks={filteredWorkerTasks}
+                onTaskMove={handleTaskMove}
+                onTaskReorder={handleTaskReorder}
+              >
+                {/* Bulk Actions */}
+                <BulkActions
+                  selectedTaskIds={selectedTaskIds}
+                  onBulkAssign={handleBulkAssign}
+                  onBulkMoveToList={handleBulkMoveToList}
+                  onBulkDelete={handleBulkDelete}
+                  onBulkStatusChange={handleBulkStatusChange}
+                  onClearSelection={clearSelection}
+                  availableAssignees={availableAssignees}
+                  availableLists={availableLists}
+                />
+
+                {renderTaskSection(
+                  "Admin Assigned Tasks",
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>,
+                  adminAssignedTasks,
+                  "blue",
+                  adminProgress,
+                  `admin-${selectedWorkerId}`
+                )}
+                
+                {renderTaskSection(
+                  "Worker Created Tasks", 
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>,
+                  workerCreatedTasks,
+                  "green", 
+                  workerProgress,
+                  `worker-${selectedWorkerId}`
+                )}
+              </DragDropProvider>
             </>
           )}
         </div>
@@ -251,25 +407,72 @@ export function AdminLists() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoadingListTasks ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Loading tasks...
+            <DragDropProvider
+              tasks={filteredListTasks}
+              onTaskMove={handleTaskMove}
+              onTaskReorder={handleTaskReorder}
+            >
+              {/* Advanced Filter */}
+              <div className="mb-4">
+                <AdvancedFilter
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                  availableAssignees={availableAssignees}
+                  availableProjects={availableProjects}
+                  onClearFilters={clearFilters}
+                />
               </div>
-            ) : listTasks && listTasks.length > 0 ? (
-              <div className="space-y-3">
-                {listTasks.map((task) => (
-                  <TaskListItem 
-                    key={task.id} 
-                    task={task} 
-                    showRemoveButton={true}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No tasks in this list yet.
-              </div>
-            )}
+
+              {/* Bulk Actions */}
+              <BulkActions
+                selectedTaskIds={selectedTaskIds}
+                onBulkAssign={handleBulkAssign}
+                onBulkMoveToList={handleBulkMoveToList}
+                onBulkDelete={handleBulkDelete}
+                onBulkStatusChange={handleBulkStatusChange}
+                onClearSelection={clearSelection}
+                availableAssignees={availableAssignees}
+                availableLists={availableLists}
+              />
+
+              {isLoadingListTasks ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Loading tasks...
+                </div>
+              ) : filteredListTasks && filteredListTasks.length > 0 ? (
+                <DroppableListContainer id={`list-${selectedListId}`}>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 mb-3">
+                      <input
+                        type="checkbox"
+                        checked={filteredListTasks.every(task => selectedTaskIds.includes(task.id))}
+                        onChange={(e) => handleSelectAll(filteredListTasks.map(t => t.id), e.target.checked)}
+                        className="rounded border-border text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        Select all ({filteredListTasks.length})
+                      </span>
+                    </div>
+                    {filteredListTasks.map((task) => (
+                      <DraggableTaskListItem 
+                        key={task.id} 
+                        task={task} 
+                        showRemoveButton={true}
+                        isSelected={selectedTaskIds.includes(task.id)}
+                        onSelect={handleTaskSelect}
+                      />
+                    ))}
+                  </div>
+                </DroppableListContainer>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  {filters.search || filters.status.length > 0 || filters.priority.length > 0 || filters.assignee.length > 0 || filters.project.length > 0
+                    ? "No tasks match the current filters."
+                    : "No tasks in this list yet."
+                  }
+                </div>
+              )}
+            </DragDropProvider>
           </CardContent>
         </Card>
       </div>
@@ -296,8 +499,34 @@ export function AdminLists() {
         </TabsList>
 
         <TabsContent value="lists" className="space-y-6">
-          {/* Task Lists Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {/* Advanced Filter */}
+          <AdvancedFilter
+            filters={filters}
+            onFiltersChange={setFilters}
+            availableAssignees={availableAssignees}
+            availableProjects={availableProjects}
+            onClearFilters={clearFilters}
+          />
+
+          {/* Bulk Actions */}
+          <BulkActions
+            selectedTaskIds={selectedTaskIds}
+            onBulkAssign={handleBulkAssign}
+            onBulkMoveToList={handleBulkMoveToList}
+            onBulkDelete={handleBulkDelete}
+            onBulkStatusChange={handleBulkStatusChange}
+            onClearSelection={clearSelection}
+            availableAssignees={availableAssignees}
+            availableLists={availableLists}
+          />
+
+          <DragDropProvider
+            tasks={[...(filteredListTasks || []), ...(filteredUnassignedTasks || [])]}
+            onTaskMove={handleTaskMove}
+            onTaskReorder={handleTaskReorder}
+          >
+            {/* Task Lists Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {isLoadingLists ? (
               <div className="col-span-full text-center py-8 text-muted-foreground">
                 Loading lists...
@@ -327,35 +556,63 @@ export function AdminLists() {
             )}
           </div>
 
-          {/* Unassigned Tasks */}
-          {unassignedTasks && unassignedTasks.length > 0 && (
-            <>
-              <Separator className="my-8" />
-              <Card className="bg-card border-border">
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    Unassigned Tasks ({unassignedTasks.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {isLoadingUnassigned ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Loading tasks...
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {unassignedTasks.map((task) => (
-                        <TaskListItem key={task.id} task={task} />
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </>
-          )}
+            {/* Unassigned Tasks */}
+            {filteredUnassignedTasks && filteredUnassignedTasks.length > 0 && (
+              <>
+                <Separator className="my-8" />
+                <Card className="bg-card border-border">
+                  <CardHeader>
+                    <CardTitle className="text-lg">
+                      Unassigned Tasks ({filteredUnassignedTasks.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoadingUnassigned ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Loading tasks...
+                      </div>
+                    ) : (
+                      <DroppableListContainer id="unassigned">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 mb-3">
+                            <input
+                              type="checkbox"
+                              checked={filteredUnassignedTasks.every(task => selectedTaskIds.includes(task.id))}
+                              onChange={(e) => handleSelectAll(filteredUnassignedTasks.map(t => t.id), e.target.checked)}
+                              className="rounded border-border text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              Select all ({filteredUnassignedTasks.length})
+                            </span>
+                          </div>
+                          {filteredUnassignedTasks.map((task) => (
+                            <DraggableTaskListItem 
+                              key={task.id} 
+                              task={task}
+                              isSelected={selectedTaskIds.includes(task.id)}
+                              onSelect={handleTaskSelect}
+                            />
+                          ))}
+                        </div>
+                      </DroppableListContainer>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </DragDropProvider>
         </TabsContent>
 
         <TabsContent value="workers" className="space-y-6">
+          {/* Advanced Filter */}
+          <AdvancedFilter
+            filters={filters}
+            onFiltersChange={setFilters}
+            availableAssignees={availableAssignees}
+            availableProjects={availableProjects}
+            onClearFilters={clearFilters}
+          />
+
           {/* Workers Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {isLoadingWorkers ? (
