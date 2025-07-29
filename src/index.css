@@ -147,4 +147,9 @@
   .admin-shadow {
     box-shadow: var(--shadow-elegant);
   }
+  
+  /* Mobile Safe Area */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }

@@ -11,6 +11,7 @@ import {
   RowSelectionState,
   useReactTable,
 } from '@tanstack/react-table';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Table,
   TableBody,
@@ -45,6 +46,7 @@ interface DataTableProps<TData, TValue> {
   enableRowSelection?: boolean;
   onRowSelectionChange?: (selection: Record<string, boolean>) => void;
   rowSelection?: Record<string, boolean>;
+  mobileCardRender?: (item: TData, index: number) => React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -55,7 +57,9 @@ export function DataTable<TData, TValue>({
   enableRowSelection = false,
   onRowSelectionChange,
   rowSelection: externalRowSelection = {},
+  mobileCardRender,
 }: DataTableProps<TData, TValue>) {
+  const isMobile = useIsMobile();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -95,6 +99,77 @@ export function DataTable<TData, TValue>({
     },
   });
 
+  // Mobile view with cards
+  if (isMobile && mobileCardRender) {
+    return (
+      <div className="space-y-4">
+        {/* Mobile Search */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={searchPlaceholder}
+              value={globalFilter}
+              onChange={(event) => setGlobalFilter(event.target.value)}
+              className="pl-10 h-12"
+            />
+          </div>
+          <Button variant="outline" size="default" className="px-4 h-12">
+            <SlidersHorizontal className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Results count */}
+        <div className="text-sm text-muted-foreground">
+          {table.getFilteredRowModel().rows.length} of {data.length} results
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="space-y-3">
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row, index) => (
+              <div key={row.id} className="animate-fade-in">
+                {mobileCardRender(row.original, index)}
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No results found.
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Pagination */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop view with table
   return (
     <div className="space-y-4">
       {/* Search and Filters */}
