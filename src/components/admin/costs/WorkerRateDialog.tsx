@@ -28,8 +28,10 @@ export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogP
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted with data:', formData);
     
     if (!formData.worker_id) {
+      console.error('No worker selected');
       alert('Please select a worker');
       return;
     }
@@ -41,10 +43,14 @@ export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogP
       monthly_salary: formData.payment_type === 'salary' ? parseFloat(formData.monthly_salary) : null,
       effective_date: formData.effective_date,
       end_date: formData.end_date || null,
+      created_by: null, // Add created_by field
     };
+
+    console.log('Processed data for mutation:', data);
 
     createRate.mutate(data, {
       onSuccess: () => {
+        console.log('Dialog onSuccess callback');
         onOpenChange(false);
         setFormData({
           worker_id: '',
@@ -56,8 +62,8 @@ export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogP
         });
       },
       onError: (error) => {
-        console.error('Error creating rate:', error);
-        alert('Failed to create worker rate. Please try again.');
+        console.error('Dialog onError callback:', error);
+        alert(`Failed to create worker rate: ${error.message}`);
       }
     });
   };

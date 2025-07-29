@@ -143,29 +143,44 @@ export function useCreateWorkerRate() {
 
   return useMutation({
     mutationFn: async (data: Omit<WorkerRate, 'id' | 'created_at' | 'updated_at' | 'profiles'>) => {
-      const { data: result, error } = await supabase
-        .from('worker_rates')
-        .insert(data)
-        .select()
-        .single();
+      console.log('Creating worker rate with data:', data);
+      
+      try {
+        const { data: result, error } = await supabase
+          .from('worker_rates')
+          .insert(data)
+          .select()
+          .single();
 
-      if (error) throw error;
-      return result;
+        console.log('Supabase response:', { result, error });
+
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
+        
+        console.log('Worker rate created successfully:', result);
+        return result;
+      } catch (err) {
+        console.error('Mutation function error:', err);
+        throw err;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log('Mutation onSuccess called with:', result);
       queryClient.invalidateQueries({ queryKey: ['worker-rates'] });
       toast({
         title: "Success",
-        description: "Worker rate updated successfully",
+        description: "Worker rate created successfully",
       });
     },
     onError: (error) => {
+      console.error('Mutation onError called with:', error);
       toast({
         title: "Error",
-        description: "Failed to update worker rate",
+        description: `Failed to create worker rate: ${error.message}`,
         variant: "destructive",
       });
-      console.error('Error updating worker rate:', error);
     },
   });
 }
