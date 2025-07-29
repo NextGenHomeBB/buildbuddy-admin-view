@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
+import { SkeletonCard } from '@/components/ui/skeleton-card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { DollarSign, Clock, FileText } from 'lucide-react';
 
 interface PaymentRecord {
@@ -49,33 +51,11 @@ export function PaymentHistory() {
   };
 
   if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Payment History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="animate-pulse flex justify-between items-center p-3 border rounded">
-                <div className="space-y-1">
-                  <div className="h-4 bg-muted rounded w-32"></div>
-                  <div className="h-3 bg-muted rounded w-20"></div>
-                </div>
-                <div className="h-6 bg-muted rounded w-16"></div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <SkeletonCard />;
   }
 
   return (
-    <Card>
+    <Card className="touch-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
@@ -84,15 +64,15 @@ export function PaymentHistory() {
       </CardHeader>
       <CardContent>
         {payments.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground">
-            <DollarSign className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No payment records yet</p>
-            <p className="text-xs">Complete shifts to generate payments</p>
-          </div>
+          <EmptyState
+            icon={DollarSign}
+            title="No payment records yet"
+            description="Complete shifts to generate payments"
+          />
         ) : (
           <div className="space-y-3">
             {payments.map((payment) => (
-              <div key={payment.id} className="flex justify-between items-center p-3 border rounded hover:bg-muted/30 transition-colors">
+              <div key={payment.id} className="flex justify-between items-center p-3 border rounded touch-card-item">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium">

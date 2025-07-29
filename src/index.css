@@ -191,6 +191,30 @@
     padding-top: env(safe-area-inset-top);
   }
 
+  /* Mobile touch optimizations */
+  .touch-card {
+    @apply transition-all duration-200 hover:shadow-md active:scale-95 cursor-pointer;
+  }
+
+  .touch-button {
+    @apply transition-all duration-150 active:scale-95 touch-manipulation;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .touch-card-item {
+    @apply transition-colors duration-200 hover:bg-muted/30 active:bg-muted/50 cursor-pointer;
+  }
+
+  /* Enhanced mobile interactions */
+  .floating-action {
+    @apply fixed bottom-6 right-6 z-50 rounded-full shadow-lg hover:shadow-xl transition-all duration-200;
+  }
+
+  .pull-indicator {
+    @apply absolute top-0 left-1/2 transform -translate-x-1/2 text-muted-foreground;
+  }
+
   /* Enhanced animations for mobile */
   @keyframes slideInRight {
     from { transform: translateX(100%); }

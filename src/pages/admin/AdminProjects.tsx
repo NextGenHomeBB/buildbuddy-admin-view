@@ -242,9 +242,11 @@ export function AdminProjects() {
 
       {/* Mobile FAB */}
       {isMobile && (
-        <FloatingActionButton onClick={() => setDrawerOpen(true)}>
-          <Plus className="h-6 w-6" />
-        </FloatingActionButton>
+        <FloatingActionButton 
+          icon={Plus}
+          onClick={() => setDrawerOpen(true)}
+          label="Add Project"
+        />
       )}
 
       {/* Mobile Filter Panel */}

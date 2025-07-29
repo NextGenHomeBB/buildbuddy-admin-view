@@ -5,11 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useShiftTracker } from '@/hooks/useShiftTracker';
 import { useWorkerProjects } from '@/hooks/useWorkerProjects';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { Clock, Play, Square, DollarSign } from 'lucide-react';
 
 export function ShiftTracker() {
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { triggerHaptic } = useHapticFeedback();
   
   const { 
     currentShift, 
@@ -33,10 +35,12 @@ export function ShiftTracker() {
   }, []);
 
   const handleStartShift = () => {
+    triggerHaptic('medium');
     startShift(selectedProject || undefined);
   };
 
   const handleEndShift = () => {
+    triggerHaptic('heavy');
     endShift();
     setSelectedProject('');
   };
@@ -51,7 +55,7 @@ export function ShiftTracker() {
   const currentShiftDuration = getCurrentShiftDuration();
 
   return (
-    <Card className="border-2 border-primary/20">
+    <Card className="border-2 border-primary/20 touch-card">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
@@ -103,7 +107,7 @@ export function ShiftTracker() {
             <Button 
               onClick={handleStartShift} 
               disabled={isLoading}
-              className="flex-1"
+              className="flex-1 touch-button"
               size="lg"
             >
               <Play className="h-4 w-4 mr-2" />
@@ -114,7 +118,7 @@ export function ShiftTracker() {
               onClick={handleEndShift} 
               disabled={isLoading}
               variant="destructive"
-              className="flex-1"
+              className="flex-1 touch-button"
               size="lg"
             >
               <Square className="h-4 w-4 mr-2" />

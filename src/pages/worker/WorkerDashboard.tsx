@@ -6,10 +6,14 @@ import { useWorkerTasks } from '@/hooks/useWorkerTasks';
 import { ShiftTracker } from '@/components/worker/ShiftTracker';
 import { WeeklyEarnings } from '@/components/worker/WeeklyEarnings';
 import { PaymentHistory } from '@/components/worker/PaymentHistory';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+import { SkeletonCard } from '@/components/ui/skeleton-card';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { FolderOpen, CheckSquare, Clock, AlertCircle } from 'lucide-react';
 
 export function WorkerDashboard() {
   const { user } = useAuth();
+  const { triggerHaptic } = useHapticFeedback();
   
   console.log('WorkerDashboard: Current user:', { 
     id: user?.id, 
@@ -18,15 +22,20 @@ export function WorkerDashboard() {
   });
   
   // Get projects assigned to the current user
-  const { data: myProjects = [] } = useWorkerProjects();
+  const { data: myProjects = [], isLoading: projectsLoading, refetch: refetchProjects } = useWorkerProjects();
   
   // Get tasks assigned to the current user
-  const { data: myTasks = [] } = useWorkerTasks();
+  const { data: myTasks = [], isLoading: tasksLoading, refetch: refetchTasks } = useWorkerTasks();
   
   console.log('WorkerDashboard: Tasks data:', { 
     tasksCount: myTasks.length, 
     tasks: myTasks 
   });
+
+  const handleRefresh = async () => {
+    triggerHaptic('light');
+    await Promise.all([refetchProjects(), refetchTasks()]);
+  };
 
   const stats = [
     {
@@ -60,18 +69,19 @@ export function WorkerDashboard() {
   const currentUserName = user?.email?.split('@')[0] || 'User';
   
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Hi, {currentUserName}</h1>
-        <p className="text-muted-foreground">
-          {myTasks.length} tasks assigned
-        </p>
-        {isAdmin && (
-          <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm">
-            You are viewing as admin. To see worker tasks, please log in as a worker or use the admin calendar.
-          </div>
-        )}
-      </div>
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Hi, {currentUserName}</h1>
+          <p className="text-muted-foreground">
+            {myTasks.length} tasks assigned
+          </p>
+          {isAdmin && (
+            <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm">
+              You are viewing as admin. To see worker tasks, please log in as a worker or use the admin calendar.
+            </div>
+          )}
+        </div>
 
       {/* Shift Tracker - Prominent Section */}
       <div className="grid gap-4 lg:grid-cols-3">
@@ -83,20 +93,26 @@ export function WorkerDashboard() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.name}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {stat.name}
-              </CardTitle>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        {(projectsLoading || tasksLoading) ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))
+        ) : (
+          stats.map((stat) => (
+            <Card key={stat.name} className="touch-card">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {stat.name}
+                </CardTitle>
+                <stat.icon className={`h-4 w-4 ${stat.color}`} />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -147,7 +163,8 @@ export function WorkerDashboard() {
         </Card>
 
         <PaymentHistory />
+        </div>
       </div>
-    </div>
+    </PullToRefresh>
   );
 }
