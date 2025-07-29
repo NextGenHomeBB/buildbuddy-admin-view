@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Plus, Users, List, CheckCircle2, Clock, Circle } from 'lucide-react';
+import { ArrowLeft, Plus, Users, List, CheckCircle2, Clock, Circle, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -17,6 +17,7 @@ export function AdminLists() {
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'lists' | 'workers'>('workers');
+  const [expandedDoneSections, setExpandedDoneSections] = useState<Record<string, boolean>>({});
   
   const { data: taskLists, isLoading: isLoadingLists } = useTaskLists();
   const { data: listTasks, isLoading: isLoadingListTasks } = useListTasks(selectedListId || '');
@@ -68,9 +69,18 @@ export function AdminLists() {
   const adminProgress = calculateProgress(adminAssignedTasks);
   const workerProgress = calculateProgress(workerCreatedTasks);
 
+  // Toggle done section visibility
+  const toggleDoneSection = (sectionKey: string) => {
+    setExpandedDoneSections(prev => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey]
+    }));
+  };
+
   // Render task section
-  const renderTaskSection = (title: string, icon: any, tasks: any[], color: string, progress: number) => {
+  const renderTaskSection = (title: string, icon: any, tasks: any[], color: string, progress: number, sectionKey: string) => {
     const grouped = groupTasksByStatus(tasks);
+    const isDoneExpanded = expandedDoneSections[sectionKey] || false;
     
     return (
       <Card className="mb-6">
@@ -126,15 +136,25 @@ export function AdminLists() {
               {/* Done Tasks */}
               {grouped.done.length > 0 && (
                 <div>
-                  <div className="flex items-center gap-2 mb-3">
+                  <button
+                    onClick={() => toggleDoneSection(sectionKey)}
+                    className="flex items-center gap-2 mb-3 p-2 rounded-lg hover:bg-muted/50 transition-colors w-full text-left group"
+                  >
+                    {isDoneExpanded ? (
+                      <ChevronDown className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-green-500" />
+                    )}
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
                     <h4 className="font-medium text-green-700">Done ({grouped.done.length})</h4>
-                  </div>
-                  <div className="space-y-3 pl-6">
-                    {grouped.done.map((task) => (
-                      <WorkerTaskItem key={task.id} task={task} />
-                    ))}
-                  </div>
+                  </button>
+                  {isDoneExpanded && (
+                    <div className="space-y-3 pl-6 animate-fade-in">
+                      {grouped.done.map((task) => (
+                        <WorkerTaskItem key={task.id} task={task} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -175,7 +195,8 @@ export function AdminLists() {
                 <div className="w-2 h-2 rounded-full bg-blue-500"></div>,
                 adminAssignedTasks,
                 "blue",
-                adminProgress
+                adminProgress,
+                `admin-${selectedWorkerId}`
               )}
               
               {renderTaskSection(
@@ -183,7 +204,8 @@ export function AdminLists() {
                 <div className="w-2 h-2 rounded-full bg-green-500"></div>,
                 workerCreatedTasks,
                 "green", 
-                workerProgress
+                workerProgress,
+                `worker-${selectedWorkerId}`
               )}
             </>
           )}
