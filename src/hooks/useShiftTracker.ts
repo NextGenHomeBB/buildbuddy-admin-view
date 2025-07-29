@@ -73,6 +73,14 @@ export function useShiftTracker() {
     }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
+      console.log('Creating timesheet entry:', {
+        user_id: user.id,
+        project_id: data.project_id,
+        work_date: new Date().toISOString().split('T')[0],
+        hours: data.hours,
+        note: data.note,
+      });
+
       const { error } = await supabase
         .from('time_sheets')
         .insert({
@@ -83,15 +91,19 @@ export function useShiftTracker() {
           note: data.note,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw new Error(`Failed to save timesheet: ${error.message}`);
+      }
     },
     onSuccess: () => {
+      console.log('Shift recorded successfully');
       queryClient.invalidateQueries({ queryKey: ['today-shifts'] });
       toast.success('Shift recorded successfully');
     },
     onError: (error) => {
       console.error('Error creating timesheet:', error);
-      toast.error('Failed to record shift');
+      toast.error(`Failed to record shift: ${error.message}`);
     },
   });
 
