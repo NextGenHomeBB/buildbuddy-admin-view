@@ -119,7 +119,7 @@ export function TasksTable({ tasks, projectId, onTaskEdit, onTaskDelete }: Tasks
                 </Badge>
               </SelectValue>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-background border shadow-lg z-50">
               <SelectItem value="todo">To Do</SelectItem>
               <SelectItem value="in_progress">In Progress</SelectItem>
               <SelectItem value="done">Done</SelectItem>
@@ -169,7 +169,7 @@ export function TasksTable({ tasks, projectId, onTaskEdit, onTaskDelete }: Tasks
                 )}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-background border shadow-lg z-50">
               <SelectItem value="unassigned">Unassigned</SelectItem>
               {workers.map(worker => (
                 <SelectItem key={worker.id} value={worker.id}>
@@ -326,7 +326,7 @@ export function TasksTable({ tasks, projectId, onTaskEdit, onTaskDelete }: Tasks
                     </Badge>
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background border shadow-lg z-50">
                   <SelectItem value="todo">To Do</SelectItem>
                   <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="done">Done</SelectItem>
@@ -357,7 +357,7 @@ export function TasksTable({ tasks, projectId, onTaskEdit, onTaskDelete }: Tasks
                     )}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background border shadow-lg z-50">
                   <SelectItem value="unassigned">Unassigned</SelectItem>
                   {workers.map(worker => (
                     <SelectItem key={worker.id} value={worker.id}>
