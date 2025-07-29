@@ -1,5 +1,5 @@
 
-import { Home, FolderOpen, CheckSquare, User, Calendar } from 'lucide-react';
+import { Home, FolderOpen, CheckSquare, User, Calendar, List } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
@@ -14,6 +14,7 @@ import {
 const navigation = [
   { name: 'Dashboard', href: '/worker', icon: Home },
   { name: 'My Projects', href: '/worker/projects', icon: FolderOpen },
+  { name: 'My Lists', href: '/worker/lists', icon: List },
   { name: 'My Tasks', href: '/worker/tasks', icon: CheckSquare },
   { name: 'Calendar', href: '/worker/calendar', icon: Calendar },
   { name: 'Profile', href: '/worker/profile', icon: User },

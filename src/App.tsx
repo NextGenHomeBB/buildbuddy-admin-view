@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import { Auth } from "./pages/Auth";
 import { AdminOverview } from "./pages/admin/AdminOverview";
 import { AdminProjects } from "./pages/admin/AdminProjects";
+import { AdminLists } from "./pages/admin/AdminLists";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { AdminSettings } from "./pages/admin/AdminSettings";
 import { AdminCalendar } from "./pages/admin/AdminCalendar";
@@ -24,6 +25,7 @@ import { PhaseTemplateDetailPage } from "./pages/admin/PhaseTemplateDetailPage";
 import { Reports } from "./pages/admin/Reports";
 import { WorkerDashboard } from "./pages/worker/WorkerDashboard";
 import { WorkerProjects } from "./pages/worker/WorkerProjects";
+import { WorkerLists } from "./pages/worker/WorkerLists";
 import { WorkerProjectDetail } from "./pages/worker/WorkerProjectDetail";
 
 const queryClient = new QueryClient({
@@ -51,6 +53,7 @@ function App() {
                 <Route index element={<AdminOverview />} />
                 <Route path="overview" element={<AdminOverview />} />
                 <Route path="projects" element={<AdminProjects />} />
+                <Route path="lists" element={<AdminLists />} />
                 <Route path="calendar" element={<AdminCalendar />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="reports" element={<Reports />} />
@@ -66,6 +69,7 @@ function App() {
               <Route path="/worker" element={<RequireWorker><WorkerLayout /></RequireWorker>}>
                 <Route index element={<WorkerDashboard />} />
                 <Route path="projects" element={<WorkerProjects />} />
+                <Route path="lists" element={<WorkerLists />} />
                 <Route path="projects/:id" element={<WorkerProjectDetail />} />
                 <Route path="calendar" element={<WorkerCalendar />} />
               </Route>
