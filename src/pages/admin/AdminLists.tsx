@@ -15,7 +15,7 @@ import { WorkerTaskItem } from '@/components/lists/WorkerTaskItem';
 export function AdminLists() {
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'lists' | 'workers'>('lists');
+  const [activeTab, setActiveTab] = useState<'lists' | 'workers'>('workers');
   
   const { data: taskLists, isLoading: isLoadingLists } = useTaskLists();
   const { data: listTasks, isLoading: isLoadingListTasks } = useListTasks(selectedListId || '');
