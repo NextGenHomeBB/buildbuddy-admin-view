@@ -40,12 +40,19 @@ export function LiveShiftMonitor() {
   const { data: activeShifts = [], isLoading, refetch } = useQuery({
     queryKey: ['active-shifts'],
     queryFn: async (): Promise<ActiveShift[]> => {
+      console.log('🔍 Fetching active shifts...');
+      
       const { data: shifts, error } = await supabase
         .from('active_shifts')
         .select('*')
         .order('shift_start', { ascending: false });
 
-      if (error) throw error;
+      console.log('📊 Active shifts query result:', { shifts, error });
+
+      if (error) {
+        console.error('❌ Error fetching active shifts:', error);
+        throw error;
+      }
 
       // Get additional data for each shift
       const shiftsWithData = await Promise.all((shifts || []).map(async (shift) => {

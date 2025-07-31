@@ -40,17 +40,30 @@ export function useShiftTracker() {
   // Load ongoing shift and sync with database on mount
   useEffect(() => {
     const syncShiftWithDatabase = async () => {
-      if (!user?.id) return;
+      if (!user?.id) {
+        console.log('📋 No user ID for shift sync');
+        return;
+      }
+      
+      console.log('🔄 Syncing shift with database for user:', user.id);
       
       // Check if there's an active shift in the database
-      const { data: activeShift } = await supabase
+      const { data: activeShift, error } = await supabase
         .from('active_shifts')
         .select('*')
         .eq('worker_id', user.id)
         .single();
 
+      if (error && error.code !== 'PGRST116') {
+        console.error('❌ Error checking active shifts:', error);
+        return;
+      }
+
+      console.log('📊 Database active shift:', activeShift);
+
       if (activeShift) {
         // Database has active shift - sync localStorage
+        console.log('✅ Found active shift in database, syncing to localStorage');
         const syncedShift: ShiftSession = {
           startTime: activeShift.shift_start,
           projectId: activeShift.project_id,
@@ -63,6 +76,8 @@ export function useShiftTracker() {
       } else {
         // No active shift in database - check localStorage
         const savedShift = localStorage.getItem('currentShift');
+        console.log('📋 Checking localStorage shift:', savedShift);
+        
         if (savedShift) {
           try {
             const shift = JSON.parse(savedShift);
@@ -70,10 +85,12 @@ export function useShiftTracker() {
             const shiftAge = Date.now() - new Date(shift.startTime).getTime();
             if (shiftAge > 24 * 60 * 60 * 1000) {
               // Shift is too old, remove it
+              console.log('🗑️ Removing stale shift from localStorage (>24h old)');
               localStorage.removeItem('currentShift');
             } else {
               // Try to restore the shift in database
-              const { error } = await supabase
+              console.log('🔄 Attempting to restore shift to database');
+              const { error: restoreError } = await supabase
                 .from('active_shifts')
                 .insert({
                   worker_id: user.id,
@@ -84,15 +101,16 @@ export function useShiftTracker() {
                   total_break_duration: shift.totalBreakTime || 0
                 });
               
-              if (!error) {
+              if (!restoreError) {
+                console.log('✅ Successfully restored shift to database');
                 setCurrentShift(shift);
               } else {
-                console.error('Failed to sync shift to database:', error);
+                console.error('❌ Failed to restore shift to database:', restoreError);
                 localStorage.removeItem('currentShift');
               }
             }
           } catch (error) {
-            console.error('Error parsing saved shift:', error);
+            console.error('❌ Error parsing saved shift:', error);
             localStorage.removeItem('currentShift');
           }
         }
@@ -174,7 +192,25 @@ export function useShiftTracker() {
   });
 
   const startShift = async (projectId?: string, shiftType: 'regular' | 'overtime' = 'regular') => {
-    if (!currentRate || currentShift) return;
+    console.log('🚀 Starting shift:', { user: user?.id, projectId, shiftType, currentRate });
+    
+    if (!user?.id) {
+      console.error('❌ No user ID available');
+      toast.error('Please log in to start a shift');
+      return;
+    }
+
+    if (!currentRate) {
+      console.error('❌ No current rate available');
+      toast.error('No wage rate configured. Please contact admin.');
+      return;
+    }
+
+    if (currentShift) {
+      console.error('❌ Shift already active');
+      toast.error('Shift already active');
+      return;
+    }
 
     const newShift: ShiftSession = {
       startTime: new Date().toISOString(),
@@ -184,25 +220,36 @@ export function useShiftTracker() {
       shiftType
     };
 
+    console.log('📊 Inserting shift to database:', {
+      worker_id: user.id,
+      project_id: projectId || null,
+      shift_start: newShift.startTime,
+      shift_type: shiftType,
+      total_break_duration: 0
+    });
+
     // Insert into active_shifts table
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from('active_shifts')
       .insert({
-        worker_id: user?.id,
+        worker_id: user.id,
         project_id: projectId || null,
         shift_start: newShift.startTime,
         shift_type: shiftType,
         total_break_duration: 0
-      });
+      })
+      .select();
 
     if (error) {
-      console.error('Error starting shift:', error);
-      toast.error('Failed to start shift. Please try again.');
+      console.error('❌ Database insert error:', error);
+      toast.error(`Failed to start shift: ${error.message}`);
       return;
     }
 
+    console.log('✅ Shift inserted successfully:', data);
     setCurrentShift(newShift);
     localStorage.setItem('currentShift', JSON.stringify(newShift));
+    toast.success('Shift started successfully');
     
     // Haptic feedback
     if (navigator.vibrate) {
