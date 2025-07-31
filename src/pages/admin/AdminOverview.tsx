@@ -39,6 +39,7 @@ export function AdminOverview() {
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,14 +50,22 @@ export function AdminOverview() {
           hasSession: !!session, 
           hasUser: !!user, 
           isAdmin,
+          userRole: user?.role,
           userId: user?.id 
         });
+        return;
+      }
+
+      // Prevent duplicate fetches
+      if (hasInitialized) {
+        logger.debug('AdminOverview: Data already initialized, skipping fetch');
         return;
       }
 
       logger.debug('AdminOverview: Starting data fetch for admin user:', user.id);
       setLoading(true);
       setError(null);
+      setHasInitialized(true);
 
       try {
         // Test the current user role function first
@@ -116,11 +125,13 @@ export function AdminOverview() {
         logger.debug('Calculated stats:', newStats);
         setStats(newStats);
         setRecentProjects(recent || []);
+        logger.debug('AdminOverview: Data fetch completed successfully');
 
       } catch (error) {
         logger.error('Error fetching overview data:', error);
         setError(`Failed to load dashboard data: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
+        logger.debug('AdminOverview: Setting loading to false');
         setLoading(false);
       }
     };
