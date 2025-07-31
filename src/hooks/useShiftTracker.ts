@@ -113,6 +113,9 @@ export function useShiftTracker() {
       hours: number;
       note: string;
       project_id?: string;
+      break_duration?: number;
+      shift_type?: string;
+      location?: string;
     }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
@@ -122,6 +125,9 @@ export function useShiftTracker() {
         work_date: new Date().toISOString().split('T')[0],
         hours: data.hours,
         note: data.note,
+        break_duration: data.break_duration,
+        shift_type: data.shift_type,
+        location: data.location,
       });
 
       const { error } = await supabase
@@ -132,6 +138,9 @@ export function useShiftTracker() {
           work_date: new Date().toISOString().split('T')[0],
           hours: data.hours,
           note: data.note,
+          break_duration: data.break_duration || 0,
+          shift_type: data.shift_type || 'regular',
+          location: data.location,
         });
 
       if (error) {
@@ -225,6 +234,8 @@ export function useShiftTracker() {
       hours: workHours,
       note,
       project_id: currentShift.project_id,
+      break_duration: currentShift.breakDuration,
+      shift_type: currentShift.shiftType,
     });
 
     // Clear active shift

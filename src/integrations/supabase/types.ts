@@ -669,29 +669,38 @@ export type Database = {
       }
       time_sheets: {
         Row: {
+          break_duration: number | null
           created_at: string | null
           hours: number | null
           id: string
+          location: string | null
           note: string | null
           project_id: string | null
+          shift_type: string | null
           user_id: string | null
           work_date: string | null
         }
         Insert: {
+          break_duration?: number | null
           created_at?: string | null
           hours?: number | null
           id?: string
+          location?: string | null
           note?: string | null
           project_id?: string | null
+          shift_type?: string | null
           user_id?: string | null
           work_date?: string | null
         }
         Update: {
+          break_duration?: number | null
           created_at?: string | null
           hours?: number | null
           id?: string
+          location?: string | null
           note?: string | null
           project_id?: string | null
+          shift_type?: string | null
           user_id?: string | null
           work_date?: string | null
         }
@@ -1066,6 +1075,31 @@ export type Database = {
       }
     }
     Views: {
+      active_shifts: {
+        Row: {
+          break_duration: number | null
+          hourly_rate: number | null
+          note: string | null
+          payment_type: string | null
+          project_name: string | null
+          recorded_hours: number | null
+          shift_start: string | null
+          shift_type: string | null
+          work_date: string | null
+          worker_avatar: string | null
+          worker_id: string | null
+          worker_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_sheets_user_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "worker.my_tasks_view": {
         Row: {
           assigned_worker_id: string | null

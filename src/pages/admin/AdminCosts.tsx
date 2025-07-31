@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, DollarSign, Users, TrendingUp, Clock } from 'lucide-react';
 import { AdminHeader } from '@/components/admin/AdminHeader';
+import { LiveShiftMonitor } from '@/components/admin/LiveShiftMonitor';
 import { useWorkerRates, useWorkerPayments, useWorkerExpenses } from '@/hooks/useWorkerCosts';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -137,8 +138,9 @@ export default function AdminCosts() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
           <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="live" className="text-xs sm:text-sm">Live Shifts</TabsTrigger>
           <TabsTrigger value="rates" className="text-xs sm:text-sm">Rates</TabsTrigger>
           <TabsTrigger value="payments" className="text-xs sm:text-sm">Payments</TabsTrigger>
           <TabsTrigger value="expenses" className="text-xs sm:text-sm">Expenses</TabsTrigger>
@@ -151,6 +153,10 @@ export default function AdminCosts() {
             expenses={expenses}
             isLoading={ratesLoading || paymentsLoading || expensesLoading}
           />
+        </TabsContent>
+
+        <TabsContent value="live" className="space-y-4">
+          <LiveShiftMonitor />
         </TabsContent>
 
         <TabsContent value="rates" className="space-y-4">
