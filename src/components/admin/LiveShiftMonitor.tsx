@@ -40,27 +40,43 @@ export function LiveShiftMonitor() {
   const { data: activeShifts = [], isLoading } = useQuery({
     queryKey: ['active-shifts'],
     queryFn: async (): Promise<ActiveShift[]> => {
-      // This would be implemented as an edge function for complex calculations
-      // For now, we'll simulate with a basic query
       const { data: shifts, error } = await supabase
-        .from('time_sheets')
-        .select(`
-          *,
-          profiles!user_id (
-            full_name,
-            avatar_url
-          ),
-          projects (
-            name
-          )
-        `)
-        .eq('work_date', new Date().toISOString().split('T')[0])
-        .order('created_at', { ascending: false });
+        .from('active_shifts')
+        .select('*');
 
       if (error) throw error;
 
-      // Filter for ongoing shifts (this is simplified - in reality we'd track active shifts differently)
-      return [];
+      return (shifts || []).map(shift => {
+        const shiftStart = new Date(shift.shift_start);
+        const now = new Date();
+        const hoursWorked = (now.getTime() - shiftStart.getTime()) / (1000 * 60 * 60);
+        
+        // Calculate current earnings based on hours worked and break time
+        const workingHours = hoursWorked - ((shift.break_duration || 0) / 60);
+        const regularHours = Math.min(workingHours, 8);
+        const overtimeHours = Math.max(0, workingHours - 8);
+        const rate = shift.hourly_rate || 0;
+        
+        let currentEarnings = 0;
+        if (shift.payment_type === 'hourly') {
+          currentEarnings = (regularHours * rate) + (overtimeHours * rate * 1.5);
+        }
+
+        return {
+          worker_id: shift.worker_id || '',
+          worker_name: shift.worker_name || 'Unknown Worker',
+          worker_avatar: shift.worker_avatar,
+          project_name: shift.project_name,
+          shift_start: shift.shift_start,
+          break_duration: shift.break_duration || 0,
+          is_on_break: false, // Would need to track this separately
+          shift_type: shift.shift_type || 'regular',
+          hourly_rate: shift.hourly_rate,
+          current_earnings: currentEarnings,
+          hours_today: shift.recorded_hours || 0,
+          overtime: workingHours > 8,
+        };
+      });
     },
     refetchInterval: 30000, // Refresh every 30 seconds
     enabled: true,
