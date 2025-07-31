@@ -43,9 +43,11 @@ export function WorkerAvailabilityModal({ worker, open, onClose }: WorkerAvailab
   const [weeklyAvailability, setWeeklyAvailability] = useState(() => 
     worker ? [...worker.weekly_availability] : []
   );
-  const [dateOverrides, setDateOverrides] = useState(() => 
-    worker ? [...worker.date_overrides] : []
-  );
+  const [dateOverrides, setDateOverrides] = useState(() => {
+    const overrides = worker ? [...worker.date_overrides] : [];
+    console.log('🔄 Modal initialized with date overrides:', overrides);
+    return overrides;
+  });
   const [newOverrideDate, setNewOverrideDate] = useState('');
   const [newOverrideNote, setNewOverrideNote] = useState('');
 
@@ -306,31 +308,73 @@ export function WorkerAvailabilityModal({ worker, open, onClose }: WorkerAvailab
                 <div className="space-y-2">
                   {dateOverrides.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
-                      No date overrides set
+                      <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>No date overrides set</p>
+                      <p className="text-xs mt-1">Add specific dates when this worker will be unavailable</p>
                     </div>
                   ) : (
-                    dateOverrides.map((override, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <AlertCircle className="h-4 w-4 text-destructive" />
-                          <div>
-                            <div className="font-medium">
-                              {new Date(override.date).toLocaleDateString()}
-                            </div>
-                            {override.note && (
-                              <div className="text-sm text-muted-foreground">{override.note}</div>
-                            )}
-                          </div>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeDateOverride(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                    <>
+                      <div className="text-sm text-muted-foreground mb-3">
+                        {dateOverrides.length} override{dateOverrides.length !== 1 ? 's' : ''} configured
                       </div>
-                    ))
+                      {dateOverrides
+                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                        .map((override, index) => {
+                          const date = new Date(override.date);
+                          const today = new Date();
+                          const isPast = date < today;
+                          const daysDiff = Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                          
+                          return (
+                            <div 
+                              key={`${override.id || index}-${override.date}`} 
+                              className={`flex items-center justify-between p-3 border rounded-lg ${
+                                isPast ? 'opacity-60 bg-muted/30' : ''
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <AlertCircle className={`h-4 w-4 ${
+                                  override.is_available ? 'text-green-500' : 'text-destructive'
+                                }`} />
+                                <div>
+                                  <div className="font-medium flex items-center gap-2">
+                                    {date.toLocaleDateString('en-US', { 
+                                      weekday: 'short',
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric'
+                                    })}
+                                    <Badge variant={override.is_available ? "default" : "destructive"} className="text-xs">
+                                      {override.is_available ? "Available" : "Unavailable"}
+                                    </Badge>
+                                    {!isPast && (
+                                      <span className="text-xs text-muted-foreground">
+                                        ({daysDiff > 0 ? `in ${daysDiff} days` : 'today'})
+                                      </span>
+                                    )}
+                                    {isPast && (
+                                      <span className="text-xs text-muted-foreground">(past)</span>
+                                    )}
+                                  </div>
+                                  {override.note && (
+                                    <div className="text-sm text-muted-foreground mt-1">
+                                      "{override.note}"
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeDateOverride(index)}
+                                className="shrink-0"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                    </>
                   )}
                 </div>
               </CardContent>

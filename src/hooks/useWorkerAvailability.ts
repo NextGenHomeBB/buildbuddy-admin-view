@@ -38,6 +38,8 @@ export function useWorkerAvailability() {
   return useQuery({
     queryKey: ['worker-availability'],
     queryFn: async (): Promise<WorkerWithAvailability[]> => {
+      console.log('🔍 Fetching worker availability data...');
+      
       // Get all workers with their profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -45,8 +47,10 @@ export function useWorkerAvailability() {
         .order('full_name', { ascending: true });
 
       if (profilesError) {
+        console.error('❌ Error fetching profiles:', profilesError);
         throw profilesError;
       }
+      console.log('✅ Profiles fetched:', profiles?.length || 0, 'workers');
 
       // Get weekly availability for all workers
       const { data: weeklyAvailability, error: weeklyError } = await supabase
@@ -55,14 +59,16 @@ export function useWorkerAvailability() {
         .order('worker_id, day_of_week');
 
       if (weeklyError) {
+        console.error('❌ Error fetching weekly availability:', weeklyError);
         throw weeklyError;
       }
+      console.log('✅ Weekly availability records:', weeklyAvailability?.length || 0);
 
-      // Get date overrides for all workers (last 30 days and next 90 days)
+      // Get date overrides for all workers (last 60 days and next 180 days for better range)
       const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 30);
+      startDate.setDate(startDate.getDate() - 60);
       const endDate = new Date();
-      endDate.setDate(endDate.getDate() + 90);
+      endDate.setDate(endDate.getDate() + 180);
 
       const { data: dateOverrides, error: dateError } = await supabase
         .from('worker_date_availability')
@@ -72,8 +78,11 @@ export function useWorkerAvailability() {
         .order('worker_id, date');
 
       if (dateError) {
+        console.error('❌ Error fetching date overrides:', dateError);
         throw dateError;
       }
+      console.log('✅ Date overrides found:', dateOverrides?.length || 0);
+      console.log('📅 Date range:', startDate.toISOString().split('T')[0], 'to', endDate.toISOString().split('T')[0]);
 
       // Get user roles for workers
       const { data: userRoles, error: rolesError } = await supabase
@@ -98,13 +107,20 @@ export function useWorkerAvailability() {
           .filter(wa => wa.is_available && wa.start_time && wa.end_time && wa.max_hours)
           .reduce((total, wa) => total + (wa.max_hours || 0), 0);
 
+        console.log(`👤 Worker ${profile.full_name}:`, {
+          weeklyRecords: workerWeekly.length,
+          dateOverrides: workerOverrides.length,
+          availableDays: availableDaysCount,
+          overrideDetails: workerOverrides.map(o => ({ date: o.date, available: o.is_available, note: o.note }))
+        });
+
         return {
           id: profile.id,
           full_name: profile.full_name || 'Unknown Worker',
           avatar_url: profile.avatar_url,
           role: workerRole?.role || 'worker',
           weekly_availability: workerWeekly,
-          date_overrides: workerOverrides,
+          date_overrides: workerOverrides.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
           available_days_count: availableDaysCount,
           total_weekly_hours: totalWeeklyHours
         };
