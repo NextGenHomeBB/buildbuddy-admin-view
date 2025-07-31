@@ -22,6 +22,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WorkerWithAvailability, useUpdateWorkerAvailability, useUpdateWorkerDateAvailability } from '@/hooks/useWorkerAvailability';
 import { toast } from 'sonner';
+import { logger } from '@/utils/logger';
 
 interface WorkerAvailabilityModalProps {
   worker: WorkerWithAvailability | null;
@@ -45,85 +46,9 @@ export function WorkerAvailabilityModal({ worker, open, onClose }: WorkerAvailab
   );
   const [dateOverrides, setDateOverrides] = useState(() => {
     const overrides = worker ? [...worker.date_overrides] : [];
-    console.log('🔄 Modal initialized with date overrides:', overrides);
+    logger.debug('Modal initialized with date overrides', { count: overrides?.length || 0 });
     return overrides;
   });
-  const [newOverrideDate, setNewOverrideDate] = useState('');
-  const [newOverrideNote, setNewOverrideNote] = useState('');
-
-  const updateWeeklyMutation = useUpdateWorkerAvailability();
-  const updateDateMutation = useUpdateWorkerDateAvailability();
-
-  if (!worker) return null;
-
-  const handleWeeklyAvailabilityChange = (dayIndex: number, field: string, value: any) => {
-    setWeeklyAvailability(prev => {
-      const existing = prev.find(wa => wa.day_of_week === dayIndex);
-      if (existing) {
-        return prev.map(wa => 
-          wa.day_of_week === dayIndex 
-            ? { ...wa, [field]: value }
-            : wa
-        );
-      } else {
-        return [...prev, {
-          id: '',
-          worker_id: worker.id,
-          day_of_week: dayIndex,
-          is_available: field === 'is_available' ? value : false,
-          start_time: field === 'start_time' ? value : null,
-          end_time: field === 'end_time' ? value : null,
-          max_hours: field === 'max_hours' ? value : null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }];
-      }
-    });
-  };
-
-  const handleSaveWeeklyAvailability = async () => {
-    try {
-      await updateWeeklyMutation.mutateAsync({
-        workerId: worker.id,
-        availability: weeklyAvailability
-      });
-      toast.success('Weekly availability updated successfully');
-    } catch (error) {
-      toast.error('Failed to update weekly availability');
-      console.error(error);
-    }
-  };
-
-  const handleAddDateOverride = () => {
-    if (!newOverrideDate) return;
-    
-    const override = {
-      id: '',
-      worker_id: worker.id,
-      date: newOverrideDate,
-      is_available: false,
-      note: newOverrideNote,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    
-    setDateOverrides(prev => [...prev, override]);
-    setNewOverrideDate('');
-    setNewOverrideNote('');
-  };
-
-  const handleSaveDateOverrides = async () => {
-    try {
-      await updateDateMutation.mutateAsync({
-        workerId: worker.id,
-        dateAvailability: dateOverrides
-      });
-      toast.success('Date overrides updated successfully');
-    } catch (error) {
-      toast.error('Failed to update date overrides');
-      console.error(error);
-    }
-  };
 
   const removeDateOverride = (index: number) => {
     setDateOverrides(prev => prev.filter((_, i) => i !== index));

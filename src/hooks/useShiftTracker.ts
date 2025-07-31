@@ -93,7 +93,7 @@ export function useShiftTracker() {
         });
 
       if (error) {
-        console.error('Supabase error details:', error);
+        logger.error('Supabase error in shift tracker', error);
         throw new Error(`Failed to save timesheet: ${error.message}`);
       }
     },

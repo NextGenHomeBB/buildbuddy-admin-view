@@ -32,38 +32,16 @@ export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogP
     logger.debug('Form submitted with data:', formData);
     
     if (!formData.worker_id) {
-      console.error('No worker selected');
-      alert('Please select a worker');
+      logger.error('No worker selected for rate dialog');
       return;
     }
-    
-    const data = {
-      worker_id: formData.worker_id,
-      payment_type: formData.payment_type,
-      hourly_rate: formData.payment_type === 'hourly' ? parseFloat(formData.hourly_rate) : null,
-      monthly_salary: formData.payment_type === 'salary' ? parseFloat(formData.monthly_salary) : null,
-      effective_date: formData.effective_date,
-      end_date: formData.end_date || null,
-      created_by: null, // Add created_by field
-    };
 
-    logger.debug('Processed data for mutation:', data);
-
-    createRate.mutate(data, {
+    createRate.mutate(formData, {
       onSuccess: () => {
-        logger.debug('Dialog onSuccess callback');
         onOpenChange(false);
-        setFormData({
-          worker_id: '',
-          payment_type: 'hourly',
-          hourly_rate: '',
-          monthly_salary: '',
-          effective_date: new Date().toISOString().split('T')[0],
-          end_date: '',
-        });
       },
       onError: (error) => {
-        console.error('Dialog onError callback:', error);
+        logger.error('Dialog error callback', error);
         alert(`Failed to create worker rate: ${error.message}`);
       }
     });

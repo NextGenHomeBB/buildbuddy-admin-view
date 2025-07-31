@@ -172,7 +172,7 @@ export function NewProjectDialog({ isOpen, onClose }: NewProjectDialogProps) {
         description: 'Failed to create project',
         variant: 'destructive',
       });
-      console.error('Error creating project:', error);
+      logger.error('Error creating project', error);
     },
   });
 
