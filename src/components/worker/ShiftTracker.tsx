@@ -25,6 +25,7 @@ export function ShiftTracker() {
     endShift,
     startBreak,
     endBreak,
+    forceSyncShift,
     isLoading 
   } = useShiftTracker();
 
@@ -193,6 +194,18 @@ export function ShiftTracker() {
             </>
           )}
         </div>
+
+        {/* Sync Button for Active Shifts */}
+        {isShiftActive && (
+          <Button 
+            onClick={() => forceSyncShift()}
+            disabled={isLoading}
+            variant="outline"
+            className="w-full touch-button text-sm"
+          >
+            Sync to Database
+          </Button>
+        )}
 
         {/* Today's Summary */}
         <div className="pt-3 border-t">

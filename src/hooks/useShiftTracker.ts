@@ -421,6 +421,33 @@ export function useShiftTracker() {
     };
   };
 
+  const forceSyncShift = async () => {
+    if (!currentShift || !user?.id) return false;
+    
+    console.log('🔄 Force syncing current shift to database...');
+    
+    const { error } = await supabase
+      .from('active_shifts')
+      .insert({
+        worker_id: user.id,
+        project_id: currentShift.projectId,
+        shift_start: currentShift.startTime,
+        shift_type: currentShift.shiftType,
+        break_start: currentShift.breakStart,
+        total_break_duration: currentShift.totalBreakTime || 0
+      });
+    
+    if (error) {
+      console.error('❌ Failed to force sync shift:', error);
+      toast.error(`Failed to sync shift: ${error.message}`);
+      return false;
+    }
+    
+    console.log('✅ Successfully force synced shift to database');
+    toast.success('Shift synced to database');
+    return true;
+  };
+
   return {
     currentShift,
     todayShifts,
@@ -434,6 +461,7 @@ export function useShiftTracker() {
     endShift,
     startBreak,
     endBreak,
+    forceSyncShift,
     isLoading: createTimesheetMutation.isPending,
   };
 }
