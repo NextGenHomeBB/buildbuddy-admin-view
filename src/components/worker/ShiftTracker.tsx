@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useShiftTracker } from '@/hooks/useShiftTracker';
 import { useWorkerProjects } from '@/hooks/useWorkerProjects';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { Clock, Play, Square, DollarSign } from 'lucide-react';
+import { Clock, Play, Square, DollarSign, Coffee, AlertTriangle, TrendingUp } from 'lucide-react';
 
 export function ShiftTracker() {
   const [selectedProject, setSelectedProject] = useState<string>('');
@@ -16,10 +16,15 @@ export function ShiftTracker() {
   const { 
     currentShift, 
     todayTotalHours, 
-    isShiftActive, 
+    currentRate,
+    isShiftActive,
+    isOnBreak,
     getCurrentShiftDuration,
+    getLiveEarnings,
     startShift, 
-    endShift, 
+    endShift,
+    startBreak,
+    endBreak,
     isLoading 
   } = useShiftTracker();
 
@@ -53,6 +58,17 @@ export function ShiftTracker() {
   };
 
   const currentShiftDuration = getCurrentShiftDuration();
+  const liveEarnings = getLiveEarnings();
+
+  const handleStartBreak = () => {
+    triggerHaptic('light');
+    startBreak();
+  };
+
+  const handleEndBreak = () => {
+    triggerHaptic('light');
+    endBreak();
+  };
 
   return (
     <Card className="border-2 border-primary/20 touch-card">
@@ -67,19 +83,58 @@ export function ShiftTracker() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Status</p>
-            <Badge variant={isShiftActive ? "default" : "secondary"} className="mt-1">
-              {isShiftActive ? 'On Duty' : 'Off Duty'}
-            </Badge>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant={isShiftActive ? "default" : "secondary"}>
+                {isShiftActive ? (isOnBreak ? 'On Break' : 'On Duty') : 'Off Duty'}
+              </Badge>
+              {isShiftActive && currentShift.shiftType && currentShift.shiftType !== 'regular' && (
+                <Badge variant="outline" className="text-xs">
+                  {currentShift.shiftType}
+                </Badge>
+              )}
+            </div>
           </div>
           {isShiftActive && (
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">Current Shift</p>
+              <p className="text-sm text-muted-foreground">
+                {isOnBreak ? 'Work Time' : 'Current Shift'}
+              </p>
               <p className="text-lg font-bold text-primary">
                 {formatDuration(currentShiftDuration)}
               </p>
+              {liveEarnings.overtime && (
+                <div className="flex items-center gap-1 text-xs text-orange-600">
+                  <AlertTriangle className="h-3 w-3" />
+                  Overtime
+                </div>
+              )}
             </div>
           )}
         </div>
+
+        {/* Live Earnings Display */}
+        {isShiftActive && currentRate && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-green-700 font-medium">Live Earnings</p>
+                <p className="text-lg font-bold text-green-800">
+                  ${liveEarnings.currentShiftEarnings.toFixed(2)}
+                </p>
+                <p className="text-xs text-green-600">
+                  Today: ${liveEarnings.todayEarnings.toFixed(2)}
+                </p>
+              </div>
+              <div className="text-right">
+                <TrendingUp className="h-5 w-5 text-green-600 mx-auto mb-1" />
+                <p className="text-xs text-green-600">
+                  ${(currentRate.hourly_rate || 0).toFixed(2)}/hr
+                  {liveEarnings.overtime && ' (OT: 1.5x)'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Project Selection */}
         {!isShiftActive && (
@@ -101,7 +156,7 @@ export function ShiftTracker() {
           </div>
         )}
 
-        {/* Action Button */}
+        {/* Action Buttons */}
         <div className="flex gap-2">
           {!isShiftActive ? (
             <Button 
@@ -114,16 +169,28 @@ export function ShiftTracker() {
               Start Shift
             </Button>
           ) : (
-            <Button 
-              onClick={handleEndShift} 
-              disabled={isLoading}
-              variant="destructive"
-              className="flex-1 touch-button"
-              size="lg"
-            >
-              <Square className="h-4 w-4 mr-2" />
-              End Shift
-            </Button>
+            <>
+              <Button 
+                onClick={isOnBreak ? handleEndBreak : handleStartBreak}
+                disabled={isLoading}
+                variant="outline"
+                className="touch-button"
+                size="lg"
+              >
+                <Coffee className="h-4 w-4 mr-2" />
+                {isOnBreak ? 'End Break' : 'Start Break'}
+              </Button>
+              <Button 
+                onClick={handleEndShift} 
+                disabled={isLoading}
+                variant="destructive"
+                className="flex-1 touch-button"
+                size="lg"
+              >
+                <Square className="h-4 w-4 mr-2" />
+                End Shift
+              </Button>
+            </>
           )}
         </div>
 
@@ -147,8 +214,18 @@ export function ShiftTracker() {
 
         {/* Quick Info */}
         {isShiftActive && currentShift.startTime && (
-          <div className="text-center text-sm text-muted-foreground bg-muted/50 p-2 rounded">
-            Started at {currentShift.startTime.toLocaleTimeString()}
+          <div className="text-center text-sm text-muted-foreground bg-muted/50 p-2 rounded space-y-1">
+            <div>Started at {currentShift.startTime.toLocaleTimeString()}</div>
+            {(currentShift.breakDuration || 0) > 0 && (
+              <div className="text-xs">
+                Break time: {Math.round(currentShift.breakDuration || 0)} minutes
+              </div>
+            )}
+            {isOnBreak && currentShift.breakStartTime && (
+              <div className="text-xs text-orange-600">
+                On break since {currentShift.breakStartTime.toLocaleTimeString()}
+              </div>
+            )}
           </div>
         )}
       </CardContent>

@@ -9,6 +9,10 @@ export interface ShiftSession {
   startTime: Date | null;
   project_id?: string;
   isActive: boolean;
+  breakStartTime?: Date | null;
+  breakDuration?: number; // Total break time in minutes
+  location?: string;
+  shiftType?: 'regular' | 'overtime' | 'weekend' | 'holiday';
 }
 
 export interface TimeSheet {
@@ -19,6 +23,16 @@ export interface TimeSheet {
   hours: number;
   note: string | null;
   created_at: string;
+  break_duration?: number;
+  shift_type?: string;
+  location?: string;
+}
+
+export interface LiveEarnings {
+  currentShiftEarnings: number;
+  todayEarnings: number;
+  weeklyEarnings: number;
+  overtime: boolean;
 }
 
 export function useShiftTracker() {
@@ -27,7 +41,11 @@ export function useShiftTracker() {
   const [currentShift, setCurrentShift] = useState<ShiftSession>({
     startTime: null,
     project_id: undefined,
-    isActive: false
+    isActive: false,
+    breakStartTime: null,
+    breakDuration: 0,
+    location: undefined,
+    shiftType: 'regular'
   });
 
   // Load ongoing shift from localStorage on mount
@@ -61,6 +79,30 @@ export function useShiftTracker() {
 
       if (error) throw error;
       return data || [];
+    },
+    enabled: !!user?.id,
+    refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
+  });
+
+  // Get current worker rate for live earnings calculation
+  const { data: currentRate } = useQuery({
+    queryKey: ['current-worker-rate', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('worker_rates')
+        .select('*')
+        .eq('worker_id', user.id)
+        .lte('effective_date', today)
+        .or('end_date.is.null,end_date.gte.' + today)
+        .order('effective_date', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
     },
     enabled: !!user?.id,
   });
@@ -108,17 +150,60 @@ export function useShiftTracker() {
     },
   });
 
-  const startShift = (project_id?: string) => {
+  const startShift = (project_id?: string, shiftType: 'regular' | 'overtime' | 'weekend' | 'holiday' = 'regular') => {
     const startTime = new Date();
+    const currentHour = startTime.getHours();
+    const dayOfWeek = startTime.getDay();
+    
+    // Auto-detect shift type based on time and day
+    let detectedShiftType = shiftType;
+    if (dayOfWeek === 0 || dayOfWeek === 6) detectedShiftType = 'weekend';
+    if (currentHour < 6 || currentHour > 18) detectedShiftType = 'overtime';
+    
     const shift = {
       startTime,
       project_id,
-      isActive: true
+      isActive: true,
+      breakStartTime: null,
+      breakDuration: 0,
+      shiftType: detectedShiftType
     };
     
     setCurrentShift(shift);
     localStorage.setItem('activeShift', JSON.stringify(shift));
-    toast.success('Shift started');
+    toast.success(`${detectedShiftType.charAt(0).toUpperCase() + detectedShiftType.slice(1)} shift started`);
+  };
+
+  const startBreak = () => {
+    if (!currentShift.isActive || currentShift.breakStartTime) return;
+    
+    const breakStartTime = new Date();
+    const updatedShift = {
+      ...currentShift,
+      breakStartTime
+    };
+    
+    setCurrentShift(updatedShift);
+    localStorage.setItem('activeShift', JSON.stringify(updatedShift));
+    toast.success('Break started');
+  };
+
+  const endBreak = () => {
+    if (!currentShift.breakStartTime) return;
+    
+    const breakEndTime = new Date();
+    const breakDurationMs = breakEndTime.getTime() - currentShift.breakStartTime.getTime();
+    const breakDurationMinutes = breakDurationMs / (1000 * 60);
+    
+    const updatedShift = {
+      ...currentShift,
+      breakStartTime: null,
+      breakDuration: (currentShift.breakDuration || 0) + breakDurationMinutes
+    };
+    
+    setCurrentShift(updatedShift);
+    localStorage.setItem('activeShift', JSON.stringify(updatedShift));
+    toast.success('Break ended');
   };
 
   const endShift = () => {
@@ -126,12 +211,18 @@ export function useShiftTracker() {
 
     const endTime = new Date();
     const durationMs = endTime.getTime() - currentShift.startTime.getTime();
-    const hours = durationMs / (1000 * 60 * 60); // Convert to hours
+    const totalHours = durationMs / (1000 * 60 * 60); // Convert to hours
+    
+    // Subtract break time from total hours
+    const breakHours = (currentShift.breakDuration || 0) / 60;
+    const workHours = Math.max(0, totalHours - breakHours);
 
-    const note = `Shift: ${currentShift.startTime.toLocaleTimeString()} - ${endTime.toLocaleTimeString()}`;
+    const note = `${currentShift.shiftType} shift: ${currentShift.startTime.toLocaleTimeString()} - ${endTime.toLocaleTimeString()}${
+      breakHours > 0 ? ` (${Math.round(currentShift.breakDuration || 0)}min break)` : ''
+    }`;
 
     createTimesheetMutation.mutate({
-      hours,
+      hours: workHours,
       note,
       project_id: currentShift.project_id,
     });
@@ -140,7 +231,10 @@ export function useShiftTracker() {
     setCurrentShift({
       startTime: null,
       project_id: undefined,
-      isActive: false
+      isActive: false,
+      breakStartTime: null,
+      breakDuration: 0,
+      shiftType: 'regular'
     });
     localStorage.removeItem('activeShift');
     toast.success('Shift ended and recorded');
@@ -149,22 +243,90 @@ export function useShiftTracker() {
   // Calculate today's total hours
   const todayTotalHours = todayShifts.reduce((total, shift) => total + (shift.hours || 0), 0);
 
-  // Calculate current shift duration
+  // Calculate current shift duration (excluding breaks)
   const getCurrentShiftDuration = () => {
     if (!currentShift.startTime) return 0;
     const now = new Date();
     const durationMs = now.getTime() - currentShift.startTime.getTime();
-    return durationMs / (1000 * 60 * 60); // Hours
+    const totalHours = durationMs / (1000 * 60 * 60);
+    const breakHours = (currentShift.breakDuration || 0) / 60;
+    
+    // If on break, add current break time
+    if (currentShift.breakStartTime) {
+      const currentBreakMs = now.getTime() - currentShift.breakStartTime.getTime();
+      const currentBreakHours = currentBreakMs / (1000 * 60 * 60);
+      return Math.max(0, totalHours - breakHours - currentBreakHours);
+    }
+    
+    return Math.max(0, totalHours - breakHours);
   };
+
+  // Calculate live earnings for current shift
+  const getLiveEarnings = (): LiveEarnings => {
+    const currentHours = getCurrentShiftDuration();
+    const todayHours = todayTotalHours + currentHours;
+    
+    if (!currentRate) {
+      return {
+        currentShiftEarnings: 0,
+        todayEarnings: 0,
+        weeklyEarnings: 0,
+        overtime: false
+      };
+    }
+
+    const isOvertime = todayHours > 8;
+    let currentShiftEarnings = 0;
+    let todayEarnings = 0;
+
+    if (currentRate.payment_type === 'hourly') {
+      const rate = currentRate.hourly_rate || 0;
+      const overtimeRate = rate * 1.5;
+      
+      // Current shift earnings
+      if (currentShift.shiftType === 'weekend') {
+        currentShiftEarnings = currentHours * overtimeRate;
+      } else if (isOvertime && currentHours > 0) {
+        const regularHours = Math.max(0, 8 - (todayHours - currentHours));
+        const overtimeHours = currentHours - regularHours;
+        currentShiftEarnings = (regularHours * rate) + (overtimeHours * overtimeRate);
+      } else {
+        currentShiftEarnings = currentHours * rate;
+      }
+      
+      // Today total earnings
+      const regularHours = Math.min(todayHours, 8);
+      const overtimeHours = Math.max(0, todayHours - 8);
+      todayEarnings = (regularHours * rate) + (overtimeHours * overtimeRate);
+    } else if (currentRate.payment_type === 'salary') {
+      const dailyRate = (currentRate.monthly_salary || 0) / 30;
+      currentShiftEarnings = dailyRate * (currentHours / 8);
+      todayEarnings = dailyRate;
+    }
+
+    return {
+      currentShiftEarnings,
+      todayEarnings,
+      weeklyEarnings: todayEarnings * 5, // Rough estimate
+      overtime: isOvertime
+    };
+  };
+
+  const isOnBreak = !!currentShift.breakStartTime;
 
   return {
     currentShift,
     todayShifts,
     todayTotalHours,
+    currentRate,
     isShiftActive: currentShift.isActive,
+    isOnBreak,
     getCurrentShiftDuration,
+    getLiveEarnings,
     startShift,
     endShift,
+    startBreak,
+    endBreak,
     isLoading: createTimesheetMutation.isPending,
   };
 }
