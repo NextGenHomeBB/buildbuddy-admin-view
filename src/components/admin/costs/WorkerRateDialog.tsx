@@ -36,7 +36,13 @@ export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogP
       return;
     }
 
-    createRate.mutate(formData, {
+    const newRate = {
+      ...formData,
+      hourly_rate: parseFloat(formData.hourly_rate) || 0,
+      monthly_salary: parseFloat(formData.monthly_salary) || 0,
+    };
+    
+    createRate.mutate(newRate, {
       onSuccess: () => {
         onOpenChange(false);
       },

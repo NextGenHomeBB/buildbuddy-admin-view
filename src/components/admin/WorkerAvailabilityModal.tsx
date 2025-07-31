@@ -41,14 +41,27 @@ const DAYS_OF_WEEK = [
 ];
 
 export function WorkerAvailabilityModal({ worker, open, onClose }: WorkerAvailabilityModalProps) {
+  // Phase 1: Critical null safety fix
+  if (!worker) {
+    return null;
+  }
+
   const [weeklyAvailability, setWeeklyAvailability] = useState(() => 
-    worker ? [...worker.weekly_availability] : []
+    [...worker.weekly_availability]
   );
   const [dateOverrides, setDateOverrides] = useState(() => {
-    const overrides = worker ? [...worker.date_overrides] : [];
+    const overrides = [...worker.date_overrides];
     logger.debug('Modal initialized with date overrides', { count: overrides?.length || 0 });
     return overrides;
   });
+
+  // Phase 2: Add missing state variables
+  const [newOverrideDate, setNewOverrideDate] = useState('');
+  const [newOverrideNote, setNewOverrideNote] = useState('');
+
+  // Phase 2: Add mutation hooks
+  const updateWeeklyMutation = useUpdateWorkerAvailability();
+  const updateDateMutation = useUpdateWorkerDateAvailability();
 
   const removeDateOverride = (index: number) => {
     setDateOverrides(prev => prev.filter((_, i) => i !== index));
@@ -66,6 +79,77 @@ export function WorkerAvailabilityModal({ worker, open, onClose }: WorkerAvailab
       created_at: '',
       updated_at: '',
     };
+  };
+
+  // Phase 2: Add missing handler functions
+  const handleWeeklyAvailabilityChange = (dayIndex: number, field: string, value: any) => {
+    setWeeklyAvailability(prev => {
+      const existing = prev.find(wa => wa.day_of_week === dayIndex);
+      if (existing) {
+        return prev.map(wa => 
+          wa.day_of_week === dayIndex 
+            ? { ...wa, [field]: value }
+            : wa
+        );
+      } else {
+        return [...prev, {
+          id: '',
+          worker_id: worker.id,
+          day_of_week: dayIndex,
+          is_available: field === 'is_available' ? value : false,
+          start_time: field === 'start_time' ? value : null,
+          end_time: field === 'end_time' ? value : null,
+          max_hours: field === 'max_hours' ? value : null,
+          created_at: '',
+          updated_at: '',
+          [field]: value
+        }];
+      }
+    });
+  };
+
+  const handleSaveWeeklyAvailability = async () => {
+    try {
+      await updateWeeklyMutation.mutateAsync({
+        workerId: worker.id,
+        availability: weeklyAvailability
+      });
+      toast.success('Weekly availability updated successfully');
+    } catch (error) {
+      console.error('Failed to update weekly availability:', error);
+      toast.error('Failed to update weekly availability');
+    }
+  };
+
+  const handleAddDateOverride = () => {
+    if (!newOverrideDate) return;
+    
+    const newOverride = {
+      id: '',
+      worker_id: worker.id,
+      date: newOverrideDate,
+      is_available: false, // Default to unavailable
+      note: newOverrideNote || undefined,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    
+    setDateOverrides(prev => [...prev, newOverride]);
+    setNewOverrideDate('');
+    setNewOverrideNote('');
+  };
+
+  const handleSaveDateOverrides = async () => {
+    try {
+      await updateDateMutation.mutateAsync({
+        workerId: worker.id,
+        dateAvailability: dateOverrides
+      });
+      toast.success('Date overrides updated successfully');
+    } catch (error) {
+      console.error('Failed to update date overrides:', error);
+      toast.error('Failed to update date overrides');
+    }
   };
 
   return (
