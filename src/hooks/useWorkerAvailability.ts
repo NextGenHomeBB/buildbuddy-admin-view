@@ -127,16 +127,25 @@ export function useUpdateWorkerAvailability() {
       // Update worker availability
       const updates = availability.map(async (item) => {
         if (item.id) {
-          // Update existing
+          // Update existing - remove readonly fields
+          const { id, worker_id, created_at, ...updateData } = item;
           return supabase
             .from('worker_availability')
-            .update(item)
+            .update(updateData)
             .eq('id', item.id);
         } else {
-          // Insert new
+          // Insert new - ensure required fields
+          const insertData = {
+            worker_id: workerId,
+            day_of_week: item.day_of_week!,
+            is_available: item.is_available ?? false,
+            start_time: item.start_time,
+            end_time: item.end_time,
+            max_hours: item.max_hours,
+          };
           return supabase
             .from('worker_availability')
-            .insert({ ...item, worker_id: workerId });
+            .insert(insertData);
         }
       });
 
@@ -169,16 +178,23 @@ export function useUpdateWorkerDateAvailability() {
       // Update worker date availability
       const updates = dateAvailability.map(async (item) => {
         if (item.id) {
-          // Update existing
+          // Update existing - remove readonly fields
+          const { id, worker_id, created_at, ...updateData } = item;
           return supabase
             .from('worker_date_availability')
-            .update(item)
+            .update(updateData)
             .eq('id', item.id);
         } else {
-          // Insert new
+          // Insert new - ensure required fields
+          const insertData = {
+            worker_id: workerId,
+            date: item.date!,
+            is_available: item.is_available ?? false,
+            note: item.note,
+          };
           return supabase
             .from('worker_date_availability')
-            .insert({ ...item, worker_id: workerId });
+            .insert(insertData);
         }
       });
 

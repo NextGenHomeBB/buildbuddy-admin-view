@@ -10,7 +10,8 @@ import {
   FileText,
   Calendar,
   List,
-  DollarSign
+  DollarSign,
+  Clock
 } from 'lucide-react';
 import {
   Sidebar,
@@ -47,6 +48,11 @@ const navigationItems = [
     title: 'Calendar',
     url: '/admin/calendar',
     icon: Calendar
+  },
+  {
+    title: 'Availability',
+    url: '/admin/availability',
+    icon: Clock
   },
   {
     title: 'Users',
