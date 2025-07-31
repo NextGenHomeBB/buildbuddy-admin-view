@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Clock, Users, DollarSign, AlertTriangle, Coffee, TrendingUp } from 'lucide-react';
+import { Clock, Users, DollarSign, AlertTriangle, Coffee, TrendingUp, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface ActiveShift {
@@ -37,7 +37,7 @@ export function LiveShiftMonitor() {
   }, []);
 
   // Fetch active shifts with real-time updates
-  const { data: activeShifts = [], isLoading } = useQuery({
+  const { data: activeShifts = [], isLoading, refetch } = useQuery({
     queryKey: ['active-shifts'],
     queryFn: async (): Promise<ActiveShift[]> => {
       const { data: shifts, error } = await supabase
@@ -119,6 +119,28 @@ export function LiveShiftMonitor() {
     refetchInterval: 30000, // Refresh every 30 seconds
     enabled: true,
   });
+
+  // Set up real-time subscription for active_shifts table
+  useEffect(() => {
+    const channel = supabase
+      .channel('active-shifts-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'active_shifts'
+        },
+        () => {
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
 
   // Summary statistics
   const totalActiveWorkers = activeShifts.length;
@@ -209,12 +231,23 @@ export function LiveShiftMonitor() {
       {/* Active Shifts List */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
             Live Shift Monitor
-            <Badge variant="outline" className="ml-auto">
-              Updated {formatDistanceToNow(currentTime, { addSuffix: true })}
-            </Badge>
+            <div className="ml-auto flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+                className="text-xs"
+              >
+                <RefreshCw className="h-3 w-3 mr-1" />
+                Refresh
+              </Button>
+              <Badge variant="outline">
+                Updated {formatDistanceToNow(currentTime, { addSuffix: true })}
+              </Badge>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
