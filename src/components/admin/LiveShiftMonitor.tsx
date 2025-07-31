@@ -42,38 +42,76 @@ export function LiveShiftMonitor() {
     queryFn: async (): Promise<ActiveShift[]> => {
       const { data: shifts, error } = await supabase
         .from('active_shifts')
-        .select('*');
+        .select('*')
+        .order('shift_start', { ascending: false });
 
       if (error) throw error;
 
-      return (shifts || []).map(shift => {
+      // Get additional data for each shift
+      const shiftsWithData = await Promise.all((shifts || []).map(async (shift) => {
+        // Get worker profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('id', shift.worker_id)
+          .single();
+
+        // Get project name
+        let projectName = 'No Project';
+        if (shift.project_id) {
+          const { data: project } = await supabase
+            .from('projects')
+            .select('name')
+            .eq('id', shift.project_id)
+            .single();
+          projectName = project?.name || 'No Project';
+        }
+
+        // Get worker rate
+        const { data: rate } = await supabase
+          .from('worker_rates')
+          .select('hourly_rate, payment_type')
+          .eq('worker_id', shift.worker_id)
+          .order('effective_date', { ascending: false })
+          .limit(1)
+          .single();
+
+        return {
+          ...shift,
+          profile,
+          project_name: projectName,
+          worker_rate: rate
+        };
+      }));
+
+      return shiftsWithData.map(shift => {
         const shiftStart = new Date(shift.shift_start);
         const now = new Date();
         const hoursWorked = (now.getTime() - shiftStart.getTime()) / (1000 * 60 * 60);
         
         // Calculate current earnings based on hours worked and break time
-        const workingHours = hoursWorked - ((shift.break_duration || 0) / 60);
+        const workingHours = Math.max(0, hoursWorked - ((shift.total_break_duration || 0) / 60));
         const regularHours = Math.min(workingHours, 8);
         const overtimeHours = Math.max(0, workingHours - 8);
-        const rate = shift.hourly_rate || 0;
+        const rate = shift.worker_rate?.hourly_rate || 0;
         
         let currentEarnings = 0;
-        if (shift.payment_type === 'hourly') {
+        if (shift.worker_rate?.payment_type === 'hourly') {
           currentEarnings = (regularHours * rate) + (overtimeHours * rate * 1.5);
         }
 
         return {
           worker_id: shift.worker_id || '',
-          worker_name: shift.worker_name || 'Unknown Worker',
-          worker_avatar: shift.worker_avatar,
+          worker_name: shift.profile?.full_name || 'Unknown Worker',
+          worker_avatar: shift.profile?.avatar_url,
           project_name: shift.project_name,
           shift_start: shift.shift_start,
-          break_duration: shift.break_duration || 0,
-          is_on_break: false, // Would need to track this separately
+          break_duration: shift.total_break_duration || 0,
+          is_on_break: !!shift.break_start,
           shift_type: shift.shift_type || 'regular',
-          hourly_rate: shift.hourly_rate,
+          hourly_rate: rate,
           current_earnings: currentEarnings,
-          hours_today: shift.recorded_hours || 0,
+          hours_today: workingHours,
           overtime: workingHours > 8,
         };
       });

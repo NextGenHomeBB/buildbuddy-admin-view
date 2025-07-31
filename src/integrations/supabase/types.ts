@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      active_shifts: {
+        Row: {
+          break_start: string | null
+          created_at: string
+          id: string
+          project_id: string | null
+          shift_start: string
+          shift_type: string | null
+          total_break_duration: number | null
+          updated_at: string
+          worker_id: string
+        }
+        Insert: {
+          break_start?: string | null
+          created_at?: string
+          id?: string
+          project_id?: string | null
+          shift_start?: string
+          shift_type?: string | null
+          total_break_duration?: number | null
+          updated_at?: string
+          worker_id: string
+        }
+        Update: {
+          break_start?: string | null
+          created_at?: string
+          id?: string
+          project_id?: string | null
+          shift_start?: string
+          shift_type?: string | null
+          total_break_duration?: number | null
+          updated_at?: string
+          worker_id?: string
+        }
+        Relationships: []
+      }
       ai_prompt_templates: {
         Row: {
           created_at: string | null
@@ -1075,31 +1111,6 @@ export type Database = {
       }
     }
     Views: {
-      active_shifts: {
-        Row: {
-          break_duration: number | null
-          hourly_rate: number | null
-          note: string | null
-          payment_type: string | null
-          project_name: string | null
-          recorded_hours: number | null
-          shift_start: string | null
-          shift_type: string | null
-          work_date: string | null
-          worker_avatar: string | null
-          worker_id: string | null
-          worker_name: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "time_sheets_user_id_fkey"
-            columns: ["worker_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       "worker.my_tasks_view": {
         Row: {
           assigned_worker_id: string | null

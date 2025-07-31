@@ -87,7 +87,7 @@ export function ShiftTracker() {
               <Badge variant={isShiftActive ? "default" : "secondary"}>
                 {isShiftActive ? (isOnBreak ? 'On Break' : 'On Duty') : 'Off Duty'}
               </Badge>
-              {isShiftActive && currentShift.shiftType && currentShift.shiftType !== 'regular' && (
+              {isShiftActive && currentShift?.shiftType && currentShift.shiftType !== 'regular' && (
                 <Badge variant="outline" className="text-xs">
                   {currentShift.shiftType}
                 </Badge>
@@ -213,17 +213,17 @@ export function ShiftTracker() {
         </div>
 
         {/* Quick Info */}
-        {isShiftActive && currentShift.startTime && (
+        {isShiftActive && currentShift?.startTime && (
           <div className="text-center text-sm text-muted-foreground bg-muted/50 p-2 rounded space-y-1">
-            <div>Started at {currentShift.startTime.toLocaleTimeString()}</div>
-            {(currentShift.breakDuration || 0) > 0 && (
+            <div>Started at {new Date(currentShift.startTime).toLocaleTimeString()}</div>
+            {(currentShift.totalBreakTime || 0) > 0 && (
               <div className="text-xs">
-                Break time: {Math.round(currentShift.breakDuration || 0)} minutes
+                Break time: {Math.round(currentShift.totalBreakTime || 0)} minutes
               </div>
             )}
-            {isOnBreak && currentShift.breakStartTime && (
+            {isOnBreak && currentShift.breakStart && (
               <div className="text-xs text-orange-600">
-                On break since {currentShift.breakStartTime.toLocaleTimeString()}
+                On break since {new Date(currentShift.breakStart).toLocaleTimeString()}
               </div>
             )}
           </div>
