@@ -367,6 +367,36 @@ export type Database = {
           },
         ]
       }
+      document_sequences: {
+        Row: {
+          created_at: string
+          current_number: number
+          document_type: string
+          id: string
+          prefix: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          current_number?: number
+          document_type: string
+          id?: string
+          prefix: string
+          updated_at?: string
+          year?: number
+        }
+        Update: {
+          created_at?: string
+          current_number?: number
+          document_type?: string
+          id?: string
+          prefix?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           client_address: string | null
@@ -379,9 +409,14 @@ export type Database = {
           document_type: string
           id: string
           notes: string | null
+          paid_at: string | null
+          payment_status: string | null
+          payment_url: string | null
           pdf_url: string | null
           project_id: string | null
           status: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           subtotal: number
           tax_amount: number | null
           tax_rate: number | null
@@ -401,9 +436,14 @@ export type Database = {
           document_type: string
           id?: string
           notes?: string | null
+          paid_at?: string | null
+          payment_status?: string | null
+          payment_url?: string | null
           pdf_url?: string | null
           project_id?: string | null
           status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           subtotal?: number
           tax_amount?: number | null
           tax_rate?: number | null
@@ -423,9 +463,14 @@ export type Database = {
           document_type?: string
           id?: string
           notes?: string | null
+          paid_at?: string | null
+          payment_status?: string | null
+          payment_url?: string | null
           pdf_url?: string | null
           project_id?: string | null
           status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           subtotal?: number
           tax_amount?: number | null
           tax_rate?: number | null
@@ -1472,6 +1517,10 @@ export type Database = {
           created_at: string
           updated_at: string
         }[]
+      }
+      next_document_number: {
+        Args: { doc_type: string }
+        Returns: string
       }
       setup_demo_data: {
         Args: { manager_id: string; worker_id: string }
