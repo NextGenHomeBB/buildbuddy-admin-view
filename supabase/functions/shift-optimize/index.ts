@@ -60,12 +60,16 @@ serve(async (req) => {
 
     console.log(`Starting optimization for date: ${targetDate.toISOString()}`)
 
-    // Get tasks that should start on target date
+    // Get tasks that should start on target date or are scheduled for that date
+    const targetDateStr = targetDate.toISOString().split('T')[0]
     const { data: tasks, error: tasksError } = await supabaseClient
       .from('tasks')
-      .select('id, title, start_date, duration_days, required_roles, crew_min, crew_max, project_id')
-      .eq('start_date', targetDate.toISOString().split('T')[0])
+      .select('id, title, start_date, end_date, duration_days, required_roles, crew_min, crew_max, project_id')
+      .or(`start_date.eq.${targetDateStr},end_date.eq.${targetDateStr}`)
       .eq('status', 'todo')
+      .eq('is_scheduled', true)
+
+    console.log(`Found ${tasks?.length || 0} tasks for date ${targetDateStr}`)
 
     if (tasksError) {
       console.error('Error fetching tasks:', tasksError)
@@ -82,6 +86,8 @@ serve(async (req) => {
       throw workersError
     }
 
+    console.log(`Found ${workers?.length || 0} workers`)
+
     // Get worker availability for the target day
     const { data: availability, error: availabilityError } = await supabaseClient
       .from('worker_availability')
@@ -93,6 +99,8 @@ serve(async (req) => {
       console.error('Error fetching availability:', availabilityError)
       throw availabilityError
     }
+
+    console.log(`Found ${availability?.length || 0} available workers for day ${dayOfWeek} (${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOfWeek]})`)
 
     // Get existing shifts for the target date to avoid conflicts
     const { data: existingShifts, error: shiftsError } = await supabaseClient
