@@ -59,17 +59,15 @@ const AdminQuotations: React.FC = () => {
 
   if (showWizard) {
     return (
-      <div className="container mx-auto p-6">
-        <QuotationWizard
-          projectId={projectId || undefined}
-          onComplete={handleWizardComplete}
-        />
-      </div>
+      <QuotationWizard
+        projectId={projectId || undefined}
+        onComplete={handleWizardComplete}
+      />
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -237,7 +235,6 @@ const AdminQuotations: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
   );
 };
 
