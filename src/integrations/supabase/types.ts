@@ -1054,6 +1054,7 @@ export type Database = {
           sync_error: string | null
           sync_status: string | null
           synced_at: string | null
+          updated_at: string | null
           user_id: string | null
           work_date: string | null
         }
@@ -1073,6 +1074,7 @@ export type Database = {
           sync_error?: string | null
           sync_status?: string | null
           synced_at?: string | null
+          updated_at?: string | null
           user_id?: string | null
           work_date?: string | null
         }
@@ -1092,6 +1094,7 @@ export type Database = {
           sync_error?: string | null
           sync_status?: string | null
           synced_at?: string | null
+          updated_at?: string | null
           user_id?: string | null
           work_date?: string | null
         }
