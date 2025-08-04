@@ -24,6 +24,10 @@ export interface CreateTaskData {
   priority: 'low' | 'medium' | 'high';
   phase_id?: string;
   assignee?: string;
+  start_date?: string;
+  end_date?: string;
+  duration_days?: number;
+  is_scheduled?: boolean;
 }
 
 export interface UpdateTaskData {
