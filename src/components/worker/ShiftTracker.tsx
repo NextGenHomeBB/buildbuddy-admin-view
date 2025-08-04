@@ -26,6 +26,7 @@ export function ShiftTracker() {
     startBreak,
     endBreak,
     forceSyncShift,
+    clearStaleShift,
     isLoading 
   } = useShiftTracker();
 
@@ -195,16 +196,27 @@ export function ShiftTracker() {
           )}
         </div>
 
-        {/* Sync Button for Active Shifts */}
+        {/* Sync and Clear Buttons for Active Shifts */}
         {isShiftActive && (
-          <Button 
-            onClick={() => forceSyncShift()}
-            disabled={isLoading}
-            variant="outline"
-            className="w-full touch-button text-sm"
-          >
-            Sync to Database
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => forceSyncShift()}
+              disabled={isLoading}
+              variant="outline"
+              className="flex-1 touch-button text-sm"
+            >
+              Sync to Database
+            </Button>
+            <Button 
+              onClick={() => clearStaleShift()}
+              disabled={isLoading}
+              variant="outline"
+              className="touch-button text-sm text-red-600 hover:text-red-700"
+              size="sm"
+            >
+              Clear
+            </Button>
+          </div>
         )}
 
         {/* Today's Summary */}

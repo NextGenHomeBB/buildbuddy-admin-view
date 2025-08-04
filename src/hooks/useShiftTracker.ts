@@ -320,8 +320,31 @@ export function useShiftTracker() {
 
     const endTime = new Date();
     const startTime = new Date(currentShift.startTime);
-    const totalDuration = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60); // in hours
+    
+    // Data validation - check for impossible durations
+    const totalDurationMs = endTime.getTime() - startTime.getTime();
+    if (totalDurationMs < 0) {
+      console.error('❌ Invalid shift duration: end time before start time');
+      toast.error('Invalid shift times detected. Please contact support.');
+      return;
+    }
+    
+    if (totalDurationMs > 24 * 60 * 60 * 1000) { // More than 24 hours
+      console.error('❌ Shift duration exceeds 24 hours:', totalDurationMs / (1000 * 60 * 60));
+      toast.error('Shift duration cannot exceed 24 hours. Please contact support.');
+      return;
+    }
+    
+    const totalDuration = totalDurationMs / (1000 * 60 * 60); // in hours
     const workingHours = Math.max(0, totalDuration - (currentShift.totalBreakTime / 60));
+    
+    console.log('📊 Shift calculation:', {
+      startTime: currentShift.startTime,
+      endTime: endTime.toISOString(),
+      totalDuration,
+      breakTime: currentShift.totalBreakTime,
+      workingHours
+    });
 
     const timeSheetData = {
       user_id: user?.id,
@@ -355,20 +378,43 @@ export function useShiftTracker() {
   // Calculate today's total hours
   const todayTotalHours = todayShifts.reduce((total, shift) => total + (shift.hours || 0), 0);
 
-  // Calculate current shift duration
+  // Calculate current shift duration with validation
   const getCurrentShiftDuration = () => {
     if (!currentShift) return 0;
     
     const now = new Date();
     const startTime = new Date(currentShift.startTime);
-    const totalHours = (now.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-    const breakHours = currentShift.totalBreakTime / 60;
+    
+    // Validate start time
+    if (isNaN(startTime.getTime())) {
+      console.error('❌ Invalid shift start time:', currentShift.startTime);
+      return 0;
+    }
+    
+    const totalMs = now.getTime() - startTime.getTime();
+    
+    // Prevent negative or impossible durations
+    if (totalMs < 0) {
+      console.error('❌ Negative shift duration detected');
+      return 0;
+    }
+    
+    if (totalMs > 24 * 60 * 60 * 1000) { // More than 24 hours
+      console.error('❌ Shift duration exceeds 24 hours, possible stale data');
+      return 0;
+    }
+    
+    const totalHours = totalMs / (1000 * 60 * 60);
+    const breakHours = (currentShift.totalBreakTime || 0) / 60;
     
     // If on break, add current break time
     if (currentShift.breakStart) {
-      const currentBreakMs = now.getTime() - new Date(currentShift.breakStart).getTime();
-      const currentBreakHours = currentBreakMs / (1000 * 60 * 60);
-      return Math.max(0, totalHours - breakHours - currentBreakHours);
+      const breakStart = new Date(currentShift.breakStart);
+      if (!isNaN(breakStart.getTime())) {
+        const currentBreakMs = Math.max(0, now.getTime() - breakStart.getTime());
+        const currentBreakHours = currentBreakMs / (1000 * 60 * 60);
+        return Math.max(0, totalHours - breakHours - currentBreakHours);
+      }
     }
     
     return Math.max(0, totalHours - breakHours);
@@ -448,6 +494,23 @@ export function useShiftTracker() {
     return true;
   };
 
+  // Clear stale shift data
+  const clearStaleShift = async () => {
+    console.log('🗑️ Clearing stale shift data...');
+    setCurrentShift(null);
+    localStorage.removeItem('currentShift');
+    
+    if (user?.id) {
+      await supabase
+        .from('active_shifts')
+        .delete()
+        .eq('worker_id', user.id);
+    }
+    
+    toast.success('Shift data cleared');
+    return true;
+  };
+
   return {
     currentShift,
     todayShifts,
@@ -462,6 +525,7 @@ export function useShiftTracker() {
     startBreak,
     endBreak,
     forceSyncShift,
+    clearStaleShift,
     isLoading: createTimesheetMutation.isPending,
   };
 }

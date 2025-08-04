@@ -22,6 +22,8 @@ interface ActiveShift {
   current_earnings: number;
   hours_today: number;
   overtime: boolean;
+  suspicious?: boolean;
+  raw_hours?: number;
 }
 
 export function LiveShiftMonitor() {
@@ -35,6 +37,26 @@ export function LiveShiftMonitor() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Fetch recent timesheet entries for debugging
+  const { data: recentTimesheets = [] } = useQuery({
+    queryKey: ['recent-timesheets'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('time_sheets')
+        .select(`
+          *,
+          profiles!inner(full_name, avatar_url),
+          projects(name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      return data || [];
+    },
+    refetchInterval: 60000,
+  });
 
   // Fetch active shifts with real-time updates
   const { data: activeShifts = [], isLoading, refetch } = useQuery({
@@ -107,6 +129,9 @@ export function LiveShiftMonitor() {
           currentEarnings = (regularHours * rate) + (overtimeHours * rate * 1.5);
         }
 
+        // Flag suspicious entries
+        const isSuspicious = hoursWorked > 24 || hoursWorked < 0 || workingHours > 24;
+        
         return {
           worker_id: shift.worker_id || '',
           worker_name: shift.profile?.full_name || 'Unknown Worker',
@@ -117,9 +142,11 @@ export function LiveShiftMonitor() {
           is_on_break: !!shift.break_start,
           shift_type: shift.shift_type || 'regular',
           hourly_rate: rate,
-          current_earnings: currentEarnings,
+          current_earnings: isSuspicious ? 0 : currentEarnings,
           hours_today: workingHours,
           overtime: workingHours > 8,
+          suspicious: isSuspicious,
+          raw_hours: hoursWorked,
         };
       });
     },
@@ -282,22 +309,27 @@ export function LiveShiftMonitor() {
                       </Avatar>
                       
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium">{shift.worker_name}</h4>
-                          <Badge variant={shift.is_on_break ? "secondary" : "default"}>
-                            {shift.is_on_break ? 'On Break' : 'Active'}
-                          </Badge>
-                          {shift.shift_type !== 'regular' && (
-                            <Badge variant="outline" className="text-xs">
-                              {shift.shift_type}
-                            </Badge>
-                          )}
-                          {shift.overtime && (
-                            <Badge variant="outline" className="text-xs text-orange-600">
-                              Overtime
-                            </Badge>
-                          )}
-                        </div>
+                       <div className="flex items-center gap-2">
+                           <h4 className="font-medium">{shift.worker_name}</h4>
+                           <Badge variant={shift.is_on_break ? "secondary" : "default"}>
+                             {shift.is_on_break ? 'On Break' : 'Active'}
+                           </Badge>
+                           {shift.shift_type !== 'regular' && (
+                             <Badge variant="outline" className="text-xs">
+                               {shift.shift_type}
+                             </Badge>
+                           )}
+                           {shift.overtime && (
+                             <Badge variant="outline" className="text-xs text-orange-600">
+                               Overtime
+                             </Badge>
+                           )}
+                           {shift.suspicious && (
+                             <Badge variant="destructive" className="text-xs">
+                               ⚠️ Suspicious ({shift.raw_hours.toFixed(1)}h)
+                             </Badge>
+                           )}
+                         </div>
                         <p className="text-sm text-muted-foreground">
                           {shift.project_name || 'No project'} • 
                           Started {formatDistanceToNow(new Date(shift.shift_start), { addSuffix: true })}
@@ -367,6 +399,72 @@ export function LiveShiftMonitor() {
                 </p>
                 <p className="text-sm text-muted-foreground">Projected Monthly</p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Timesheets Section */}
+      {recentTimesheets.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Recent Timesheet Entries
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {recentTimesheets.slice(0, 5).map((timesheet) => {
+                const isSuspicious = timesheet.hours > 24 || timesheet.hours < 0;
+                return (
+                  <div 
+                    key={timesheet.id} 
+                    className={`flex items-center justify-between p-3 border rounded-lg ${
+                      isSuspicious ? 'border-red-200 bg-red-50' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={timesheet.profiles?.avatar_url} />
+                        <AvatarFallback>
+                          {timesheet.profiles?.full_name?.split(' ').map(n => n[0]).join('') || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-sm">{timesheet.profiles?.full_name}</h4>
+                          <Badge 
+                            variant={timesheet.sync_status === 'completed' ? 'default' : 'secondary'}
+                            className="text-xs"
+                          >
+                            {timesheet.sync_status}
+                          </Badge>
+                          {isSuspicious && (
+                            <Badge variant="destructive" className="text-xs">
+                              ⚠️ {timesheet.hours.toFixed(1)}h
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {timesheet.projects?.name || 'No project'} • 
+                          {new Date(timesheet.work_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-sm font-medium">
+                        {timesheet.hours.toFixed(2)}h
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(timesheet.created_at), { addSuffix: true })}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
