@@ -28,6 +28,7 @@ import { PhaseTemplateListPage } from "./pages/admin/PhaseTemplateListPage";
 import { PhaseTemplateDetailPage } from "./pages/admin/PhaseTemplateDetailPage";
 import { Reports } from "./pages/admin/Reports";
 import AdminQuotations from "./pages/admin/AdminQuotations";
+console.log('AdminQuotations imported:', AdminQuotations);
 import { WorkerDashboard } from "./pages/worker/WorkerDashboard";
 import { WorkerProjects } from "./pages/worker/WorkerProjects";
 import { WorkerLists } from "./pages/worker/WorkerLists";

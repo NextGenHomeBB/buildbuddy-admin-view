@@ -26,6 +26,7 @@ import { useDocuments, type Document } from '@/hooks/useDocuments';
 import { format } from 'date-fns';
 
 const AdminQuotations: React.FC = () => {
+  console.log('AdminQuotations component loading...');
   const [searchParams] = useSearchParams();
   const [showWizard, setShowWizard] = useState(false);
   const { documents, loading, fetchDocuments } = useDocuments();
@@ -238,4 +239,5 @@ const AdminQuotations: React.FC = () => {
   );
 };
 
+console.log('AdminQuotations component defined successfully');
 export default AdminQuotations;
