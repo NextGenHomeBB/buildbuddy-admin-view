@@ -11,6 +11,7 @@ import { ScheduleAnalytics } from '@/components/admin/schedule/ScheduleAnalytics
 import { useShifts } from '@/hooks/useShiftOptimization';
 import { useOptimizedTasks } from '@/hooks/useOptimizedTasks';
 import { useWorkers } from '@/hooks/useWorkers';
+import { useCreateTask } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/use-toast';
 import { format, addDays, startOfWeek } from 'date-fns';
 
@@ -26,14 +27,45 @@ export default function AdminScheduleManual() {
   const { data: shifts } = useShifts();
   const { data: tasks } = useOptimizedTasks();
   const { data: workers } = useWorkers();
+  const createTaskMutation = useCreateTask();
 
   const handleTaskCreate = async (taskData: any) => {
     try {
-      // For now, just show success message
-      // In a real implementation, this would call the createTask mutation
+      if (!taskData.project_id) {
+        toast({
+          title: "Error",
+          description: "Please select a project to create the task",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Calculate end_date from start_date + duration_days
+      const endDate = taskData.start_date && taskData.duration_days 
+        ? new Date(new Date(taskData.start_date).getTime() + (taskData.duration_days - 1) * 24 * 60 * 60 * 1000)
+        : undefined;
+
+      const createTaskData = {
+        title: taskData.title,
+        description: taskData.description || undefined,
+        status: 'todo' as const,
+        priority: taskData.priority,
+        phase_id: taskData.phase_id || undefined,
+        assignee: taskData.assignee || undefined,
+        start_date: taskData.start_date,
+        duration_days: taskData.duration_days,
+        end_date: endDate?.toISOString().split('T')[0],
+        is_scheduled: true
+      };
+
+      await createTaskMutation.mutateAsync({
+        projectId: taskData.project_id,
+        data: createTaskData
+      });
+
       toast({
         title: "Success", 
-        description: "Task created successfully (demo mode)"
+        description: "Task created successfully"
       });
     } catch (error) {
       toast({
