@@ -21,6 +21,8 @@ export interface Document {
   total_amount: number;
   status: string;
   pdf_url?: string;
+  source_document_id?: string;
+  converted_to_invoice_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -162,6 +164,96 @@ export const useDocuments = () => {
     }
   };
 
+  const convertToInvoice = async (quotationId: string) => {
+    try {
+      // Get the quotation and its lines
+      const { data: quotation, error: quotationError } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('id', quotationId)
+        .single();
+
+      if (quotationError || !quotation) throw quotationError || new Error('Quotation not found');
+
+      const { data: lines, error: linesError } = await supabase
+        .from('document_lines')
+        .select('*')
+        .eq('document_id', quotationId)
+        .order('sort_order');
+
+      if (linesError) throw linesError;
+
+      // Create the invoice
+      const invoiceData = {
+        ...quotation,
+        id: undefined,
+        document_type: 'invoice',
+        document_number: '', // Will be auto-generated
+        source_document_id: quotationId,
+        status: 'pending',
+        created_at: undefined,
+        updated_at: undefined,
+      };
+
+      const { data: invoice, error: invoiceError } = await supabase
+        .from('documents')
+        .insert(invoiceData)
+        .select()
+        .single();
+
+      if (invoiceError) throw invoiceError;
+
+      // Copy all line items
+      if (lines && lines.length > 0) {
+        const invoiceLines = lines.map(line => ({
+          ...line,
+          id: undefined,
+          document_id: invoice.id,
+          created_at: undefined,
+        }));
+
+        const { error: linesInsertError } = await supabase
+          .from('document_lines')
+          .insert(invoiceLines);
+
+        if (linesInsertError) throw linesInsertError;
+      }
+
+      // Update quotation to mark as converted
+      const { error: updateError } = await supabase
+        .from('documents')
+        .update({ 
+          converted_to_invoice_id: invoice.id,
+          status: 'converted'
+        })
+        .eq('id', quotationId);
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      setDocuments(prev => prev.map(doc => 
+        doc.id === quotationId 
+          ? { ...doc, converted_to_invoice_id: invoice.id, status: 'converted' }
+          : doc
+      ));
+
+      toast({
+        title: "Success",
+        description: `Invoice ${invoice.document_number} created successfully`,
+      });
+
+      return invoice;
+    } catch (error) {
+      console.error('Error converting to invoice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to convert quotation to invoice",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   return {
     documents,
     loading,
@@ -169,6 +261,7 @@ export const useDocuments = () => {
     createDocument,
     updateDocument,
     deleteDocument,
+    convertToInvoice,
   };
 };
 

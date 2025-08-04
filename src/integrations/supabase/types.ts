@@ -403,6 +403,7 @@ export type Database = {
           client_email: string | null
           client_name: string
           client_phone: string | null
+          converted_to_invoice_id: string | null
           created_at: string
           created_by: string
           document_number: string
@@ -414,6 +415,7 @@ export type Database = {
           payment_url: string | null
           pdf_url: string | null
           project_id: string | null
+          source_document_id: string | null
           status: string
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
@@ -430,6 +432,7 @@ export type Database = {
           client_email?: string | null
           client_name: string
           client_phone?: string | null
+          converted_to_invoice_id?: string | null
           created_at?: string
           created_by: string
           document_number: string
@@ -441,6 +444,7 @@ export type Database = {
           payment_url?: string | null
           pdf_url?: string | null
           project_id?: string | null
+          source_document_id?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -457,6 +461,7 @@ export type Database = {
           client_email?: string | null
           client_name?: string
           client_phone?: string | null
+          converted_to_invoice_id?: string | null
           created_at?: string
           created_by?: string
           document_number?: string
@@ -468,6 +473,7 @@ export type Database = {
           payment_url?: string | null
           pdf_url?: string | null
           project_id?: string | null
+          source_document_id?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
@@ -481,6 +487,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "documents_converted_to_invoice_id_fkey"
+            columns: ["converted_to_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "documents_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -492,6 +505,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
             referencedColumns: ["id"]
           },
         ]

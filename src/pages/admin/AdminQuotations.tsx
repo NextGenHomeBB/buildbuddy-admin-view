@@ -29,7 +29,7 @@ const AdminQuotations: React.FC = () => {
   console.log('AdminQuotations component loading...');
   const [searchParams] = useSearchParams();
   const [showWizard, setShowWizard] = useState(false);
-  const { documents, loading, fetchDocuments } = useDocuments();
+  const { documents, loading, fetchDocuments, convertToInvoice } = useDocuments();
   const navigate = useNavigate();
 
   const projectId = searchParams.get('project');
@@ -45,6 +45,14 @@ const AdminQuotations: React.FC = () => {
   const handleWizardComplete = (document: Document) => {
     setShowWizard(false);
     fetchDocuments(projectId || undefined);
+  };
+
+  const handleConvertToInvoice = async (quotationId: string) => {
+    try {
+      await convertToInvoice(quotationId);
+    } catch (error) {
+      // Error is already handled in the hook
+    }
   };
 
   const getStatusColor = (status: string): "default" | "secondary" | "destructive" | "outline" => {
@@ -225,6 +233,21 @@ const AdminQuotations: React.FC = () => {
                             >
                               <Download className="h-4 w-4" />
                             </Button>
+                          )}
+                          {document.status === 'accepted' && !document.converted_to_invoice_id && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleConvertToInvoice(document.id)}
+                            >
+                              <FileText className="h-4 w-4 mr-1" />
+                              Convert to Invoice
+                            </Button>
+                          )}
+                          {document.converted_to_invoice_id && (
+                            <Badge variant="secondary">
+                              Converted
+                            </Badge>
                           )}
                         </div>
                       </TableCell>
