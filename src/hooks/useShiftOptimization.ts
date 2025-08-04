@@ -60,10 +60,18 @@ export function useOptimizeShifts() {
       queryClient.invalidateQueries({ queryKey: ['shifts'] });
       queryClient.invalidateQueries({ queryKey: ['optimization-runs'] });
       
-      toast({
-        title: "Optimization Complete",
-        description: `Generated ${data.total_count} shift proposals with ${data.auto_confirmed ? 'auto-confirmation' : 'manual review required'}.`,
-      });
+      if (data.total_count === 0) {
+        toast({
+          title: "No Shifts Generated",
+          description: "No tasks found for the selected date or no workers available. Please check if there are tasks scheduled and workers with availability.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Optimization Complete",
+          description: `Generated ${data.total_count} shift proposals${data.auto_confirmed ? ' and auto-confirmed them' : ' for review'}.`,
+        });
+      }
     },
     onError: (error) => {
       toast({
