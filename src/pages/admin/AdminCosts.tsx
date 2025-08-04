@@ -13,6 +13,7 @@ import { WorkerRatesTab } from '@/components/admin/costs/WorkerRatesTab';
 import { PaymentsTab } from '@/components/admin/costs/PaymentsTab';
 import { ExpensesTab } from '@/components/admin/costs/ExpensesTab';
 import { CostOverviewTab } from '@/components/admin/costs/CostOverviewTab';
+import { TimesheetApprovalTable } from '@/components/admin/TimesheetApprovalTable';
 import { logger } from '@/utils/logger';
 
 export default function AdminCosts() {
@@ -138,12 +139,13 @@ export default function AdminCosts() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6">
           <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
           <TabsTrigger value="live" className="text-xs sm:text-sm">Live Shifts</TabsTrigger>
           <TabsTrigger value="rates" className="text-xs sm:text-sm">Rates</TabsTrigger>
           <TabsTrigger value="payments" className="text-xs sm:text-sm">Payments</TabsTrigger>
           <TabsTrigger value="expenses" className="text-xs sm:text-sm">Expenses</TabsTrigger>
+          <TabsTrigger value="approvals" className="text-xs sm:text-sm">Approvals</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -173,6 +175,10 @@ export default function AdminCosts() {
 
         <TabsContent value="expenses" className="space-y-4">
           <ExpensesTab expenses={expenses} isLoading={expensesLoading} />
+        </TabsContent>
+
+        <TabsContent value="approvals" className="space-y-4">
+          <TimesheetApprovalTable />
         </TabsContent>
       </Tabs>
     </div>

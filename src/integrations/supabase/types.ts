@@ -1039,6 +1039,9 @@ export type Database = {
       }
       time_sheets: {
         Row: {
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
           break_duration: number | null
           created_at: string | null
           hours: number | null
@@ -1046,6 +1049,7 @@ export type Database = {
           location: string | null
           note: string | null
           project_id: string | null
+          rejection_reason: string | null
           shift_type: string | null
           sync_error: string | null
           sync_status: string | null
@@ -1054,6 +1058,9 @@ export type Database = {
           work_date: string | null
         }
         Insert: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           break_duration?: number | null
           created_at?: string | null
           hours?: number | null
@@ -1061,6 +1068,7 @@ export type Database = {
           location?: string | null
           note?: string | null
           project_id?: string | null
+          rejection_reason?: string | null
           shift_type?: string | null
           sync_error?: string | null
           sync_status?: string | null
@@ -1069,6 +1077,9 @@ export type Database = {
           work_date?: string | null
         }
         Update: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           break_duration?: number | null
           created_at?: string | null
           hours?: number | null
@@ -1076,6 +1087,7 @@ export type Database = {
           location?: string | null
           note?: string | null
           project_id?: string | null
+          rejection_reason?: string | null
           shift_type?: string | null
           sync_error?: string | null
           sync_status?: string | null
