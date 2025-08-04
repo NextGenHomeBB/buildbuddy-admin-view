@@ -949,6 +949,41 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_shifts_project_id"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_costs_vw"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "fk_shifts_project_id"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_shifts_task_id"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_shifts_task_id"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "worker.my_tasks_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_shifts_worker_id"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "shifts_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
