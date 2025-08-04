@@ -1,0 +1,198 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import { SkeletonCard } from '@/components/ui/skeleton-card';
+import { Clock, Calendar, DollarSign } from 'lucide-react';
+
+interface TimeSheetEntry {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  work_date: string;
+  hours: number;
+  break_duration: number;
+  shift_type: string;
+  note: string | null;
+  approval_status: string;
+  approved_at: string | null;
+  created_at: string;
+  profiles: {
+    full_name: string;
+  } | null;
+  projects: {
+    name: string;
+  } | null;
+}
+
+export function TimeHistoryTable() {
+  const [filterDays, setFilterDays] = useState(7);
+
+  const { data: timesheets = [], isLoading } = useQuery({
+    queryKey: ['timesheet-history', filterDays],
+    queryFn: async (): Promise<TimeSheetEntry[]> => {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - filterDays);
+      
+      const { data, error } = await supabase
+        .from('time_sheets')
+        .select(`
+          *,
+          profiles:user_id(full_name),
+          projects:project_id(name)
+        `)
+        .gte('work_date', startDate.toISOString().split('T')[0])
+        .order('work_date', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  if (isLoading) {
+    return <SkeletonCard />;
+  }
+
+  const totalHours = timesheets.reduce((sum, entry) => sum + entry.hours, 0);
+  const totalEntries = timesheets.length;
+  const avgHoursPerDay = totalEntries > 0 ? totalHours / Math.max(filterDays, 1) : 0;
+
+  return (
+    <div className="space-y-4">
+      {/* Summary Cards */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalHours.toFixed(1)}</div>
+            <p className="text-xs text-muted-foreground">
+              Last {filterDays} days
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Time Entries</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalEntries}</div>
+            <p className="text-xs text-muted-foreground">
+              Total shifts recorded
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Daily Average</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{avgHoursPerDay.toFixed(1)}h</div>
+            <p className="text-xs text-muted-foreground">
+              Hours per day
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filter Buttons */}
+      <div className="flex gap-2">
+        {[7, 14, 30].map((days) => (
+          <Button
+            key={days}
+            variant={filterDays === days ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilterDays(days)}
+          >
+            Last {days} days
+          </Button>
+        ))}
+      </div>
+
+      {/* Time History Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Time Sheet History</CardTitle>
+          <CardDescription>
+            Automatically approved time entries for all workers
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Worker</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Project</TableHead>
+                <TableHead>Hours</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Notes</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {timesheets.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    No time entries found for the last {filterDays} days
+                  </TableCell>
+                </TableRow>
+              ) : (
+                timesheets.map((entry) => (
+                  <TableRow key={entry.id}>
+                    <TableCell className="font-medium">
+                      {entry.profiles?.full_name || 'Unknown Worker'}
+                    </TableCell>
+                    <TableCell>
+                      {format(new Date(entry.work_date), 'MMM dd, yyyy')}
+                    </TableCell>
+                    <TableCell>
+                      {entry.projects?.name || 'No Project'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{entry.hours.toFixed(1)}h</span>
+                        {entry.break_duration > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            Break: {Math.round(entry.break_duration)}min
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={entry.shift_type === 'overtime' ? 'destructive' : 'secondary'}>
+                        {entry.shift_type || 'regular'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-green-600 border-green-200">
+                        Auto-Approved
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-xs">
+                      <span className="text-sm text-muted-foreground truncate">
+                        {entry.note || '-'}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

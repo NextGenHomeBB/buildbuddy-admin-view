@@ -354,7 +354,10 @@ export function useShiftTracker() {
       project_id: currentShift.projectId,
       shift_type: currentShift.shiftType,
       note: notes || null,
-      location: null
+      location: null,
+      approval_status: 'approved',
+      approved_at: new Date().toISOString(),
+      approved_by: user?.id
     };
 
     // Create timesheet entry

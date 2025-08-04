@@ -13,7 +13,7 @@ import { WorkerRatesTab } from '@/components/admin/costs/WorkerRatesTab';
 import { PaymentsTab } from '@/components/admin/costs/PaymentsTab';
 import { ExpensesTab } from '@/components/admin/costs/ExpensesTab';
 import { CostOverviewTab } from '@/components/admin/costs/CostOverviewTab';
-import { TimesheetApprovalTable } from '@/components/admin/TimesheetApprovalTable';
+import { TimeHistoryTable } from '@/components/admin/TimeHistoryTable';
 import { logger } from '@/utils/logger';
 
 export default function AdminCosts() {
@@ -141,11 +141,11 @@ export default function AdminCosts() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6">
           <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
-          <TabsTrigger value="live" className="text-xs sm:text-sm">Live Shifts</TabsTrigger>
+          <TabsTrigger value="live" className="text-xs sm:text-sm">Live Tracking</TabsTrigger>
           <TabsTrigger value="rates" className="text-xs sm:text-sm">Rates</TabsTrigger>
           <TabsTrigger value="payments" className="text-xs sm:text-sm">Payments</TabsTrigger>
           <TabsTrigger value="expenses" className="text-xs sm:text-sm">Expenses</TabsTrigger>
-          <TabsTrigger value="approvals" className="text-xs sm:text-sm">Approvals</TabsTrigger>
+          <TabsTrigger value="timesheets" className="text-xs sm:text-sm">Time History</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -177,8 +177,8 @@ export default function AdminCosts() {
           <ExpensesTab expenses={expenses} isLoading={expensesLoading} />
         </TabsContent>
 
-        <TabsContent value="approvals" className="space-y-4">
-          <TimesheetApprovalTable />
+        <TabsContent value="timesheets" className="space-y-4">
+          <TimeHistoryTable />
         </TabsContent>
       </Tabs>
     </div>
