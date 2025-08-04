@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Calendar, CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { useProjects } from '@/hooks/useProjects';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Worker {
   id: string;
@@ -28,6 +30,9 @@ interface AddTaskDialogProps {
     assignee?: string;
     start_date: string;
     duration_days: number;
+    project_id?: string;
+    phase_id?: string;
+    template_task_id?: string;
   }) => void;
 }
 
@@ -39,13 +44,71 @@ export function AddTaskDialog({
   onTaskCreate
 }: AddTaskDialogProps) {
   const { toast } = useToast();
+  const { data: projects = [] } = useProjects();
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     priority: 'medium',
     assignee: 'unassigned',
-    duration_days: 1
+    duration_days: 1,
+    project_id: 'none',
+    phase_id: 'none',
+    template_task_id: 'none'
   });
+
+  // Fetch phases for selected project
+  const [phases, setPhases] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchPhasesAndTasks = async () => {
+      if (formData.project_id !== 'none') {
+        // Fetch phases for selected project
+        const { data: phasesData } = await supabase
+          .from('project_phases')
+          .select('*')
+          .eq('project_id', formData.project_id)
+          .order('created_at', { ascending: true });
+        
+        setPhases(phasesData || []);
+
+        if (formData.phase_id !== 'none') {
+          // Fetch tasks for selected phase
+          const { data: tasksData } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('phase_id', formData.phase_id)
+            .order('created_at', { ascending: true });
+          
+          setTasks(tasksData || []);
+        } else {
+          setTasks([]);
+        }
+      } else {
+        setPhases([]);
+        setTasks([]);
+      }
+    };
+
+    fetchPhasesAndTasks();
+  }, [formData.project_id, formData.phase_id]);
+
+  // Use phases and tasks directly since they're already filtered by useEffect
+
+  // Auto-populate title and description when template task is selected
+  useEffect(() => {
+    if (formData.template_task_id !== 'none') {
+      const selectedTask = tasks.find(task => task.id === formData.template_task_id);
+      if (selectedTask) {
+        setFormData(prev => ({
+          ...prev,
+          title: selectedTask.title,
+          description: selectedTask.description || ''
+        }));
+      }
+    }
+  }, [formData.template_task_id, tasks]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +125,10 @@ export function AddTaskDialog({
     onTaskCreate({
       ...formData,
       start_date: format(selectedDate, 'yyyy-MM-dd'),
-      assignee: formData.assignee === 'unassigned' ? undefined : formData.assignee
+      assignee: formData.assignee === 'unassigned' ? undefined : formData.assignee,
+      project_id: formData.project_id === 'none' ? undefined : formData.project_id,
+      phase_id: formData.phase_id === 'none' ? undefined : formData.phase_id,
+      template_task_id: formData.template_task_id === 'none' ? undefined : formData.template_task_id
     });
 
     // Reset form
@@ -71,7 +137,10 @@ export function AddTaskDialog({
       description: '',
       priority: 'medium',
       assignee: 'unassigned',
-      duration_days: 1
+      duration_days: 1,
+      project_id: 'none',
+      phase_id: 'none',
+      template_task_id: 'none'
     });
 
     onOpenChange(false);
@@ -83,10 +152,23 @@ export function AddTaskDialog({
   };
 
   const handleInputChange = (field: string, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // Reset dependent fields when parent selection changes
+      if (field === 'project_id') {
+        newData.phase_id = 'none';
+        newData.template_task_id = 'none';
+        newData.title = '';
+        newData.description = '';
+      } else if (field === 'phase_id') {
+        newData.template_task_id = 'none';
+        newData.title = '';
+        newData.description = '';
+      }
+      
+      return newData;
+    });
   };
 
   return (
@@ -104,6 +186,71 @@ export function AddTaskDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Project Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="project">Project</Label>
+            <Select
+              value={formData.project_id}
+              onValueChange={(value) => handleInputChange('project_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a project" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No Project</SelectItem>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Phase Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="phase">Phase</Label>
+            <Select
+              value={formData.phase_id}
+              onValueChange={(value) => handleInputChange('phase_id', value)}
+              disabled={formData.project_id === 'none'}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a phase" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No Phase</SelectItem>
+                {phases.map((phase) => (
+                  <SelectItem key={phase.id} value={phase.id}>
+                    {phase.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Task Template Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="template_task">Task Template (Optional)</Label>
+            <Select
+              value={formData.template_task_id}
+              onValueChange={(value) => handleInputChange('template_task_id', value)}
+              disabled={formData.phase_id === 'none'}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a task template" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Create New Task</SelectItem>
+                {tasks.map((task) => (
+                  <SelectItem key={task.id} value={task.id}>
+                    {task.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="title">Task Title *</Label>
             <Input
