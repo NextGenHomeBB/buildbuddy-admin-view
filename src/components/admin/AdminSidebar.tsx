@@ -70,6 +70,11 @@ const navigationItems = [
     icon: FileText
   },
   {
+    title: 'Quotations',
+    url: '/admin/quotations',
+    icon: FileText
+  },
+  {
     title: 'Settings',
     url: '/admin/settings',
     icon: Settings

@@ -72,6 +72,7 @@ function App() {
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="costs" element={<AdminCosts />} />
                 <Route path="reports" element={<Reports />} />
+                <Route path="quotations" element={<AdminQuotations />} />
                 <Route path="system" element={<SystemOverview />} />
                 <Route path="settings" element={<AdminSettings />} />
                 <Route path="phase-templates" element={<PhaseTemplateListPage />} />

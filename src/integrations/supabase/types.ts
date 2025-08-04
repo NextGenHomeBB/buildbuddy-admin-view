@@ -317,6 +317,140 @@ export type Database = {
           },
         ]
       }
+      document_lines: {
+        Row: {
+          created_at: string
+          document_id: string
+          id: string
+          line_total: number
+          material_description: string | null
+          material_name: string
+          material_sku: string | null
+          material_unit: string | null
+          quantity: number
+          sort_order: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          id?: string
+          line_total?: number
+          material_description?: string | null
+          material_name: string
+          material_sku?: string | null
+          material_unit?: string | null
+          quantity?: number
+          sort_order?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          id?: string
+          line_total?: number
+          material_description?: string | null
+          material_name?: string
+          material_sku?: string | null
+          material_unit?: string | null
+          quantity?: number
+          sort_order?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_lines_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          client_address: string | null
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string
+          created_by: string
+          document_number: string
+          document_type: string
+          id: string
+          notes: string | null
+          pdf_url: string | null
+          project_id: string | null
+          status: string
+          subtotal: number
+          tax_amount: number | null
+          tax_rate: number | null
+          terms_conditions: string | null
+          total_amount: number
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          client_address?: string | null
+          client_email?: string | null
+          client_name: string
+          client_phone?: string | null
+          created_at?: string
+          created_by: string
+          document_number: string
+          document_type: string
+          id?: string
+          notes?: string | null
+          pdf_url?: string | null
+          project_id?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number | null
+          tax_rate?: number | null
+          terms_conditions?: string | null
+          total_amount?: number
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          client_address?: string | null
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          created_by?: string
+          document_number?: string
+          document_type?: string
+          id?: string
+          notes?: string | null
+          pdf_url?: string | null
+          project_id?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number | null
+          tax_rate?: number | null
+          terms_conditions?: string | null
+          total_amount?: number
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       materials: {
         Row: {
           category: string | null
