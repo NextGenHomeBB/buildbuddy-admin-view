@@ -18,7 +18,7 @@ import { AdminProjects } from "./pages/admin/AdminProjects";
 import { AdminLists } from "./pages/admin/AdminLists";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { AdminSettings } from "./pages/admin/AdminSettings";
-import { CalendarPage } from "./pages/calendar/CalendarPage";
+import { CalendarPage } from "./pages/admin/AdminCalendar";
 import AdminCosts from "./pages/admin/AdminCosts";
 import { AdminAvailability } from "./pages/admin/AdminAvailability";
 import { SystemOverview } from "./components/admin/SystemOverview";
