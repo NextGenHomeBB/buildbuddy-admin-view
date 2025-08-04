@@ -42,6 +42,21 @@ serve(async (req) => {
       )
     }
 
+    // Enhanced security: Check rate limiting for user invitations
+    const { data: rateLimitCheck, error: rateLimitError } = await supabaseClient
+      .rpc('check_rate_limit', {
+        operation_name: 'user_invite',
+        max_attempts: 10,
+        window_minutes: 60
+      })
+
+    if (rateLimitError || !rateLimitCheck) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Too many invitations sent. Please try again later.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
+      )
+    }
+
     // Check if user is admin (only admins can invite users)
     const { data: currentUserRole } = await supabaseClient
       .from('user_roles')
@@ -58,7 +73,7 @@ serve(async (req) => {
 
     const { emails, role, message, send_welcome }: InviteRequest = await req.json()
 
-    // Validate input
+    // Enhanced input validation
     if (!emails || !Array.isArray(emails) || emails.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Email list is required' }),
@@ -66,9 +81,35 @@ serve(async (req) => {
       )
     }
 
+    // Limit number of emails per request
+    if (emails.length > 50) {
+      return new Response(
+        JSON.stringify({ error: 'Maximum 50 emails allowed per request' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const invalidEmails = emails.filter(email => !emailRegex.test(email))
+    if (invalidEmails.length > 0) {
+      return new Response(
+        JSON.stringify({ error: `Invalid email format: ${invalidEmails.join(', ')}` }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
     if (!['admin', 'manager', 'worker'].includes(role)) {
       return new Response(
         JSON.stringify({ error: 'Invalid role specified' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    // Validate message length if provided
+    if (message && message.length > 500) {
+      return new Response(
+        JSON.stringify({ error: 'Message must be under 500 characters' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }

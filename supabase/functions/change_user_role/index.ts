@@ -41,6 +41,21 @@ serve(async (req) => {
       )
     }
 
+    // Enhanced security: Check rate limiting for role changes
+    const { data: rateLimitCheck, error: rateLimitError } = await supabaseClient
+      .rpc('check_rate_limit', {
+        operation_name: 'role_change',
+        max_attempts: 5,
+        window_minutes: 60
+      })
+
+    if (rateLimitError || !rateLimitCheck) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
+      )
+    }
+
     // Check if user is admin (only admins can change user roles)
     const { data: currentUserRole } = await supabaseClient
       .from('user_roles')
