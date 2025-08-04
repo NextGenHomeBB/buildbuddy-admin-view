@@ -868,6 +868,39 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduler_notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          message: string
+          notification_type: string
+          read_at: string | null
+          recipient_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message: string
+          notification_type?: string
+          read_at?: string | null
+          recipient_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message?: string
+          notification_type?: string
+          read_at?: string | null
+          recipient_id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       security_audit_log: {
         Row: {
           action: string
@@ -1903,6 +1936,10 @@ export type Database = {
       next_document_number: {
         Args: { doc_type: string }
         Returns: string
+      }
+      notify_shift_proposals: {
+        Args: { proposal_count: number; target_date: string }
+        Returns: undefined
       }
       setup_demo_data: {
         Args: { manager_id: string; worker_id: string }
