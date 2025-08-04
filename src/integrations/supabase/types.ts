@@ -74,6 +74,141 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_events: {
+        Row: {
+          all_day: boolean
+          created_at: string
+          description: string | null
+          ends_at: string
+          external_id: string | null
+          id: string
+          last_synced: string | null
+          location: string | null
+          provider: string | null
+          starts_at: string
+          sync_error: string | null
+          sync_status: string | null
+          task_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          all_day?: boolean
+          created_at?: string
+          description?: string | null
+          ends_at: string
+          external_id?: string | null
+          id?: string
+          last_synced?: string | null
+          location?: string | null
+          provider?: string | null
+          starts_at: string
+          sync_error?: string | null
+          sync_status?: string | null
+          task_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          all_day?: boolean
+          created_at?: string
+          description?: string | null
+          ends_at?: string
+          external_id?: string | null
+          id?: string
+          last_synced?: string | null
+          location?: string | null
+          provider?: string | null
+          starts_at?: string
+          sync_error?: string | null
+          sync_status?: string | null
+          task_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      calendar_oauth_tokens: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          provider: string
+          refresh_token: string | null
+          scope: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          provider: string
+          refresh_token?: string | null
+          scope?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          provider?: string
+          refresh_token?: string | null
+          scope?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      calendar_sync_settings: {
+        Row: {
+          auto_sync_enabled: boolean | null
+          created_at: string
+          google_calendar_id: string | null
+          google_enabled: boolean | null
+          id: string
+          outlook_calendar_id: string | null
+          outlook_enabled: boolean | null
+          sync_direction: string | null
+          sync_interval_minutes: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_sync_enabled?: boolean | null
+          created_at?: string
+          google_calendar_id?: string | null
+          google_enabled?: boolean | null
+          id?: string
+          outlook_calendar_id?: string | null
+          outlook_enabled?: boolean | null
+          sync_direction?: string | null
+          sync_interval_minutes?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_sync_enabled?: boolean | null
+          created_at?: string
+          google_calendar_id?: string | null
+          google_enabled?: boolean | null
+          id?: string
+          outlook_calendar_id?: string | null
+          outlook_enabled?: boolean | null
+          sync_direction?: string | null
+          sync_interval_minutes?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       checklist_templates: {
         Row: {
           created_at: string | null

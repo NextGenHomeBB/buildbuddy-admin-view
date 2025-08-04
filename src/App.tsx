@@ -18,7 +18,7 @@ import { AdminProjects } from "./pages/admin/AdminProjects";
 import { AdminLists } from "./pages/admin/AdminLists";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { AdminSettings } from "./pages/admin/AdminSettings";
-import { AdminCalendar } from "./pages/admin/AdminCalendar";
+import { CalendarPage } from "./pages/calendar/CalendarPage";
 import AdminCosts from "./pages/admin/AdminCosts";
 import { AdminAvailability } from "./pages/admin/AdminAvailability";
 import { SystemOverview } from "./components/admin/SystemOverview";
@@ -67,7 +67,7 @@ function App() {
                 <Route path="overview" element={<AdminOverview />} />
                 <Route path="projects" element={<AdminProjects />} />
                 <Route path="lists" element={<AdminLists />} />
-                <Route path="calendar" element={<AdminCalendar />} />
+                <Route path="calendar" element={<CalendarPage />} />
                 <Route path="availability" element={<AdminAvailability />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="costs" element={<AdminCosts />} />
