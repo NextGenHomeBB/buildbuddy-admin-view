@@ -612,23 +612,32 @@ export type Database = {
         Row: {
           id: string
           material_id: string | null
+          planned_qty: number | null
           project_id: string | null
           quantity: number | null
+          task_id: string | null
           total_cost: number | null
+          used_flag: boolean | null
         }
         Insert: {
           id?: string
           material_id?: string | null
+          planned_qty?: number | null
           project_id?: string | null
           quantity?: number | null
+          task_id?: string | null
           total_cost?: number | null
+          used_flag?: boolean | null
         }
         Update: {
           id?: string
           material_id?: string | null
+          planned_qty?: number | null
           project_id?: string | null
           quantity?: number | null
+          task_id?: string | null
           total_cost?: number | null
+          used_flag?: boolean | null
         }
         Relationships: [
           {
@@ -643,6 +652,20 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_materials_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_materials_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "worker.my_tasks_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1033,6 +1056,64 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_logs: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_at: string | null
+          id: string
+          project_id: string | null
+          start_at: string
+          task_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_at?: string | null
+          id?: string
+          project_id?: string | null
+          start_at?: string
+          task_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_at?: string | null
+          id?: string
+          project_id?: string | null
+          start_at?: string
+          task_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_logs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "worker.my_tasks_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1520,6 +1601,14 @@ export type Database = {
           operation_name: string
           max_attempts?: number
           window_minutes?: number
+        }
+        Returns: boolean
+      }
+      check_timer_overlap: {
+        Args: {
+          p_user_id: string
+          p_start_time?: string
+          p_exclude_id?: string
         }
         Returns: boolean
       }
