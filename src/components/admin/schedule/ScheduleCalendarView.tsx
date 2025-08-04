@@ -6,6 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { DragDropProvider } from '@/components/lists/DragDropProvider';
 import { DraggableTaskListItem } from '@/components/lists/DraggableTaskListItem';
 import { DroppableListContainer } from '@/components/lists/DroppableListContainer';
+import { AddTaskDialog } from './AddTaskDialog';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface Task {
   id: string;
@@ -57,6 +59,7 @@ interface ScheduleCalendarViewProps {
   shifts: Shift[];
   tasks: Task[];
   workers: Worker[];
+  onTaskCreate?: (task: any) => void;
 }
 
 export function ScheduleCalendarView({ 
@@ -64,10 +67,14 @@ export function ScheduleCalendarView({
   onDateChange, 
   shifts, 
   tasks, 
-  workers 
+  workers,
+  onTaskCreate 
 }: ScheduleCalendarViewProps) {
+  const { toast } = useToast();
   const [selectedWeek, setSelectedWeek] = useState(startOfWeek(selectedDate));
   const [showUnassigned, setShowUnassigned] = useState(false);
+  const [addTaskDialogOpen, setAddTaskDialogOpen] = useState(false);
+  const [selectedDayForTask, setSelectedDayForTask] = useState<Date>(new Date());
 
   const weekDays = eachDayOfInterval({
     start: startOfWeek(selectedWeek),
@@ -123,6 +130,29 @@ export function ScheduleCalendarView({
   const navigateWeek = (direction: 'prev' | 'next') => {
     const newWeek = addDays(selectedWeek, direction === 'next' ? 7 : -7);
     setSelectedWeek(newWeek);
+  };
+
+  const handleAddTask = (day: Date) => {
+    setSelectedDayForTask(day);
+    setAddTaskDialogOpen(true);
+  };
+
+  const handleTaskCreate = (taskData: any) => {
+    if (onTaskCreate) {
+      onTaskCreate({
+        ...taskData,
+        id: `temp-${Date.now()}`, // Temporary ID until saved to database
+        status: 'todo',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    } else {
+      toast({
+        title: "Info",
+        description: "Task creation handler not implemented yet",
+        variant: "default"
+      });
+    }
   };
 
   return (
@@ -336,6 +366,7 @@ export function ScheduleCalendarView({
                         variant="ghost" 
                         size="sm" 
                         className="w-full justify-center text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/30 hover:border-muted-foreground/60"
+                        onClick={() => handleAddTask(day)}
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Task
@@ -348,6 +379,15 @@ export function ScheduleCalendarView({
           })}
         </div>
       </div>
+
+      {/* Add Task Dialog */}
+      <AddTaskDialog
+        open={addTaskDialogOpen}
+        onOpenChange={setAddTaskDialogOpen}
+        selectedDate={selectedDayForTask}
+        workers={workers}
+        onTaskCreate={handleTaskCreate}
+      />
     </div>
   );
 }

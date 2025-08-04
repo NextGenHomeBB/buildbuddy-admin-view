@@ -11,9 +11,11 @@ import { ScheduleAnalytics } from '@/components/admin/schedule/ScheduleAnalytics
 import { useShifts } from '@/hooks/useShiftOptimization';
 import { useOptimizedTasks } from '@/hooks/useOptimizedTasks';
 import { useWorkers } from '@/hooks/useWorkers';
+import { useToast } from '@/hooks/use-toast';
 import { format, addDays, startOfWeek } from 'date-fns';
 
 export default function AdminScheduleManual() {
+  const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeView, setActiveView] = useState<'calendar' | 'board' | 'workforce' | 'analytics'>('calendar');
   const [selectedWeek, setSelectedWeek] = useState(startOfWeek(new Date()));
@@ -24,6 +26,23 @@ export default function AdminScheduleManual() {
   const { data: shifts } = useShifts();
   const { data: tasks } = useOptimizedTasks();
   const { data: workers } = useWorkers();
+
+  const handleTaskCreate = async (taskData: any) => {
+    try {
+      // For now, just show success message
+      // In a real implementation, this would call the createTask mutation
+      toast({
+        title: "Success", 
+        description: "Task created successfully (demo mode)"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create task",
+        variant: "destructive"
+      });
+    }
+  };
 
   const totalShifts = shifts?.length || 0;
   const confirmedShifts = shifts?.filter(s => s.status === 'confirmed').length || 0;
@@ -127,6 +146,7 @@ export default function AdminScheduleManual() {
             shifts={shifts || []}
             tasks={tasks || []}
             workers={workers || []}
+            onTaskCreate={handleTaskCreate}
           />
         </TabsContent>
 
