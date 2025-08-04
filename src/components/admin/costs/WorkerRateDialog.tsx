@@ -16,7 +16,7 @@ interface WorkerRateDialogProps {
 
 export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogProps) {
   const [formData, setFormData] = useState({
-    worker_id: rate?.worker_id || '',
+    worker_id: rate?.worker_id || 'none',
     payment_type: rate?.payment_type || 'hourly' as const,
     hourly_rate: rate?.hourly_rate?.toString() || '',
     monthly_salary: rate?.monthly_salary?.toString() || '',
@@ -31,7 +31,7 @@ export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogP
     e.preventDefault();
     logger.debug('Form submitted with data:', formData);
     
-    if (!formData.worker_id) {
+    if (!formData.worker_id || formData.worker_id === 'none' || formData.worker_id === 'loading') {
       logger.error('No worker selected for rate dialog');
       return;
     }
@@ -76,9 +76,9 @@ export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogP
               </SelectTrigger>
               <SelectContent>
                 {workersLoading ? (
-                  <SelectItem value="" disabled>Loading workers...</SelectItem>
+                  <SelectItem value="loading" disabled>Loading workers...</SelectItem>
                 ) : workers.length === 0 ? (
-                  <SelectItem value="" disabled>No workers available</SelectItem>
+                  <SelectItem value="none" disabled>No workers available</SelectItem>
                 ) : (
                   workers.map((worker) => (
                     <SelectItem key={worker.id} value={worker.id}>
@@ -168,7 +168,7 @@ export function WorkerRateDialog({ open, onOpenChange, rate }: WorkerRateDialogP
             </Button>
             <Button 
               type="submit" 
-              disabled={createRate.isPending || workersLoading || !formData.worker_id}
+              disabled={createRate.isPending || workersLoading || !formData.worker_id || formData.worker_id === 'none' || formData.worker_id === 'loading'}
             >
               {createRate.isPending ? 'Saving...' : rate ? 'Update Rate' : 'Add Rate'}
             </Button>

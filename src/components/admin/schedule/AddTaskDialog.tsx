@@ -43,7 +43,7 @@ export function AddTaskDialog({
     title: '',
     description: '',
     priority: 'medium',
-    assignee: '',
+    assignee: 'unassigned',
     duration_days: 1
   });
 
@@ -62,7 +62,7 @@ export function AddTaskDialog({
     onTaskCreate({
       ...formData,
       start_date: format(selectedDate, 'yyyy-MM-dd'),
-      assignee: formData.assignee || undefined
+      assignee: formData.assignee === 'unassigned' ? undefined : formData.assignee
     });
 
     // Reset form
@@ -70,7 +70,7 @@ export function AddTaskDialog({
       title: '',
       description: '',
       priority: 'medium',
-      assignee: '',
+      assignee: 'unassigned',
       duration_days: 1
     });
 
@@ -167,7 +167,7 @@ export function AddTaskDialog({
                 <SelectValue placeholder="Select a worker" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Unassigned</SelectItem>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
                 {workers.map((worker) => (
                   <SelectItem key={worker.id} value={worker.id}>
                     <div className="flex items-center gap-2">

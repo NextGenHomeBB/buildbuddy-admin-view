@@ -9,7 +9,7 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { Clock, Play, Square, DollarSign, Coffee, AlertTriangle, TrendingUp } from 'lucide-react';
 
 export function ShiftTracker() {
-  const [selectedProject, setSelectedProject] = useState<string>('');
+  const [selectedProject, setSelectedProject] = useState<string>('none');
   const [currentTime, setCurrentTime] = useState(new Date());
   const { triggerHaptic } = useHapticFeedback();
   
@@ -43,13 +43,13 @@ export function ShiftTracker() {
 
   const handleStartShift = () => {
     triggerHaptic('medium');
-    startShift(selectedProject || undefined);
+    startShift(selectedProject === 'none' ? undefined : selectedProject);
   };
 
   const handleEndShift = () => {
     triggerHaptic('heavy');
     endShift();
-    setSelectedProject('');
+    setSelectedProject('none');
   };
 
   const formatDuration = (hours: number) => {
@@ -147,7 +147,7 @@ export function ShiftTracker() {
                 <SelectValue placeholder="Choose a project..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No Project</SelectItem>
+                <SelectItem value="none">No Project</SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}
