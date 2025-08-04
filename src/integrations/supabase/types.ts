@@ -976,6 +976,13 @@ export type Database = {
             referencedRelation: "worker.my_tasks_view"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "shifts_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       task_completion_history: {

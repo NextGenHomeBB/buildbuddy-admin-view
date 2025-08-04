@@ -28,7 +28,7 @@ import { PhaseTemplateListPage } from "./pages/admin/PhaseTemplateListPage";
 import { PhaseTemplateDetailPage } from "./pages/admin/PhaseTemplateDetailPage";
 import { Reports } from "./pages/admin/Reports";
 import AdminQuotations from "./pages/admin/AdminQuotations";
-console.log('AdminQuotations imported:', AdminQuotations);
+import AdminScheduleAuto from "./pages/admin/AdminScheduleAuto";
 import { WorkerDashboard } from "./pages/worker/WorkerDashboard";
 import { WorkerProjects } from "./pages/worker/WorkerProjects";
 import { WorkerLists } from "./pages/worker/WorkerLists";
@@ -75,6 +75,7 @@ function App() {
                 <Route path="costs" element={<AdminCosts />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="quotations" element={<AdminQuotations />} />
+                <Route path="schedule/auto" element={<AdminScheduleAuto />} />
                 <Route path="system" element={<SystemOverview />} />
                 <Route path="settings" element={<AdminSettings />} />
                 <Route path="phase-templates" element={<PhaseTemplateListPage />} />

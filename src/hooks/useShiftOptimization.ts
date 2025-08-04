@@ -84,7 +84,7 @@ export function useShifts(date?: string, status?: string) {
         .select(`
           *,
           task:tasks(title, project:projects(name)),
-          worker:profiles!worker_id(full_name)
+          worker:profiles!shifts_worker_id_fkey(full_name)
         `)
         .order('start_time', { ascending: true });
 
