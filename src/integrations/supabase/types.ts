@@ -560,6 +560,42 @@ export type Database = {
         }
         Relationships: []
       }
+      optimization_runs: {
+        Row: {
+          auto_generated: boolean | null
+          created_at: string
+          created_by: string | null
+          execution_time_ms: number | null
+          id: string
+          optimization_score: number | null
+          run_date: string
+          total_shifts_confirmed: number | null
+          total_shifts_proposed: number | null
+        }
+        Insert: {
+          auto_generated?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          optimization_score?: number | null
+          run_date: string
+          total_shifts_confirmed?: number | null
+          total_shifts_proposed?: number | null
+        }
+        Update: {
+          auto_generated?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          optimization_score?: number | null
+          run_date?: string
+          total_shifts_confirmed?: number | null
+          total_shifts_proposed?: number | null
+        }
+        Relationships: []
+      }
       phase_templates: {
         Row: {
           created_at: string | null
@@ -868,6 +904,80 @@ export type Database = {
         }
         Relationships: []
       }
+      shifts: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          created_by: string | null
+          end_time: string
+          id: string
+          notes: string | null
+          project_id: string | null
+          start_time: string
+          status: string
+          task_id: string | null
+          updated_at: string
+          worker_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          end_time: string
+          id?: string
+          notes?: string | null
+          project_id?: string | null
+          start_time: string
+          status?: string
+          task_id?: string | null
+          updated_at?: string
+          worker_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          end_time?: string
+          id?: string
+          notes?: string | null
+          project_id?: string | null
+          start_time?: string
+          status?: string
+          task_id?: string | null
+          updated_at?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_costs_vw"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "shifts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "worker.my_tasks_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_completion_history: {
         Row: {
           completed_at: string
@@ -1011,6 +1121,8 @@ export type Database = {
           assignee: string | null
           completed_at: string | null
           created_at: string | null
+          crew_max: number | null
+          crew_min: number | null
           description: string | null
           duration_days: number | null
           end_date: string | null
@@ -1021,6 +1133,7 @@ export type Database = {
           position: number | null
           priority: string | null
           project_id: string | null
+          required_roles: Json | null
           start_date: string | null
           status: string | null
           title: string
@@ -1030,6 +1143,8 @@ export type Database = {
           assignee?: string | null
           completed_at?: string | null
           created_at?: string | null
+          crew_max?: number | null
+          crew_min?: number | null
           description?: string | null
           duration_days?: number | null
           end_date?: string | null
@@ -1040,6 +1155,7 @@ export type Database = {
           position?: number | null
           priority?: string | null
           project_id?: string | null
+          required_roles?: Json | null
           start_date?: string | null
           status?: string | null
           title: string
@@ -1049,6 +1165,8 @@ export type Database = {
           assignee?: string | null
           completed_at?: string | null
           created_at?: string | null
+          crew_max?: number | null
+          crew_min?: number | null
           description?: string | null
           duration_days?: number | null
           end_date?: string | null
@@ -1059,6 +1177,7 @@ export type Database = {
           position?: number | null
           priority?: string | null
           project_id?: string | null
+          required_roles?: Json | null
           start_date?: string | null
           status?: string | null
           title?: string
@@ -1689,6 +1808,15 @@ export type Database = {
           operation_name: string
           max_attempts?: number
           window_minutes?: number
+        }
+        Returns: boolean
+      }
+      check_shift_overlap: {
+        Args: {
+          p_worker_id: string
+          p_start_time: string
+          p_end_time: string
+          p_exclude_shift_id?: string
         }
         Returns: boolean
       }
