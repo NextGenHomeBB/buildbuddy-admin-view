@@ -23,6 +23,7 @@ import { ProjectOverviewTab } from '@/components/admin/ProjectOverviewTab';
 import { ProjectPhasesTab } from '@/components/admin/ProjectPhasesTab';
 import { ProjectTasksTab } from '@/components/admin/ProjectTasksTab';
 import { ProjectFilesTab } from '@/components/admin/ProjectFilesTab';
+import { ProjectCostsTab } from '@/components/admin/costs/ProjectCostsTab';
 import { ProjectPeopleTab } from './ProjectPeopleTab';
 import { PhaseDetailTab } from './PhaseDetailTab';
 import { ProjectDashboard } from './ProjectDashboard';
@@ -46,7 +47,7 @@ export function ProjectDetailPage() {
   // Get current tab from URL
   const pathParts = location.pathname.split('/');
   const currentPath = pathParts[pathParts.length - 1];
-  const currentTab = ['overview', 'phases', 'tasks', 'people', 'time', 'files'].includes(currentPath!) 
+  const currentTab = ['overview', 'phases', 'tasks', 'people', 'time', 'costs', 'files'].includes(currentPath!) 
     ? currentPath! 
     : 'overview';
 
@@ -165,7 +166,7 @@ export function ProjectDetailPage() {
           {/* Tabs Navigation */}
           <div className="border-b">
             <Tabs value={currentTab} onValueChange={handleTabChange}>
-              <TabsList className="grid w-full grid-cols-6 md:w-auto md:inline-flex">
+              <TabsList className="grid w-full grid-cols-7 md:w-auto md:inline-flex">
                 <TabsTrigger value="overview" className="px-6 py-3">
                   Overview
                 </TabsTrigger>
@@ -180,6 +181,9 @@ export function ProjectDetailPage() {
                 </TabsTrigger>
                 <TabsTrigger value="time" className="px-6 py-3">
                   Time
+                </TabsTrigger>
+                <TabsTrigger value="costs" className="px-6 py-3">
+                  Costs
                 </TabsTrigger>
                 <TabsTrigger value="files" className="px-6 py-3">
                   Files
@@ -199,6 +203,7 @@ export function ProjectDetailPage() {
             <Route path="/tasks" element={<ProjectTasksTab projectId={id!} />} />
             <Route path="/people" element={<ProjectPeopleTab projectId={id!} />} />
             <Route path="/time" element={<ProjectTimeTracking projectId={id!} />} />
+            <Route path="/costs" element={<ProjectCostsTab projectId={id!} />} />
             <Route path="/files" element={<ProjectFilesTab projectId={id!} />} />
           </Routes>
         </div>
