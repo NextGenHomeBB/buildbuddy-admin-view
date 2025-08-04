@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar } from '@/components/ui/calendar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DragDropProvider } from '@/components/lists/DragDropProvider';
 import { DraggableTaskListItem } from '@/components/lists/DraggableTaskListItem';
 import { DroppableListContainer } from '@/components/lists/DroppableListContainer';
@@ -13,7 +13,9 @@ import {
   Users, 
   Clock, 
   AlertTriangle,
-  CheckCircle2 
+  CheckCircle2,
+  ChevronDown,
+  Calendar
 } from 'lucide-react';
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -65,7 +67,7 @@ export function ScheduleCalendarView({
   workers 
 }: ScheduleCalendarViewProps) {
   const [selectedWeek, setSelectedWeek] = useState(startOfWeek(selectedDate));
-  const [showUnassigned, setShowUnassigned] = useState(true);
+  const [showUnassigned, setShowUnassigned] = useState(false);
 
   const weekDays = eachDayOfInterval({
     start: startOfWeek(selectedWeek),
@@ -127,12 +129,17 @@ export function ScheduleCalendarView({
     <div className="space-y-6">
       {/* Week Navigation */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Week of {format(selectedWeek, 'MMMM d, yyyy')}
-            </CardTitle>
+            <div>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Calendar className="h-5 w-5" />
+                Week of {format(selectedWeek, 'MMMM d, yyyy')}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {format(selectedWeek, 'MMM d')} - {format(addDays(selectedWeek, 6), 'MMM d, yyyy')}
+              </p>
+            </div>
             <div className="flex items-center gap-2">
               <Button 
                 variant="outline" 
@@ -140,19 +147,21 @@ export function ScheduleCalendarView({
                 onClick={() => navigateWeek('prev')}
               >
                 <ChevronLeft className="h-4 w-4" />
+                Previous
               </Button>
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => setSelectedWeek(startOfWeek(new Date()))}
               >
-                Today
+                This Week
               </Button>
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => navigateWeek('next')}
               >
+                Next
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -160,17 +169,22 @@ export function ScheduleCalendarView({
         </CardHeader>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-8 gap-6">
-        {/* Unassigned Tasks Sidebar */}
-        {showUnassigned && (
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between text-sm">
-                <span>Unassigned Tasks</span>
-                <Badge variant="secondary">{unassignedTasks.length}</Badge>
-              </CardTitle>
+      {/* Unassigned Tasks Collapsible Panel */}
+      <Collapsible open={showUnassigned} onOpenChange={setShowUnassigned}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-accent/5 transition-colors">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <span>Unassigned Tasks</span>
+                  <Badge variant="secondary" className="ml-2">{unassignedTasks.length}</Badge>
+                </CardTitle>
+                <ChevronDown className={cn("h-4 w-4 transition-transform", showUnassigned && "rotate-180")} />
+              </div>
             </CardHeader>
-            <CardContent>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pt-0">
               <DragDropProvider
                 tasks={unassignedTasks}
                 onTaskMove={handleTaskMove}
@@ -178,82 +192,109 @@ export function ScheduleCalendarView({
               >
                 <DroppableListContainer 
                   id="unassigned"
-                  className="space-y-2 min-h-[200px]"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
                   emptyMessage="No unassigned tasks"
                 >
                   {unassignedTasks.map(task => (
-                    <DraggableTaskListItem
+                    <div
                       key={task.id}
-                      task={task}
-                    />
+                      className="p-3 border border-dashed border-muted-foreground/30 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors cursor-move"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="outline" className="text-xs">
+                          {task.priority}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {task.project?.name}
+                        </span>
+                      </div>
+                      <h4 className="font-medium text-sm mb-1 line-clamp-2">{task.title}</h4>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {task.duration_days ? `${task.duration_days} days` : 'No duration set'}
+                      </div>
+                    </div>
                   ))}
                 </DroppableListContainer>
               </DragDropProvider>
             </CardContent>
-          </Card>
-        )}
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
-        {/* Calendar Grid */}
-        <div className={cn("space-y-4", showUnassigned ? "lg:col-span-6" : "lg:col-span-8")}>
-          {/* Week Days Header */}
-          <div className="grid grid-cols-7 gap-2">
-            {weekDays.map((day, index) => (
+      {/* Enhanced Calendar Grid */}
+      <div className="space-y-4">
+        {/* Week Days Header */}
+        <div className="grid grid-cols-7 gap-3">
+          {weekDays.map((day, index) => {
+            const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+            const isSelected = format(day, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
+            
+            return (
               <Card key={index} className={cn(
-                "transition-colors",
-                format(day, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd') && "ring-2 ring-primary"
+                "transition-all duration-200",
+                isToday && "ring-2 ring-primary/50 bg-primary/5",
+                isSelected && "ring-2 ring-primary bg-primary/10"
               )}>
-                <CardHeader className="p-3">
-                  <div className="text-center">
-                    <p className="text-sm font-medium">{format(day, 'EEE')}</p>
-                    <p className="text-lg font-bold">{format(day, 'd')}</p>
+                <CardHeader className="p-4 text-center">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                      {format(day, 'EEE')}
+                    </p>
+                    <p className="text-2xl font-bold">{format(day, 'd')}</p>
+                    <p className="text-xs text-muted-foreground">{format(day, 'MMM')}</p>
                   </div>
                 </CardHeader>
               </Card>
-            ))}
-          </div>
+            );
+          })}
+        </div>
 
-          {/* Schedule Content */}
-          <div className="grid grid-cols-7 gap-2">
-            {weekDays.map((day, index) => {
-              const dayShifts = getShiftsForDay(day);
-              const dayTasks = getTasksForDay(day);
-              const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
-              const isSelected = format(day, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
+        {/* Schedule Content */}
+        <div className="grid grid-cols-7 gap-3">
+          {weekDays.map((day, index) => {
+            const dayShifts = getShiftsForDay(day);
+            const dayTasks = getTasksForDay(day);
+            const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+            const isSelected = format(day, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
 
-              return (
-                <Card 
-                  key={index} 
-                  className={cn(
-                    "min-h-[300px] cursor-pointer transition-colors",
-                    isToday && "bg-accent/20",
-                    isSelected && "ring-2 ring-primary"
-                  )}
-                  onClick={() => onDateChange(day)}
-                >
-                  <CardContent className="p-3 space-y-2">
+            return (
+              <Card 
+                key={index} 
+                className={cn(
+                  "min-h-[400px] cursor-pointer transition-all duration-200 hover:shadow-md",
+                  isToday && "ring-1 ring-primary/30 bg-primary/5",
+                  isSelected && "ring-2 ring-primary bg-primary/10"
+                )}
+                onClick={() => onDateChange(day)}
+              >
+                <CardContent className="p-4 h-full">
+                  <div className="space-y-3 h-full">
                     {/* Shifts */}
                     {dayShifts.map(shift => (
                       <div
                         key={shift.id}
-                        className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded text-xs space-y-1"
+                        className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg space-y-2 shadow-sm"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-medium">{shift.task?.title}</span>
+                          <span className="font-medium text-sm line-clamp-1">{shift.task?.title}</span>
                           <Badge 
                             variant={shift.status === 'confirmed' ? 'default' : 'secondary'}
-                            className="text-xs"
+                            className="text-xs shrink-0"
                           >
                             {shift.status}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {format(new Date(shift.start_time), 'HH:mm')} - 
-                          {format(new Date(shift.end_time), 'HH:mm')}
-                        </div>
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Users className="h-3 w-3" />
-                          {shift.worker?.full_name}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {format(new Date(shift.start_time), 'HH:mm')} - 
+                            {format(new Date(shift.end_time), 'HH:mm')}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Users className="h-3 w-3" />
+                            {shift.worker?.full_name}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -266,20 +307,20 @@ export function ScheduleCalendarView({
                     >
                       <DroppableListContainer 
                         id={`day-${format(day, 'yyyy-MM-dd')}`}
-                        className="space-y-2"
+                        className="space-y-2 flex-1"
                         emptyMessage=""
                       >
                         {dayTasks.map(task => (
                           <div
                             key={task.id}
-                            className="p-2 bg-green-100 dark:bg-green-900/30 rounded text-xs"
+                            className="p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg shadow-sm"
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium">{task.title}</span>
-                              <CheckCircle2 className="h-3 w-3 text-green-600" />
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-sm line-clamp-1">{task.title}</span>
+                              <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                             </div>
                             {task.assignee_profile && (
-                              <div className="flex items-center gap-1 text-muted-foreground mt-1">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Users className="h-3 w-3" />
                                 {task.assignee_profile.full_name}
                               </div>
@@ -290,19 +331,21 @@ export function ScheduleCalendarView({
                     </DragDropProvider>
 
                     {/* Add Task Button */}
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="w-full justify-start text-muted-foreground"
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Add task
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                    <div className="mt-auto">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full justify-center text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/30 hover:border-muted-foreground/60"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Task
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </div>
