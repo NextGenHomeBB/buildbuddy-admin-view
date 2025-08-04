@@ -18,5 +18,8 @@ verify_jwt = true
 [functions.duplicate_project]
 verify_jwt = true
 
+[functions.sync-timesheet]
+verify_jwt = true
+
 [storage]
 enabled = true

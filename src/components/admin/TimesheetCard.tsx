@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Clock, Edit, Trash2, Sync, CheckCircle, AlertCircle } from 'lucide-react';
+import { Clock, Edit, Trash2, RotateCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -62,7 +62,7 @@ export function TimesheetCard({ timesheet, onEdit, onDelete, onSync }: Timesheet
       case 'failed':
         return <AlertCircle className="h-4 w-4 text-destructive" />;
       default:
-        return <Sync className="h-4 w-4 text-warning" />;
+        return <RotateCw className="h-4 w-4 text-warning" />;
     }
   };
 
@@ -197,7 +197,7 @@ export function TimesheetCard({ timesheet, onEdit, onDelete, onSync }: Timesheet
               onClick={() => onSync?.(timesheet.id)}
               className="flex-1"
             >
-              <Sync className="h-4 w-4 mr-2" />
+              <RotateCw className="h-4 w-4 mr-2" />
               Sync
             </Button>
           )}

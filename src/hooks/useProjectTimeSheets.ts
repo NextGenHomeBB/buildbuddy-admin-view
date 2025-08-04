@@ -43,7 +43,10 @@ export function useProjectTimeSheets(projectId?: string) {
         .order('work_date', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map(item => ({
+        ...item,
+        sync_status: item.sync_status as 'pending' | 'synced' | 'failed' || 'pending'
+      }));
     },
     enabled: !!user?.id && !!projectId,
   });
@@ -63,7 +66,10 @@ export function useProjectTimeSheets(projectId?: string) {
         .single();
 
       if (error) throw error;
-      return timesheet;
+      return {
+        ...timesheet,
+        sync_status: timesheet.sync_status as 'pending' | 'synced' | 'failed' || 'pending'
+      };
     },
     onSuccess: (newTimesheet) => {
       // Optimistically update the cache
@@ -93,7 +99,10 @@ export function useProjectTimeSheets(projectId?: string) {
         .single();
 
       if (error) throw error;
-      return timesheet;
+      return {
+        ...timesheet,
+        sync_status: timesheet.sync_status as 'pending' | 'synced' | 'failed' || 'pending'
+      };
     },
     onSuccess: (updatedTimesheet) => {
       // Optimistically update the cache

@@ -713,6 +713,9 @@ export type Database = {
           note: string | null
           project_id: string | null
           shift_type: string | null
+          sync_error: string | null
+          sync_status: string | null
+          synced_at: string | null
           user_id: string | null
           work_date: string | null
         }
@@ -725,6 +728,9 @@ export type Database = {
           note?: string | null
           project_id?: string | null
           shift_type?: string | null
+          sync_error?: string | null
+          sync_status?: string | null
+          synced_at?: string | null
           user_id?: string | null
           work_date?: string | null
         }
@@ -737,6 +743,9 @@ export type Database = {
           note?: string | null
           project_id?: string | null
           shift_type?: string | null
+          sync_error?: string | null
+          sync_status?: string | null
+          synced_at?: string | null
           user_id?: string | null
           work_date?: string | null
         }

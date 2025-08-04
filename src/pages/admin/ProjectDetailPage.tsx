@@ -26,6 +26,7 @@ import { ProjectFilesTab } from '@/components/admin/ProjectFilesTab';
 import { ProjectPeopleTab } from './ProjectPeopleTab';
 import { PhaseDetailTab } from './PhaseDetailTab';
 import { ProjectDashboard } from './ProjectDashboard';
+import { ProjectTimeTracking } from '@/components/admin/ProjectTimeTracking';
 import { useProject } from '@/hooks/useProjects';
 
 export function ProjectDetailPage() {
@@ -45,7 +46,7 @@ export function ProjectDetailPage() {
   // Get current tab from URL
   const pathParts = location.pathname.split('/');
   const currentPath = pathParts[pathParts.length - 1];
-  const currentTab = ['overview', 'phases', 'tasks', 'people', 'files'].includes(currentPath!) 
+  const currentTab = ['overview', 'phases', 'tasks', 'people', 'time', 'files'].includes(currentPath!) 
     ? currentPath! 
     : 'overview';
 
@@ -164,7 +165,7 @@ export function ProjectDetailPage() {
           {/* Tabs Navigation */}
           <div className="border-b">
             <Tabs value={currentTab} onValueChange={handleTabChange}>
-              <TabsList className="grid w-full grid-cols-5 md:w-auto md:inline-flex">
+              <TabsList className="grid w-full grid-cols-6 md:w-auto md:inline-flex">
                 <TabsTrigger value="overview" className="px-6 py-3">
                   Overview
                 </TabsTrigger>
@@ -176,6 +177,9 @@ export function ProjectDetailPage() {
                 </TabsTrigger>
                 <TabsTrigger value="people" className="px-6 py-3">
                   People
+                </TabsTrigger>
+                <TabsTrigger value="time" className="px-6 py-3">
+                  Time
                 </TabsTrigger>
                 <TabsTrigger value="files" className="px-6 py-3">
                   Files
@@ -194,6 +198,7 @@ export function ProjectDetailPage() {
             <Route path="/phases/:phaseId" element={<PhaseDetailTab phaseId={phaseId || ""} projectId={id!} />} />
             <Route path="/tasks" element={<ProjectTasksTab projectId={id!} />} />
             <Route path="/people" element={<ProjectPeopleTab projectId={id!} />} />
+            <Route path="/time" element={<ProjectTimeTracking projectId={id!} />} />
             <Route path="/files" element={<ProjectFilesTab projectId={id!} />} />
           </Routes>
         </div>
