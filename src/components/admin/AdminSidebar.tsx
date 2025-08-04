@@ -12,7 +12,8 @@ import {
   List,
   DollarSign,
   Clock,
-  Zap
+  Zap,
+  CalendarDays
 } from 'lucide-react';
 import {
   Sidebar,
@@ -59,6 +60,11 @@ const navigationItems = [
     title: 'Auto Schedule',
     url: '/admin/schedule/auto',
     icon: Zap
+  },
+  {
+    title: 'Manual Schedule',
+    url: '/admin/schedule/manual',
+    icon: CalendarDays
   },
   {
     title: 'Users',
