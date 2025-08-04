@@ -17,6 +17,7 @@ import { format, addDays, startOfWeek, eachDayOfInterval } from 'date-fns';
 import { DragDropProvider } from '@/components/lists/DragDropProvider';
 import { DraggableTaskListItem } from '@/components/lists/DraggableTaskListItem';
 import { DroppableListContainer } from '@/components/lists/DroppableListContainer';
+import { AddTaskDialog } from './AddTaskDialog';
 import { cn } from '@/lib/utils';
 
 interface Task {
@@ -56,6 +57,14 @@ interface ScheduleBoardProps {
   shifts: Shift[];
   tasks: Task[];
   workers: Worker[];
+  onTaskCreate?: (task: {
+    title: string;
+    description: string;
+    priority: string;
+    assignee?: string;
+    start_date: string;
+    duration_days: number;
+  }) => void;
 }
 
 export function ScheduleBoard({ 
@@ -63,9 +72,13 @@ export function ScheduleBoard({
   onWeekChange, 
   shifts, 
   tasks, 
-  workers 
+  workers,
+  onTaskCreate
 }: ScheduleBoardProps) {
   const [selectedWorker, setSelectedWorker] = useState<string | null>(null);
+  const [addTaskDialogOpen, setAddTaskDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedWorkerId, setSelectedWorkerId] = useState<string>('');
 
   const weekDays = eachDayOfInterval({
     start: startOfWeek(selectedWeek),
@@ -107,6 +120,20 @@ export function ScheduleBoard({
     console.log('Moving task', taskId, 'to list', newListId, 'at position', newPosition);
   };
 
+  const handleAddTask = (workerId: string, date: Date) => {
+    setSelectedWorkerId(workerId);
+    setSelectedDate(date);
+    setAddTaskDialogOpen(true);
+  };
+
+  const handleTaskCreateWithAssignee = (taskData: any) => {
+    if (onTaskCreate) {
+      onTaskCreate({
+        ...taskData,
+        assignee: selectedWorkerId
+      });
+    }
+  };
   const handleTaskReorder = (taskId: string, newPosition: number) => {
     console.log('Reordering task', taskId, 'to position', newPosition);
   };
@@ -283,6 +310,7 @@ export function ScheduleBoard({
                       variant="ghost" 
                       size="sm" 
                       className="w-full mt-2 justify-start text-muted-foreground"
+                      onClick={() => handleAddTask(worker.id, day)}
                     >
                       <Plus className="h-3 w-3 mr-1" />
                       Add
@@ -301,6 +329,15 @@ export function ScheduleBoard({
           ))}
         </DragDropProvider>
       </div>
+
+      {/* Add Task Dialog */}
+      <AddTaskDialog
+        open={addTaskDialogOpen}
+        onOpenChange={setAddTaskDialogOpen}
+        selectedDate={selectedDate}
+        workers={workers}
+        onTaskCreate={handleTaskCreateWithAssignee}
+      />
     </div>
   );
 }

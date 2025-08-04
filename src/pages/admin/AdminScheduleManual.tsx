@@ -157,6 +157,7 @@ export default function AdminScheduleManual() {
             shifts={shifts || []}
             tasks={tasks || []}
             workers={workers || []}
+            onTaskCreate={handleTaskCreate}
           />
         </TabsContent>
 
