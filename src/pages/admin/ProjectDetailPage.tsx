@@ -166,29 +166,18 @@ export function ProjectDetailPage() {
           {/* Tabs Navigation */}
           <div className="border-b">
             <Tabs value={currentTab} onValueChange={handleTabChange}>
-              <TabsList className="w-full overflow-x-auto flex justify-start md:grid md:w-full md:grid-cols-7 lg:w-auto lg:inline-flex">
-                <TabsTrigger value="overview" className="px-3 py-2 sm:px-4 sm:py-3 md:px-6 whitespace-nowrap">
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger value="phases" className="px-3 py-2 sm:px-4 sm:py-3 md:px-6 whitespace-nowrap">
-                  Phases
-                </TabsTrigger>
-                <TabsTrigger value="tasks" className="px-3 py-2 sm:px-4 sm:py-3 md:px-6 whitespace-nowrap">
-                  Tasks
-                </TabsTrigger>
-                <TabsTrigger value="people" className="px-3 py-2 sm:px-4 sm:py-3 md:px-6 whitespace-nowrap">
-                  People
-                </TabsTrigger>
-                <TabsTrigger value="time" className="px-3 py-2 sm:px-4 sm:py-3 md:px-6 whitespace-nowrap">
-                  Time
-                </TabsTrigger>
-                <TabsTrigger value="costs" className="px-3 py-2 sm:px-4 sm:py-3 md:px-6 whitespace-nowrap">
-                  Costs
-                </TabsTrigger>
-                <TabsTrigger value="files" className="px-3 py-2 sm:px-4 sm:py-3 md:px-6 whitespace-nowrap">
-                  Files
-                </TabsTrigger>
-              </TabsList>
+              <div className="relative">
+                <TabsList className="w-full justify-start overflow-x-auto scrollbar-hide">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="phases">Phases</TabsTrigger>
+                  <TabsTrigger value="tasks">Tasks</TabsTrigger>
+                  <TabsTrigger value="people">People</TabsTrigger>
+                  <TabsTrigger value="time">Time</TabsTrigger>
+                  <TabsTrigger value="costs">Costs</TabsTrigger>
+                  <TabsTrigger value="files">Files</TabsTrigger>
+                </TabsList>
+                <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-background to-transparent pointer-events-none sm:hidden" />
+              </div>
             </Tabs>
           </div>
         </div>
