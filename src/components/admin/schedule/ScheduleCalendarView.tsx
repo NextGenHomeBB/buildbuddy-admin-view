@@ -160,38 +160,43 @@ export function ScheduleCalendarView({
       {/* Week Navigation */}
       <Card>
         <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Calendar className="h-5 w-5" />
-                Week of {format(selectedWeek, 'MMMM d, yyyy')}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Week of {format(selectedWeek, 'MMMM d, yyyy')}</span>
+                <span className="sm:hidden">{format(selectedWeek, 'MMM d, yyyy')}</span>
               </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                 {format(selectedWeek, 'MMM d')} - {format(addDays(selectedWeek, 6), 'MMM d, yyyy')}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
               <Button 
                 variant="outline" 
                 size="sm"
+                className="min-h-[44px] sm:min-h-auto shrink-0"
                 onClick={() => navigateWeek('prev')}
               >
                 <ChevronLeft className="h-4 w-4" />
-                Previous
+                <span className="hidden sm:inline">Previous</span>
               </Button>
               <Button 
                 variant="outline" 
                 size="sm"
+                className="min-h-[44px] sm:min-h-auto shrink-0"
                 onClick={() => setSelectedWeek(startOfWeek(new Date()))}
               >
-                This Week
+                <span className="hidden sm:inline">This Week</span>
+                <span className="sm:hidden">Today</span>
               </Button>
               <Button 
                 variant="outline" 
                 size="sm"
+                className="min-h-[44px] sm:min-h-auto shrink-0"
                 onClick={() => navigateWeek('next')}
               >
-                Next
+                <span className="hidden sm:inline">Next</span>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -222,7 +227,7 @@ export function ScheduleCalendarView({
               >
                 <DroppableListContainer 
                   id="unassigned"
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
                   emptyMessage="No unassigned tasks"
                 >
                   {unassignedTasks.map(task => (
@@ -255,7 +260,7 @@ export function ScheduleCalendarView({
       {/* Enhanced Calendar Grid */}
       <div className="space-y-4">
         {/* Week Days Header */}
-        <div className="grid grid-cols-7 gap-3">
+        <div className="hidden md:grid grid-cols-7 gap-3">
           {weekDays.map((day, index) => {
             const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
             const isSelected = format(day, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
@@ -266,12 +271,12 @@ export function ScheduleCalendarView({
                 isToday && "ring-2 ring-primary/50 bg-primary/5",
                 isSelected && "ring-2 ring-primary bg-primary/10"
               )}>
-                <CardHeader className="p-4 text-center">
+                <CardHeader className="p-3 lg:p-4 text-center">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                    <p className="text-xs lg:text-sm font-medium text-muted-foreground uppercase tracking-wide">
                       {format(day, 'EEE')}
                     </p>
-                    <p className="text-2xl font-bold">{format(day, 'd')}</p>
+                    <p className="text-xl lg:text-2xl font-bold">{format(day, 'd')}</p>
                     <p className="text-xs text-muted-foreground">{format(day, 'MMM')}</p>
                   </div>
                 </CardHeader>
@@ -281,7 +286,7 @@ export function ScheduleCalendarView({
         </div>
 
         {/* Schedule Content */}
-        <div className="grid grid-cols-7 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           {weekDays.map((day, index) => {
             const dayShifts = getShiftsForDay(day);
             const dayTasks = getTasksForDay(day);
@@ -292,22 +297,41 @@ export function ScheduleCalendarView({
               <Card 
                 key={index} 
                 className={cn(
-                  "min-h-[400px] cursor-pointer transition-all duration-200 hover:shadow-md",
+                  "min-h-[300px] sm:min-h-[350px] md:min-h-[400px] cursor-pointer transition-all duration-200 hover:shadow-md",
                   isToday && "ring-1 ring-primary/30 bg-primary/5",
                   isSelected && "ring-2 ring-primary bg-primary/10"
                 )}
                 onClick={() => onDateChange(day)}
               >
-                <CardContent className="p-4 h-full">
-                  <div className="space-y-3 h-full">
+                <CardContent className="p-3 sm:p-4 h-full">
+                  <div className="space-y-2 sm:space-y-3 h-full">
+                    {/* Day Header - Mobile Only */}
+                    <div className="md:hidden mb-3 pb-2 border-b border-border">
+                      <div className="flex items-center justify-between">
+                        <div className="text-center">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            {format(day, 'EEE')}
+                          </p>
+                          <p className="text-lg font-bold">{format(day, 'd')}</p>
+                          <p className="text-xs text-muted-foreground">{format(day, 'MMM')}</p>
+                        </div>
+                        {(isToday || isSelected) && (
+                          <div className="text-xs">
+                            {isToday && <span className="text-primary font-medium">Today</span>}
+                            {isSelected && !isToday && <span className="text-primary font-medium">Selected</span>}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Shifts */}
                     {dayShifts.map(shift => (
                       <div
                         key={shift.id}
-                        className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg space-y-2 shadow-sm"
+                        className="p-2 sm:p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg space-y-1 sm:space-y-2 shadow-sm"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-medium text-sm line-clamp-1">{shift.task?.title}</span>
+                          <span className="font-medium text-xs sm:text-sm line-clamp-1">{shift.task?.title}</span>
                           <Badge 
                             variant={shift.status === 'confirmed' ? 'default' : 'secondary'}
                             className="text-xs shrink-0"
@@ -316,14 +340,16 @@ export function ScheduleCalendarView({
                           </Badge>
                         </div>
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3" />
-                            {format(new Date(shift.start_time), 'HH:mm')} - 
-                            {format(new Date(shift.end_time), 'HH:mm')}
+                            <span className="truncate">
+                              {format(new Date(shift.start_time), 'HH:mm')} - 
+                              {format(new Date(shift.end_time), 'HH:mm')}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground">
                             <Users className="h-3 w-3" />
-                            {shift.worker?.full_name}
+                            <span className="truncate">{shift.worker?.full_name}</span>
                           </div>
                         </div>
                       </div>
@@ -343,16 +369,16 @@ export function ScheduleCalendarView({
                         {dayTasks.map(task => (
                           <div
                             key={task.id}
-                            className="p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg shadow-sm"
+                            className="p-2 sm:p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg shadow-sm"
                           >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="font-medium text-sm line-clamp-1">{task.title}</span>
+                            <div className="flex items-center justify-between mb-1 sm:mb-2">
+                              <span className="font-medium text-xs sm:text-sm line-clamp-1">{task.title}</span>
                               <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                             </div>
                             {task.assignee_profile && (
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground">
                                 <Users className="h-3 w-3" />
-                                {task.assignee_profile.full_name}
+                                <span className="truncate">{task.assignee_profile.full_name}</span>
                               </div>
                             )}
                           </div>
@@ -365,11 +391,11 @@ export function ScheduleCalendarView({
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="w-full justify-center text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/30 hover:border-muted-foreground/60"
+                        className="w-full justify-center text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/30 hover:border-muted-foreground/60 min-h-[44px] sm:min-h-auto"
                         onClick={() => handleAddTask(day)}
                       >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Task
+                        <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">Add Task</span>
                       </Button>
                     </div>
                   </div>

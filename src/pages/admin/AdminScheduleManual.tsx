@@ -84,67 +84,67 @@ export default function AdminScheduleManual() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Manual Scheduling</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold">Manual Scheduling</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Plan and manage worker schedules with intelligent assistance
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
+          <Button variant="outline" size="sm" className="min-h-[44px] sm:min-h-auto">
+            <Settings className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Settings</span>
           </Button>
         </div>
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 md:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Shifts</p>
-                <p className="text-2xl font-bold">{totalShifts}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Total Shifts</p>
+                <p className="text-xl sm:text-2xl font-bold">{totalShifts}</p>
               </div>
-              <Calendar className="h-8 w-8 text-muted-foreground" />
+              <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground shrink-0" />
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 md:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Confirmed</p>
-                <p className="text-2xl font-bold text-green-600">{confirmedShifts}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Confirmed</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-600">{confirmedShifts}</p>
               </div>
-              <Clock className="h-8 w-8 text-muted-foreground" />
+              <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground shrink-0" />
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 md:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Workers</p>
-                <p className="text-2xl font-bold">{totalWorkers}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Workers</p>
+                <p className="text-xl sm:text-2xl font-bold">{totalWorkers}</p>
               </div>
-              <Users className="h-8 w-8 text-muted-foreground" />
+              <Users className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground shrink-0" />
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 md:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Tasks</p>
-                <p className="text-2xl font-bold">{activeTasks}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Active Tasks</p>
+                <p className="text-xl sm:text-2xl font-bold">{activeTasks}</p>
               </div>
-              <MapPin className="h-8 w-8 text-muted-foreground" />
+              <MapPin className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground shrink-0" />
             </div>
           </CardContent>
         </Card>
@@ -153,21 +153,25 @@ export default function AdminScheduleManual() {
       {/* Main Interface */}
       <Tabs value={activeView} onValueChange={setActiveView as any} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="calendar" className="flex items-center gap-2">
+          <TabsTrigger value="calendar" className="flex items-center gap-1 sm:gap-2 min-h-[44px] sm:min-h-auto">
             <Calendar className="h-4 w-4" />
-            Calendar View
+            <span className="hidden sm:inline">Calendar</span>
+            <span className="sm:hidden">Cal</span>
           </TabsTrigger>
-          <TabsTrigger value="board" className="flex items-center gap-2">
+          <TabsTrigger value="board" className="flex items-center gap-1 sm:gap-2 min-h-[44px] sm:min-h-auto">
             <BarChart3 className="h-4 w-4" />
-            Schedule Board
+            <span className="hidden sm:inline">Schedule</span>
+            <span className="sm:hidden">Sch</span>
           </TabsTrigger>
-          <TabsTrigger value="workforce" className="flex items-center gap-2">
+          <TabsTrigger value="workforce" className="flex items-center gap-1 sm:gap-2 min-h-[44px] sm:min-h-auto">
             <Users className="h-4 w-4" />
-            Workforce
+            <span className="hidden sm:inline">Workforce</span>
+            <span className="sm:hidden">Work</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
+          <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 min-h-[44px] sm:min-h-auto">
             <BarChart3 className="h-4 w-4" />
-            Analytics
+            <span className="hidden sm:inline">Analytics</span>
+            <span className="sm:hidden">Data</span>
           </TabsTrigger>
         </TabsList>
 
