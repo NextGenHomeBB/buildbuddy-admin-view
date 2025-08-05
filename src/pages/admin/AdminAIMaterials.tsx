@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MaterialsEstimate } from '@/components/ai-materials/MaterialsEstimate';
 import { CostSummary } from '@/components/ai-materials/CostSummary';
 import { ExportOptions } from '@/components/ai-materials/ExportOptions';
@@ -9,10 +9,34 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function AdminAIMaterials() {
   const { mutate: computeMaterials, isPending: isComputing, data: estimateData, error } = useComputeMaterials();
-  const { activePlanId, activeStyleId } = usePlanStore();
+  const { activePlanId, activeStyleId, setActivePlanId } = usePlanStore();
+
+  // Auto-load the first available floor plan if none is selected
+  useEffect(() => {
+    const loadDefaultPlan = async () => {
+      if (!activePlanId) {
+        try {
+          const { data: plans, error } = await supabase
+            .from('floor_plans')
+            .select('id')
+            .limit(1)
+            .single();
+          
+          if (plans && !error) {
+            setActivePlanId(plans.id);
+          }
+        } catch (error) {
+          console.error('Error loading default plan:', error);
+        }
+      }
+    };
+    
+    loadDefaultPlan();
+  }, [activePlanId, setActivePlanId]);
 
   const handleComputeMaterials = () => {
     if (!activePlanId) {

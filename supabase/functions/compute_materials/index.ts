@@ -108,12 +108,28 @@ Return ONLY a JSON object in this exact format:
 
     let content = data.choices[0].message.content.trim()
     
+    console.log('OpenAI raw response:', content)
+    
     // Clean the content - remove markdown code blocks if present
     if (content.startsWith('```json')) {
       content = content.replace(/^```json\s*/, '').replace(/\s*```$/, '')
     } else if (content.startsWith('```')) {
       content = content.replace(/^```\s*/, '').replace(/\s*```$/, '')
     }
+    
+    // Additional cleaning - remove any text before the first {
+    const jsonStart = content.indexOf('{')
+    if (jsonStart > 0) {
+      content = content.substring(jsonStart)
+    }
+    
+    // Remove any text after the last }
+    const jsonEnd = content.lastIndexOf('}')
+    if (jsonEnd > 0 && jsonEnd < content.length - 1) {
+      content = content.substring(0, jsonEnd + 1)
+    }
+    
+    console.log('Cleaned content:', content)
 
     let result
     try {
