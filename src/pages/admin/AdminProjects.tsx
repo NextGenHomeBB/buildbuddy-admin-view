@@ -1,51 +1,22 @@
 import { useState } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Plus, Eye, Edit, Trash2, Filter } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { logger } from '@/utils/logger';
-import { DataTable } from '@/components/admin/DataTable';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useNavigate } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
 import { useProjects, Project } from '@/hooks/useProjects';
 import { ProjectDrawer } from '@/components/admin/ProjectDrawer';
 import { DeleteProjectDialog } from '@/components/admin/DeleteProjectDialog';
+import { ProjectCard } from '@/components/admin/ProjectCard';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
-import { SlidePanel } from '@/components/ui/slide-panel';
 import { NetworkStatus } from '@/components/ui/network-status';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 
-const getStatusBadgeVariant = (status: string) => {
-  switch (status) {
-    case 'active':
-      return 'default';
-    case 'completed':
-      return 'secondary';
-    case 'on_hold':
-      return 'destructive';
-    case 'cancelled':
-      return 'outline';
-    case 'planning':
-      return 'outline';
-    default:
-      return 'outline';
-  }
-};
 
 
 export function AdminProjects() {
   logger.debug('AdminProjects component rendering...');
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
-  logger.debug('useNavigate hook called');
   
   const { data: projects = [], isLoading } = useProjects();
   logger.debug('useProjects hook called, data:', { projects, isLoading });
@@ -53,7 +24,7 @@ export function AdminProjects() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
-  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleEdit = (project: Project) => {
     setSelectedProject(project);
@@ -70,117 +41,19 @@ export function AdminProjects() {
     setSelectedProject(null);
   };
 
-  const columns: ColumnDef<Project>[] = [
-    {
-      accessorKey: 'name',
-      header: 'Name',
-      cell: ({ row }) => {
-        const project = row.original;
-        return (
-          <div 
-            className="space-y-1 min-w-0 cursor-pointer hover:text-primary transition-colors"
-            onClick={() => navigate(`/admin/projects/${project.id}`)}
-          >
-            <div className="font-semibold text-foreground truncate">{project.name}</div>
-            <div className="text-sm text-muted-foreground truncate">
-              {project.description || 'No description'}
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => {
-        const status = row.getValue('status') as string;
-        return (
-          <Badge variant={getStatusBadgeVariant(status)} className="capitalize">
-            {status.replace('_', ' ')}
-          </Badge>
-        );
-      },
-    },
-    {
-      id: 'phases',
-      header: 'Phases',
-      cell: ({ row }) => {
-        const project = row.original;
-        const phaseCount = project.project_phases?.length || 0;
-        return (
-          <span className="text-sm text-muted-foreground">
-            {phaseCount} {phaseCount === 1 ? 'phase' : 'phases'}
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: 'updated_at',
-      header: 'Updated At',
-      cell: ({ row }) => {
-        const updatedAt = row.getValue('updated_at') as string;
-        const createdAt = row.original.created_at;
-        const dateToShow = updatedAt || createdAt;
-        
-        return dateToShow ? (
-          <span className="text-sm text-muted-foreground">
-            {new Date(dateToShow).toLocaleDateString()}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">-</span>
-        );
-      },
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => {
-        const project = row.original;
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => navigate(`/admin/projects/${project.id}`)}
-                className="gap-2"
-              >
-                <Eye className="h-4 w-4" />
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => handleEdit(project)}
-                className="gap-2"
-              >
-                <Edit className="h-4 w-4" />
-                Edit Project
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => handleDelete(project)}
-                className="gap-2 text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete Project
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
-  ];
+  // Filter projects based on search query
+  const filteredProjects = projects.filter(project =>
+    project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (project.location && project.location.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   return (
     <div className="space-y-6">
       <NetworkStatus />
       
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
           <h1 data-testid="admin-projects-header" className="text-3xl font-bold text-foreground">
             Projects
@@ -190,38 +63,64 @@ export function AdminProjects() {
           </p>
         </div>
         {!isMobile && (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsFilterPanelOpen(true)}
-              className="gap-2"
-            >
-              <Filter className="h-4 w-4" />
-              Filter
-            </Button>
-            <Button
-              data-testid="new-project-button"
-              onClick={() => setDrawerOpen(true)}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              New Project
-            </Button>
-          </div>
+          <Button
+            data-testid="new-project-button"
+            onClick={() => setDrawerOpen(true)}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            New Project
+          </Button>
         )}
       </div>
 
-      {/* Projects Table */}
+      {/* Search Bar */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search projects..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      {/* Projects Grid */}
       {isLoading ? (
-        <div className="flex items-center justify-center h-32">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-64 bg-muted animate-pulse rounded-lg" />
+          ))}
+        </div>
+      ) : filteredProjects.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-muted-foreground text-lg mb-2">
+            {searchQuery ? 'No projects found' : 'No projects yet'}
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            {searchQuery 
+              ? 'Try adjusting your search terms'
+              : 'Create your first project to get started'
+            }
+          </p>
+          {!searchQuery && (
+            <Button onClick={() => setDrawerOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Create Project
+            </Button>
+          )}
         </div>
       ) : (
-        <DataTable
-          columns={columns}
-          data={projects}
-          searchPlaceholder="Search projects..."
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredProjects.map((project) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
       )}
 
       {/* Project Drawer */}
@@ -249,50 +148,6 @@ export function AdminProjects() {
           label="Add Project"
         />
       )}
-
-      {/* Mobile Filter Panel */}
-      <SlidePanel
-        isOpen={isFilterPanelOpen}
-        onClose={() => setIsFilterPanelOpen(false)}
-        title="Filter Projects"
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium">Status</label>
-            <div className="mt-2 space-y-2">
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" className="rounded" />
-                <span className="text-sm">Active</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" className="rounded" />
-                <span className="text-sm">Completed</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" className="rounded" />
-                <span className="text-sm">On Hold</span>
-              </label>
-            </div>
-          </div>
-          <div>
-            <label className="text-sm font-medium">Priority</label>
-            <div className="mt-2 space-y-2">
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" className="rounded" />
-                <span className="text-sm">High</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" className="rounded" />
-                <span className="text-sm">Medium</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" className="rounded" />
-                <span className="text-sm">Low</span>
-              </label>
-            </div>
-          </div>
-        </div>
-      </SlidePanel>
     </div>
   );
 }
