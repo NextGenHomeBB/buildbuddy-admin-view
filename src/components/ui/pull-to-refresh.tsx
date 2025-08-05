@@ -23,11 +23,6 @@ export function PullToRefresh({
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
-  // Only enable pull-to-refresh on mobile devices
-  if (!isMobile) {
-    return <div className={className}>{children}</div>;
-  }
-
   const handleTouchStart = (e: TouchEvent) => {
     if (isRefreshing) return;
     
@@ -72,7 +67,7 @@ export function PullToRefresh({
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || !isMobile) return;
 
     container.addEventListener('touchstart', handleTouchStart, { passive: true });
     container.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -83,7 +78,12 @@ export function PullToRefresh({
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [startY, pullDistance, threshold, isRefreshing]);
+  }, [startY, pullDistance, threshold, isRefreshing, isMobile]);
+
+  // Only enable pull-to-refresh on mobile devices
+  if (!isMobile) {
+    return <div className={className}>{children}</div>;
+  }
 
   const pullProgress = Math.min(pullDistance / threshold, 1);
   const showIndicator = pullDistance > 10 || isRefreshing;
