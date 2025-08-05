@@ -42,7 +42,12 @@ serve(async (req) => {
     })
 
     const data = await response.json()
-    const result = JSON.parse(data.choices[0].message.content)
+    
+    // Clean the response content to remove markdown formatting
+    let content = data.choices[0].message.content
+    content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+    
+    const result = JSON.parse(content)
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
