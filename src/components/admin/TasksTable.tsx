@@ -264,7 +264,7 @@ export function TasksTable({ tasks, projectId, onTaskEdit, onTaskDelete }: Tasks
     const phase = phases.find(p => p.id === task.phase_id);
 
     return (
-      <div className="bg-card p-4 rounded-lg border space-y-3">
+      <div className="bg-card p-3 sm:p-4 rounded-lg border space-y-3 min-h-[44px]">
         <div className="flex items-start justify-between">
           <div className="flex-1 space-y-1">
             <h4 className="font-medium text-foreground">{task.title}</h4>
@@ -274,12 +274,12 @@ export function TasksTable({ tasks, projectId, onTaskEdit, onTaskDelete }: Tasks
               </p>
             )}
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
+           <DropdownMenu>
+             <DropdownMenuTrigger asChild>
+               <Button variant="ghost" className="h-9 w-9 p-0 sm:h-8 sm:w-8">
+                 <MoreHorizontal className="h-4 w-4" />
+               </Button>
+             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -313,19 +313,19 @@ export function TasksTable({ tasks, projectId, onTaskEdit, onTaskDelete }: Tasks
           </div>
 
           <div className="space-y-2">
-            <div>
-              <label className="text-xs text-muted-foreground block mb-1">Status</label>
-              <Select
-                value={task.status}
-                onValueChange={(value) => handleStatusChange(task.id, value as Task['status'])}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue>
-                    <Badge variant={statusConfig.variant} className="text-xs">
-                      {statusConfig.label}
-                    </Badge>
-                  </SelectValue>
-                </SelectTrigger>
+             <div>
+               <label className="text-xs text-muted-foreground block mb-1">Status</label>
+               <Select
+                 value={task.status}
+                 onValueChange={(value) => handleStatusChange(task.id, value as Task['status'])}
+               >
+                 <SelectTrigger className="w-full h-10 sm:h-9">
+                   <SelectValue>
+                     <Badge variant={statusConfig.variant} className="text-xs">
+                       {statusConfig.label}
+                     </Badge>
+                   </SelectValue>
+                 </SelectTrigger>
                 <SelectContent className="bg-background border shadow-lg z-50">
                   <SelectItem value="todo">To Do</SelectItem>
                   <SelectItem value="in_progress">In Progress</SelectItem>
@@ -334,13 +334,13 @@ export function TasksTable({ tasks, projectId, onTaskEdit, onTaskDelete }: Tasks
               </Select>
             </div>
 
-            <div>
-              <label className="text-xs text-muted-foreground block mb-1">Assignee</label>
-              <Select
-                value={task.assignee || 'unassigned'}
-                onValueChange={(value) => handleAssigneeChange(task.id, value === 'unassigned' ? '' : value)}
-              >
-                <SelectTrigger className="w-full">
+             <div>
+               <label className="text-xs text-muted-foreground block mb-1">Assignee</label>
+               <Select
+                 value={task.assignee || 'unassigned'}
+                 onValueChange={(value) => handleAssigneeChange(task.id, value === 'unassigned' ? '' : value)}
+               >
+                 <SelectTrigger className="w-full h-10 sm:h-9">
                   <SelectValue placeholder="Unassigned">
                     {assignedWorker ? (
                       <div className="flex items-center gap-2">

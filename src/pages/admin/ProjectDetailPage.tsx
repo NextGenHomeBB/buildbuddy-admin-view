@@ -180,7 +180,7 @@ export function ProjectDetailPage() {
         </div>
 
         {/* Tab Content */}
-        <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+        <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6 lg:p-8">
           <Routes>
             <Route path="/" element={<ProjectDashboard project={project} />} />
             <Route path="/overview" element={<ProjectDashboard project={project} />} />

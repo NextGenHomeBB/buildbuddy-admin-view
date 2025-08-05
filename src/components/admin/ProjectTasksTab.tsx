@@ -68,28 +68,28 @@ export function ProjectTasksTab({ projectId }: ProjectTasksTabProps) {
       </div>
 
       {/* Tasks Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border">
-          <div className="text-2xl font-bold text-foreground">{tasks.length}</div>
-          <div className="text-sm text-muted-foreground">Total Tasks</div>
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-card p-3 sm:p-4 rounded-lg border">
+          <div className="text-xl sm:text-2xl font-bold text-foreground">{tasks.length}</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Total Tasks</div>
         </div>
-        <div className="bg-card p-4 rounded-lg border">
-          <div className="text-2xl font-bold text-blue-600">
+        <div className="bg-card p-3 sm:p-4 rounded-lg border">
+          <div className="text-xl sm:text-2xl font-bold text-blue-600">
             {tasks.filter(t => t.status === 'todo').length}
           </div>
-          <div className="text-sm text-muted-foreground">To Do</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">To Do</div>
         </div>
-        <div className="bg-card p-4 rounded-lg border">
-          <div className="text-2xl font-bold text-yellow-600">
+        <div className="bg-card p-3 sm:p-4 rounded-lg border">
+          <div className="text-xl sm:text-2xl font-bold text-yellow-600">
             {tasks.filter(t => t.status === 'in_progress').length}
           </div>
-          <div className="text-sm text-muted-foreground">In Progress</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">In Progress</div>
         </div>
-        <div className="bg-card p-4 rounded-lg border">
-          <div className="text-2xl font-bold text-green-600">
+        <div className="bg-card p-3 sm:p-4 rounded-lg border">
+          <div className="text-xl sm:text-2xl font-bold text-green-600">
             {tasks.filter(t => t.status === 'done').length}
           </div>
-          <div className="text-sm text-muted-foreground">Done</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Done</div>
         </div>
       </div>
 
