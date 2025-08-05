@@ -212,94 +212,109 @@ export function WorkforceOverview({
         <CardHeader>
           <CardTitle>Worker Details</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="p-3 md:p-6">
+          <div className="space-y-3 md:space-y-4">
             {workers.map(worker => {
               const stats = getWorkerStats(worker.id);
               
               return (
-                <div key={worker.id} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={worker.avatar_url} />
-                        <AvatarFallback>
-                          {worker.full_name?.split(' ').map(n => n[0]).join('') || 'W'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h4 className="font-medium">{worker.full_name}</h4>
-                        <p className="text-sm text-muted-foreground">{worker.role}</p>
+                <Card key={worker.id} className="p-3 md:p-4 border">
+                  {/* Mobile-first responsive layout */}
+                  <div className="space-y-4">
+                    {/* Worker Header - Always horizontal but better spaced */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-12 w-12 md:h-10 md:w-10">
+                          <AvatarImage src={worker.avatar_url} />
+                          <AvatarFallback>
+                            {worker.full_name?.split(' ').map(n => n[0]).join('') || 'W'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h4 className="font-medium text-base md:text-sm">{worker.full_name}</h4>
+                          <p className="text-sm text-muted-foreground">{worker.role}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">
-                        {stats.totalHours.toFixed(1)}h this week
-                      </Badge>
-                      {stats.overtimeHours > 0 && (
-                        <Badge variant="destructive">
-                          {stats.overtimeHours.toFixed(1)}h overtime
-                        </Badge>
-                      )}
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="h-9 w-9 md:h-8 md:w-8">
                         <Settings className="h-4 w-4" />
                       </Button>
                     </div>
-                  </div>
 
-                  {/* Utilization */}
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Utilization</span>
-                      <span className="text-sm text-muted-foreground">
-                        {stats.utilization.toFixed(1)}%
-                      </span>
+                    {/* Stats Row - Stack on mobile, row on tablet+ */}
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                      <Badge variant="outline" className="text-xs md:text-sm justify-center sm:justify-start">
+                        {stats.totalHours.toFixed(1)}h this week
+                      </Badge>
+                      {stats.overtimeHours > 0 && (
+                        <Badge variant="destructive" className="text-xs md:text-sm justify-center sm:justify-start">
+                          {stats.overtimeHours.toFixed(1)}h overtime
+                        </Badge>
+                      )}
                     </div>
-                    <Progress value={stats.utilization} className="h-2" />
-                  </div>
 
-                  {/* Weekly Schedule */}
-                  <div>
-                    <h5 className="text-sm font-medium mb-2">Weekly Schedule</h5>
-                    <div className="grid grid-cols-7 gap-2">
-                      {weekDays.map((day, index) => {
-                        const availability = getWorkerAvailability(worker.id, day);
-                        
-                        return (
-                          <div key={index} className="text-center">
-                            <p className="text-xs text-muted-foreground mb-1">
-                              {format(day, 'EEE')}
-                            </p>
-                            <Badge 
-                              variant="secondary" 
-                              className={`${getAvailabilityColor(availability)} text-xs`}
-                            >
-                              {availability}
-                            </Badge>
-                          </div>
-                        );
-                      })}
+                    {/* Utilization */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Utilization</span>
+                        <span className="text-sm text-muted-foreground">
+                          {stats.utilization.toFixed(1)}%
+                        </span>
+                      </div>
+                      <Progress value={stats.utilization} className="h-2" />
                     </div>
-                  </div>
 
-                  {/* Quick Stats */}
-                  <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t">
-                    <div className="text-center">
-                      <p className="text-lg font-bold">{stats.shiftsCount}</p>
-                      <p className="text-xs text-muted-foreground">Total Shifts</p>
+                    {/* Weekly Schedule - Responsive grid */}
+                    <div>
+                      <h5 className="text-sm font-medium mb-2">Weekly Schedule</h5>
+                      <div className="overflow-x-auto">
+                        <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-7 gap-2 min-w-max">
+                          {weekDays.slice(0, window.innerWidth < 640 ? 4 : window.innerWidth < 1024 ? 5 : 7).map((day, index) => {
+                            const availability = getWorkerAvailability(worker.id, day);
+                            
+                            return (
+                              <div key={index} className="text-center min-w-[60px]">
+                                <p className="text-xs text-muted-foreground mb-1">
+                                  {format(day, 'EEE')}
+                                </p>
+                                <Badge 
+                                  variant="secondary" 
+                                  className={`${getAvailabilityColor(availability)} text-xs w-full justify-center`}
+                                >
+                                  {availability === 'available' ? 'Free' : 
+                                   availability === 'scheduled' ? 'Busy' : 
+                                   'Over'}
+                                </Badge>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {weekDays.length > 4 && window.innerWidth < 640 && (
+                          <p className="text-xs text-muted-foreground mt-2 text-center">
+                            Scroll to see more days →
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-green-600">{stats.confirmedShifts}</p>
-                      <p className="text-xs text-muted-foreground">Confirmed</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-blue-600">
-                        {stats.shiftsCount - stats.confirmedShifts}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Pending</p>
+
+                    {/* Quick Stats - Responsive grid */}
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-4 border-t">
+                      <div className="text-center">
+                        <p className="text-lg md:text-xl font-bold">{stats.shiftsCount}</p>
+                        <p className="text-xs text-muted-foreground">Shifts</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg md:text-xl font-bold text-green-600">{stats.confirmedShifts}</p>
+                        <p className="text-xs text-muted-foreground">Confirmed</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg md:text-xl font-bold text-blue-600">
+                          {stats.shiftsCount - stats.confirmedShifts}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Pending</p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
