@@ -48,7 +48,24 @@ export function useComputeMaterials() {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(`Edge function error: ${error.message || error.toString()}`);
+      }
+
+      if (!data) {
+        throw new Error('Geen data ontvangen van de materiaalberekening');
+      }
+
+      // Validate the response structure
+      if (!data.materials || !Array.isArray(data.materials)) {
+        throw new Error('Ongeldige response: materialen lijst ontbreekt');
+      }
+
+      if (!data.breakdown || typeof data.breakdown !== 'object') {
+        throw new Error('Ongeldige response: kostenverdeling ontbreekt');
+      }
+
       return data;
     },
     onSuccess: async (data) => {
@@ -56,31 +73,54 @@ export function useComputeMaterials() {
 
       // Save the generated estimate to the database
       try {
+        const user = await supabase.auth.getUser();
+        
+        if (!user.data.user?.id) {
+          throw new Error('Gebruiker niet ingelogd');
+        }
+
         const { error } = await supabase
           .from('material_estimates')
           .insert([{
             plan_id: activePlanId,
             style_id: activeStyleId,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
+            user_id: user.data.user.id,
             estimate_data: data as any,
             total_cost: data.totalCost,
             currency: data.currency || 'EUR',
           }]);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Database save error:', error);
+          throw error;
+        }
 
         // Invalidate queries
         queryClient.invalidateQueries({ queryKey: ['material-estimates'] });
         
         toast.success('Materiaalschatting berekend en opgeslagen');
       } catch (error) {
-        toast.error('Materiaalschatting berekend maar niet opgeslagen');
         console.error('Error saving material estimate:', error);
+        toast.error('Materiaalschatting berekend maar niet opgeslagen');
       }
     },
     onError: (error) => {
-      toast.error('Fout bij berekenen materialen');
       console.error('Error computing materials:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Fout bij berekenen materialen';
+      
+      if (error.message.includes('plan_id is required')) {
+        errorMessage = 'Geen plattegrond geselecteerd';
+      } else if (error.message.includes('OpenAI API')) {
+        errorMessage = 'AI service tijdelijk niet beschikbaar';
+      } else if (error.message.includes('JSON')) {
+        errorMessage = 'Fout bij verwerken van AI response';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     },
   });
 }

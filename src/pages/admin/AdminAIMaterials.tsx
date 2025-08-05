@@ -8,13 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Calculator } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AdminAIMaterials() {
-  const { mutate: computeMaterials, isPending: isComputing, data: estimateData } = useComputeMaterials();
+  const { mutate: computeMaterials, isPending: isComputing, data: estimateData, error } = useComputeMaterials();
   const { activePlanId, activeStyleId } = usePlanStore();
 
   const handleComputeMaterials = () => {
-    if (!activePlanId) return;
+    if (!activePlanId) {
+      toast.error('Selecteer eerst een plattegrond in de AI Indeling tool');
+      return;
+    }
     computeMaterials();
   };
 

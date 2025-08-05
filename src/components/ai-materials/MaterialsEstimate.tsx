@@ -1,6 +1,7 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Table as TableIcon } from 'lucide-react';
 
 interface MaterialItem {
   name: string;
@@ -42,8 +43,15 @@ export function MaterialsEstimate({ estimate, loading }: MaterialsEstimateProps)
   if (!estimate) {
     return (
       <div className="text-center text-muted-foreground py-8">
-        <p>Geen materiaalschatting beschikbaar</p>
-        <p className="text-sm mt-1">Klik op "Bereken Materialen" om te beginnen</p>
+        <div className="space-y-3">
+          <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+            <TableIcon className="h-8 w-8" />
+          </div>
+          <div>
+            <p className="font-medium">Geen materiaalschatting beschikbaar</p>
+            <p className="text-sm mt-1">Klik op "Bereken Materialen" om te beginnen</p>
+          </div>
+        </div>
       </div>
     );
   }
