@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { BarChart3, FolderKanban, Users, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { FolderKanban, Users, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { cn } from '@/lib/utils';
 import { logger } from '@/utils/logger';
+import { OverviewModal } from '@/components/admin/OverviewModal';
 
 interface Stats {
   total_projects: number;
@@ -189,76 +190,18 @@ export function AdminOverview() {
     );
   }
 
-  const statCards = [
-    {
-      title: 'Total Projects',
-      value: stats.total_projects,
-      description: '+2 from last month',
-      icon: FolderKanban,
-      trend: 'up'
-    },
-    {
-      title: 'Active Projects',
-      value: stats.active_projects,
-      description: 'Currently in progress',
-      icon: Clock,
-      trend: 'neutral'
-    },
-    {
-      title: 'Completed Projects',
-      value: stats.completed_projects,
-      description: 'This quarter',
-      icon: CheckCircle,
-      trend: 'up'
-    },
-    {
-      title: 'Team Members',
-      value: stats.active_users,
-      description: `${stats.total_users} total users`,
-      icon: Users,
-      trend: 'up'
-    }
-  ];
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
-        <p className="text-muted-foreground mt-2">
-          Welcome back! Here's what's happening with your projects.
-        </p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className={cn(
-        "grid gap-6",
-        deviceType === 'mobile' && "grid-cols-1",
-        deviceType === 'tablet' && "tablet-grid-2 lg:grid-cols-4",
-        deviceType === 'desktop' && "md:grid-cols-2 lg:grid-cols-4"
-      )}>
-        {statCards.map((stat) => (
-          <Card key={stat.title} className={cn(
-            "admin-card transition-all duration-200",
-            deviceType === 'desktop' && "desktop-hover-effects desktop-micro-interaction hover:admin-shadow"
-          )}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className="h-5 w-5 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{stat.value}</div>
-              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                {stat.trend === 'up' && (
-                  <TrendingUp className="h-3 w-3 text-success" />
-                )}
-                {stat.description}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
+          <p className="text-muted-foreground mt-2">
+            Welcome back! Here's what's happening with your projects.
+          </p>
+        </div>
+        <OverviewModal stats={stats} />
       </div>
 
       {/* Recent Projects */}
