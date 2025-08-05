@@ -1,19 +1,8 @@
 import { useState } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
-import { Plus, MoreHorizontal, Edit, Trash2, Calendar, Zap } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Plus, Zap, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { DataTable } from '@/components/admin/DataTable';
-import { Progress } from '@/components/ui/progress';
-import { StatusChip } from '@/components/admin/StatusChip';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { PhaseCard } from '@/components/admin/PhaseCard';
 import { PhaseDrawer } from '@/components/admin/PhaseDrawer';
 import { ApplyFastPhasesModal } from '@/components/admin/ApplyFastPhasesModal';
 import { DeletePhaseDialog } from '@/components/admin/DeletePhaseDialog';
@@ -25,12 +14,12 @@ interface ProjectPhasesTabProps {
 
 export function ProjectPhasesTab({ projectId }: ProjectPhasesTabProps) {
   const { data: phases = [], isLoading } = usePhases(projectId);
-  const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingPhase, setEditingPhase] = useState<ProjectPhase | null>(null);
   const [fastPhasesModalOpen, setFastPhasesModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleEdit = (phase: ProjectPhase) => {
     setEditingPhase(phase);
@@ -47,125 +36,11 @@ export function ProjectPhasesTab({ projectId }: ProjectPhasesTabProps) {
     setEditingPhase(null);
   };
 
-  const handlePhaseClick = (phase: ProjectPhase) => {
-    navigate(`/admin/projects/${projectId}/phases/${phase.id}`);
-  };
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  const columns: ColumnDef<ProjectPhase>[] = [
-    {
-      accessorKey: 'name',
-      header: 'Phase Name',
-      cell: ({ row }) => {
-        const phase = row.original;
-        return (
-          <div 
-            className="space-y-1 cursor-pointer hover:text-primary transition-colors"
-            onClick={() => handlePhaseClick(phase)}
-          >
-            <div className="font-medium text-foreground hover:underline">{phase.name}</div>
-            {phase.description && (
-              <div className="text-sm text-muted-foreground line-clamp-2">
-                {phase.description}
-              </div>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => {
-        const status = row.getValue('status') as string;
-        return <StatusChip status={status} />;
-      },
-    },
-    {
-      accessorKey: 'progress',
-      header: 'Progress',
-      cell: ({ row }) => {
-        const progress = row.getValue('progress') as number || 0;
-        return (
-          <div className="w-24 space-y-1">
-            <Progress value={progress} className="h-2" />
-            <div className="text-xs text-muted-foreground text-center">
-              {progress.toFixed(0)}%
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'start_date',
-      header: 'Start Date',
-      cell: ({ row }) => {
-        const startDate = row.getValue('start_date') as string;
-        return (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4" />
-            {formatDate(startDate)}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'end_date',
-      header: 'End Date',
-      cell: ({ row }) => {
-        const endDate = row.getValue('end_date') as string;
-        return (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4" />
-            {formatDate(endDate)}
-          </div>
-        );
-      },
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => {
-        const phase = row.original;
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => handleEdit(phase)}
-                className="gap-2"
-              >
-                <Edit className="h-4 w-4" />
-                Edit Phase
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="gap-2 text-destructive"
-                onClick={() => handleDelete(phase)}
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete Phase
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
-  ];
+  // Filter phases based on search term
+  const filteredPhases = phases.filter(phase =>
+    phase.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (phase.description && phase.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   if (isLoading) {
     return (
@@ -178,14 +53,14 @@ export function ProjectPhasesTab({ projectId }: ProjectPhasesTabProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Project Phases</h2>
           <p className="text-muted-foreground mt-1">
-            Manage and track progress of individual project phases. Click on a phase name to view its tasks.
+            Manage and track progress of individual project phases. Click on a phase to view its tasks.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Button 
             onClick={() => setFastPhasesModalOpen(true)} 
             variant="outline" 
@@ -201,12 +76,37 @@ export function ProjectPhasesTab({ projectId }: ProjectPhasesTabProps) {
         </div>
       </div>
 
-      {/* Phases Table */}
-      <DataTable
-        columns={columns}
-        data={phases}
-        searchPlaceholder="Search phases..."
-      />
+      {/* Search Bar */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Search phases..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {/* Phases Grid */}
+      {filteredPhases.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          {filteredPhases.map((phase) => (
+            <PhaseCard
+              key={phase.id}
+              phase={phase}
+              projectId={projectId}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <div className="text-muted-foreground">
+            {searchTerm ? 'No phases found matching your search.' : 'No phases found for this project.'}
+          </div>
+        </div>
+      )}
 
       {/* Phase Drawer */}
       <PhaseDrawer
