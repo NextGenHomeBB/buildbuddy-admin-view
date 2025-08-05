@@ -166,18 +166,15 @@ export function ProjectDetailPage() {
           {/* Tabs Navigation */}
           <div className="border-b">
             <Tabs value={currentTab} onValueChange={handleTabChange}>
-              <div className="relative">
-                <TabsList className="w-full justify-start overflow-x-auto scrollbar-hide">
-                  <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="phases">Phases</TabsTrigger>
-                  <TabsTrigger value="tasks">Tasks</TabsTrigger>
-                  <TabsTrigger value="people">People</TabsTrigger>
-                  <TabsTrigger value="time">Time</TabsTrigger>
-                  <TabsTrigger value="costs">Costs</TabsTrigger>
-                  <TabsTrigger value="files">Files</TabsTrigger>
-                </TabsList>
-                <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-background to-transparent pointer-events-none sm:hidden" />
-              </div>
+              <TabsList>
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="phases">Phases</TabsTrigger>
+                <TabsTrigger value="tasks">Tasks</TabsTrigger>
+                <TabsTrigger value="people">People</TabsTrigger>
+                <TabsTrigger value="time">Time</TabsTrigger>
+                <TabsTrigger value="costs">Costs</TabsTrigger>
+                <TabsTrigger value="files">Files</TabsTrigger>
+              </TabsList>
             </Tabs>
           </div>
         </div>
