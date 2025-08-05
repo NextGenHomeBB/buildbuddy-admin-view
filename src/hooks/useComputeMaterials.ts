@@ -43,8 +43,8 @@ export function useComputeMaterials() {
 
       const { data, error } = await supabase.functions.invoke('compute_materials', {
         body: { 
-          plan_id: activePlanId, 
-          style_id: activeStyleId 
+          plan_id: activePlanId,
+          style_id: activeStyleId || undefined
         },
       });
 

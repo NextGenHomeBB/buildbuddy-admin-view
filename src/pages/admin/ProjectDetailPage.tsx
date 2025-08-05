@@ -28,6 +28,7 @@ import { ProjectPeopleTab } from './ProjectPeopleTab';
 import { PhaseDetailTab } from './PhaseDetailTab';
 import { ProjectDashboard } from './ProjectDashboard';
 import { ProjectTimeTracking } from '@/components/admin/ProjectTimeTracking';
+import { ProjectAIHub } from '@/components/admin/ProjectAIHub';
 import { useProject } from '@/hooks/useProjects';
 
 export function ProjectDetailPage() {
@@ -47,7 +48,7 @@ export function ProjectDetailPage() {
   // Get current tab from URL
   const pathParts = location.pathname.split('/');
   const currentPath = pathParts[pathParts.length - 1];
-  const currentTab = ['overview', 'phases', 'tasks', 'people', 'time', 'costs', 'files'].includes(currentPath!) 
+  const currentTab = ['overview', 'phases', 'tasks', 'people', 'time', 'costs', 'ai', 'files'].includes(currentPath!) 
     ? currentPath! 
     : 'overview';
 
@@ -191,6 +192,10 @@ export function ProjectDetailPage() {
                   <span className="hidden xs:inline text-xs">💰</span>
                   <span className="text-xs sm:text-sm">Costs</span>
                 </TabsTrigger>
+                <TabsTrigger value="ai" className="gap-1.5 sm:gap-2">
+                  <span className="hidden xs:inline text-xs">🤖</span>
+                  <span className="text-xs sm:text-sm">AI</span>
+                </TabsTrigger>
                 <TabsTrigger value="files" className="gap-1.5 sm:gap-2">
                   <span className="hidden xs:inline text-xs">📁</span>
                   <span className="text-xs sm:text-sm">Files</span>
@@ -211,6 +216,7 @@ export function ProjectDetailPage() {
             <Route path="/people" element={<ProjectPeopleTab projectId={id!} />} />
             <Route path="/time" element={<ProjectTimeTracking projectId={id!} />} />
             <Route path="/costs" element={<ProjectCostsTab projectId={id!} />} />
+            <Route path="/ai/*" element={<ProjectAIHub projectId={id!} projectName={project.name} />} />
             <Route path="/files" element={<ProjectFilesTab projectId={id!} />} />
           </Routes>
         </div>
