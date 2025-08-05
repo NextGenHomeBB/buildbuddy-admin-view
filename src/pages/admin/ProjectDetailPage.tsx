@@ -166,14 +166,35 @@ export function ProjectDetailPage() {
           {/* Tabs Navigation */}
           <div className="border-b">
             <Tabs value={currentTab} onValueChange={handleTabChange}>
-              <TabsList>
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="phases">Phases</TabsTrigger>
-                <TabsTrigger value="tasks">Tasks</TabsTrigger>
-                <TabsTrigger value="people">People</TabsTrigger>
-                <TabsTrigger value="time">Time</TabsTrigger>
-                <TabsTrigger value="costs">Costs</TabsTrigger>
-                <TabsTrigger value="files">Files</TabsTrigger>
+              <TabsList className="w-full max-w-full">
+                <TabsTrigger value="overview" className="gap-1.5 sm:gap-2">
+                  <span className="hidden xs:inline text-xs">📊</span>
+                  <span className="text-xs sm:text-sm">Overview</span>
+                </TabsTrigger>
+                <TabsTrigger value="phases" className="gap-1.5 sm:gap-2">
+                  <span className="hidden xs:inline text-xs">📋</span>
+                  <span className="text-xs sm:text-sm">Phases</span>
+                </TabsTrigger>
+                <TabsTrigger value="tasks" className="gap-1.5 sm:gap-2">
+                  <span className="hidden xs:inline text-xs">✅</span>
+                  <span className="text-xs sm:text-sm">Tasks</span>
+                </TabsTrigger>
+                <TabsTrigger value="people" className="gap-1.5 sm:gap-2">
+                  <span className="hidden xs:inline text-xs">👥</span>
+                  <span className="text-xs sm:text-sm">People</span>
+                </TabsTrigger>
+                <TabsTrigger value="time" className="gap-1.5 sm:gap-2">
+                  <span className="hidden xs:inline text-xs">⏰</span>
+                  <span className="text-xs sm:text-sm">Time</span>
+                </TabsTrigger>
+                <TabsTrigger value="costs" className="gap-1.5 sm:gap-2">
+                  <span className="hidden xs:inline text-xs">💰</span>
+                  <span className="text-xs sm:text-sm">Costs</span>
+                </TabsTrigger>
+                <TabsTrigger value="files" className="gap-1.5 sm:gap-2">
+                  <span className="hidden xs:inline text-xs">📁</span>
+                  <span className="text-xs sm:text-sm">Files</span>
+                </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
