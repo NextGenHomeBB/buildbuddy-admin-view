@@ -41,12 +41,14 @@ export function AdminProjects() {
     setSelectedProject(null);
   };
 
-  // Filter projects based on search query
-  const filteredProjects = projects.filter(project =>
-    project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (project.location && project.location.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Filter projects based on search query and sort by progress
+  const filteredProjects = projects
+    .filter(project =>
+      project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (project.location && project.location.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+    .sort((a, b) => b.progress - a.progress);
 
   return (
     <div className="space-y-6">
