@@ -1,13 +1,15 @@
 
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, DollarSign, Users, CheckCircle, Circle } from 'lucide-react';
+import { ArrowLeft, Plus, DollarSign, Users, CheckCircle, Circle, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { usePhases } from '@/hooks/usePhases';
 import { useTasks } from '@/hooks/useTasks';
 import { TaskDrawer } from '@/components/admin/TaskDrawer';
@@ -70,13 +72,31 @@ export function PhaseDetailTab({ phaseId, projectId }: PhaseDetailTabProps) {
             <div className="text-xs sm:text-sm text-muted-foreground">Tasks Complete</div>
           </div>
           <div className="text-center p-3 sm:p-4 sm:col-span-2 lg:col-span-1">
-            <div className="text-xl sm:text-2xl font-bold text-foreground">
-              {phase.start_date ? new Date(phase.start_date).toLocaleDateString('en-GB', {
-                day: 'numeric',
-                month: 'short'
-              }) : 'No date'}
-            </div>
-            <div className="text-xs sm:text-sm text-muted-foreground">Start Date</div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" className="flex flex-col h-auto p-2 hover:bg-muted/50">
+                  <div className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+                    {phase.start_date ? new Date(phase.start_date).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'short'
+                    }) : 'No date'}
+                    <CalendarIcon className="h-4 w-4" />
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Start Date</div>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <Calendar
+                  mode="single"
+                  selected={phase.start_date ? new Date(phase.start_date) : undefined}
+                  onSelect={(date) => {
+                    // TODO: Update phase start date
+                    console.log('Selected date:', date);
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </div>
