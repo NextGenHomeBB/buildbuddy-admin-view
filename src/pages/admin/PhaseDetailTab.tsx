@@ -59,24 +59,24 @@ export function PhaseDetailTab({ phaseId, projectId }: PhaseDetailTabProps) {
           </Badge>
         </div>
         
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-foreground">{Math.round(progress)}%</div>
-            <div className="text-sm text-muted-foreground">Progress</div>
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="text-center p-3 sm:p-4">
+            <div className="text-xl sm:text-2xl font-bold text-foreground">{Math.round(progress)}%</div>
+            <div className="text-xs sm:text-sm text-muted-foreground">Progress</div>
             <Progress value={progress} className="mt-2 h-2" />
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-foreground">{completedTasks}/{totalTasks}</div>
-            <div className="text-sm text-muted-foreground">Tasks Complete</div>
+          <div className="text-center p-3 sm:p-4">
+            <div className="text-xl sm:text-2xl font-bold text-foreground">{completedTasks}/{totalTasks}</div>
+            <div className="text-xs sm:text-sm text-muted-foreground">Tasks Complete</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-foreground">
+          <div className="text-center p-3 sm:p-4 sm:col-span-2 lg:col-span-1">
+            <div className="text-xl sm:text-2xl font-bold text-foreground">
               {phase.start_date ? new Date(phase.start_date).toLocaleDateString('en-GB', {
                 day: 'numeric',
                 month: 'short'
               }) : 'No date'}
             </div>
-            <div className="text-sm text-muted-foreground">Start Date</div>
+            <div className="text-xs sm:text-sm text-muted-foreground">Start Date</div>
           </div>
         </div>
       </div>
@@ -106,31 +106,38 @@ export function PhaseDetailTab({ phaseId, projectId }: PhaseDetailTabProps) {
               <div className="space-y-4">
                 {phaseTasks.length > 0 ? (
                   phaseTasks.map((task) => (
-                    <div key={task.id} className="flex items-center space-x-3 p-3 rounded-lg border">
-                      <Checkbox 
-                        checked={task.status === 'done'}
-                        className="h-5 w-5"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`font-medium ${task.status === 'done' ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-                            {task.title}
-                          </span>
-                          <Badge variant={
-                            task.priority === 'high' ? 'destructive' :
-                            task.priority === 'medium' ? 'default' : 'secondary'
-                          } className="text-xs">
-                            {task.priority}
-                          </Badge>
-                        </div>
-                        {task.description && (
-                          <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+                    <div key={task.id} className="flex items-start sm:items-center gap-3 p-2 sm:p-3 rounded-lg border min-h-[60px] hover:bg-muted/50 transition-colors">
+                      <div 
+                        className={`flex-shrink-0 w-6 h-6 rounded-full border-2 border-green-500 flex items-center justify-center mt-1 sm:mt-0 transition-all ${
+                          task.status === 'done' 
+                            ? 'bg-green-500 text-white' 
+                            : 'bg-transparent hover:bg-green-50'
+                        }`}
+                      >
+                        {task.status === 'done' && (
+                          <CheckCircle className="h-4 w-4 text-white" />
                         )}
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm text-muted-foreground">
-                          {new Date(task.created_at).toLocaleDateString('en-GB')}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                          <span className={`font-medium text-sm sm:text-base ${task.status === 'done' ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                            {task.title}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={
+                              task.priority === 'high' ? 'destructive' :
+                              task.priority === 'medium' ? 'default' : 'secondary'
+                            } className="text-xs flex-shrink-0">
+                              {task.priority}
+                            </Badge>
+                            <div className="text-xs sm:text-sm text-muted-foreground sm:ml-auto">
+                              {new Date(task.created_at).toLocaleDateString('en-GB')}
+                            </div>
+                          </div>
                         </div>
+                        {task.description && (
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
+                        )}
                       </div>
                     </div>
                   ))
