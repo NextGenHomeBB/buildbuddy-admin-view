@@ -30,6 +30,7 @@ import { Reports } from "./pages/admin/Reports";
 import AdminQuotations from "./pages/admin/AdminQuotations";
 import AdminScheduleAuto from "./pages/admin/AdminScheduleAuto";
 import AdminScheduleManual from "./pages/admin/AdminScheduleManual";
+import AdminMaterials from "./pages/admin/AdminMaterials";
 import { WorkerDashboard } from "./pages/worker/WorkerDashboard";
 import { WorkerProjects } from "./pages/worker/WorkerProjects";
 import { WorkerLists } from "./pages/worker/WorkerLists";
@@ -73,6 +74,7 @@ function App() {
                 <Route path="calendar" element={<CalendarPage />} />
                 <Route path="availability" element={<AdminAvailability />} />
                 <Route path="users" element={<AdminUsers />} />
+                <Route path="materials" element={<AdminMaterials />} />
                 <Route path="costs" element={<AdminCosts />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="quotations" element={<AdminQuotations />} />

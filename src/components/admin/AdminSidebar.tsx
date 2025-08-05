@@ -13,7 +13,8 @@ import {
   DollarSign,
   Clock,
   Zap,
-  CalendarDays
+  CalendarDays,
+  Package
 } from 'lucide-react';
 import {
   Sidebar,
@@ -70,6 +71,11 @@ const navigationItems = [
     title: 'Users',
     url: '/admin/users',
     icon: Users
+  },
+  {
+    title: 'Materials',
+    url: '/admin/materials',
+    icon: Package
   },
   {
     title: 'Costs',
