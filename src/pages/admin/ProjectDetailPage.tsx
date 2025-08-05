@@ -82,7 +82,7 @@ export function ProjectDetailPage() {
     return (
       <div className="flex-1 flex flex-col h-full">
         {/* Breadcrumb */}
-        <div className="flex-shrink-0 border-b bg-background p-4">
+        <div className="flex-shrink-0 border-b bg-background p-3 sm:p-4">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -111,7 +111,7 @@ export function ProjectDetailPage() {
         </div>
 
         {/* Header */}
-        <div className="flex-shrink-0 p-6">
+        <div className="flex-shrink-0 p-4 sm:p-6">
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
@@ -121,14 +121,14 @@ export function ProjectDetailPage() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-foreground">Phase Detail</h1>
-              <p className="text-muted-foreground mt-1">Manage phase tasks and progress</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Phase Detail</h1>
+              <p className="text-muted-foreground mt-1 text-sm sm:text-base">Manage phase tasks and progress</p>
             </div>
           </div>
         </div>
 
         {/* Phase Detail Content */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-6">
           <PhaseDetailTab phaseId={phaseId} projectId={id!} />
         </div>
       </div>
@@ -138,7 +138,7 @@ export function ProjectDetailPage() {
   return (
     <div className="flex-1 flex flex-col h-full">
       {/* Breadcrumb */}
-      <div className="flex-shrink-0 border-b bg-background p-4">
+      <div className="flex-shrink-0 border-b bg-background p-3 sm:p-4">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -159,33 +159,33 @@ export function ProjectDetailPage() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-shrink-0 p-6 space-y-6">
+        <div className="flex-shrink-0 p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
           {/* Project Header */}
           <ProjectHeaderCard project={project} />
 
           {/* Tabs Navigation */}
           <div className="border-b">
             <Tabs value={currentTab} onValueChange={handleTabChange}>
-              <TabsList className="grid w-full grid-cols-7 md:w-auto md:inline-flex">
-                <TabsTrigger value="overview" className="px-6 py-3">
+              <TabsList className="w-full overflow-x-auto flex justify-start md:grid md:w-full md:grid-cols-7 lg:w-auto lg:inline-flex">
+                <TabsTrigger value="overview" className="px-3 py-2 sm:px-4 sm:py-3 md:px-6 whitespace-nowrap">
                   Overview
                 </TabsTrigger>
-                <TabsTrigger value="phases" className="px-6 py-3">
+                <TabsTrigger value="phases" className="px-3 py-2 sm:px-4 sm:py-3 md:px-6 whitespace-nowrap">
                   Phases
                 </TabsTrigger>
-                <TabsTrigger value="tasks" className="px-6 py-3">
+                <TabsTrigger value="tasks" className="px-3 py-2 sm:px-4 sm:py-3 md:px-6 whitespace-nowrap">
                   Tasks
                 </TabsTrigger>
-                <TabsTrigger value="people" className="px-6 py-3">
+                <TabsTrigger value="people" className="px-3 py-2 sm:px-4 sm:py-3 md:px-6 whitespace-nowrap">
                   People
                 </TabsTrigger>
-                <TabsTrigger value="time" className="px-6 py-3">
+                <TabsTrigger value="time" className="px-3 py-2 sm:px-4 sm:py-3 md:px-6 whitespace-nowrap">
                   Time
                 </TabsTrigger>
-                <TabsTrigger value="costs" className="px-6 py-3">
+                <TabsTrigger value="costs" className="px-3 py-2 sm:px-4 sm:py-3 md:px-6 whitespace-nowrap">
                   Costs
                 </TabsTrigger>
-                <TabsTrigger value="files" className="px-6 py-3">
+                <TabsTrigger value="files" className="px-3 py-2 sm:px-4 sm:py-3 md:px-6 whitespace-nowrap">
                   Files
                 </TabsTrigger>
               </TabsList>
@@ -194,7 +194,7 @@ export function ProjectDetailPage() {
         </div>
 
         {/* Tab Content */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
           <Routes>
             <Route path="/" element={<ProjectDashboard project={project} />} />
             <Route path="/overview" element={<ProjectDashboard project={project} />} />
