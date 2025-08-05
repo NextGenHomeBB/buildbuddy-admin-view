@@ -106,10 +106,11 @@ export function AdminSidebar() {
   return (
     <Sidebar 
       className={cn(
-        "border-r border-sidebar-border bg-sidebar transition-all duration-300",
+        "border-r border-sidebar-border bg-sidebar transition-all duration-300 z-50",
         isCollapsed ? "w-16" : "w-64"
       )}
       collapsible="icon"
+      side="left"
     >
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-3">
@@ -125,7 +126,7 @@ export function AdminSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-4">
+      <SidebarContent className="px-2 py-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
         <SidebarGroup>
           <SidebarGroupLabel className={cn(
             "text-sidebar-foreground/60 text-xs uppercase tracking-wider mb-2",
@@ -134,24 +135,25 @@ export function AdminSidebar() {
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton 
                     asChild
                     className={cn(
-                      "w-full justify-start gap-3 transition-colors hover:bg-sidebar-accent",
+                      "w-full justify-start gap-3 transition-colors hover:bg-sidebar-accent min-h-[44px] px-3 py-2",
                       isActiveRoute(item.url) && 
-                      "bg-sidebar-accent text-sidebar-primary font-medium"
+                      "bg-sidebar-accent text-sidebar-primary font-medium",
+                      isCollapsed && "justify-center"
                     )}
                   >
                     <NavLink 
                       to={item.url}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg"
+                      className="flex items-center gap-3 rounded-lg"
                     >
                       <item.icon className="h-5 w-5 shrink-0" />
                       {!isCollapsed && (
-                        <span className="truncate">{item.title}</span>
+                        <span className="truncate text-sm">{item.title}</span>
                       )}
                     </NavLink>
                   </SidebarMenuButton>
