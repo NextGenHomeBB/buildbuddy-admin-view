@@ -530,33 +530,132 @@ export type Database = {
           },
         ]
       }
+      floor_plans: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          plan_data: Json
+          prompt: string
+          total_area: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          plan_data: Json
+          prompt: string
+          total_area?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          plan_data?: Json
+          prompt?: string
+          total_area?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      material_estimates: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          estimate_data: Json
+          id: string
+          plan_id: string
+          style_id: string | null
+          total_cost: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          estimate_data: Json
+          id?: string
+          plan_id: string
+          style_id?: string | null
+          total_cost: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          estimate_data?: Json
+          id?: string
+          plan_id?: string
+          style_id?: string | null
+          total_cost?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_estimates_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_estimates_style_id_fkey"
+            columns: ["style_id"]
+            isOneToOne: false
+            referencedRelation: "plan_styles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       materials: {
         Row: {
+          article_nr: string | null
+          brand: string | null
           category: string | null
+          ean: string | null
           id: string
           name: string | null
+          price_ex_vat: number | null
           sku: string | null
+          specs: Json | null
           supplier: string | null
           unit: string | null
           unit_cost: number | null
+          url: string | null
         }
         Insert: {
+          article_nr?: string | null
+          brand?: string | null
           category?: string | null
+          ean?: string | null
           id?: string
           name?: string | null
+          price_ex_vat?: number | null
           sku?: string | null
+          specs?: Json | null
           supplier?: string | null
           unit?: string | null
           unit_cost?: number | null
+          url?: string | null
         }
         Update: {
+          article_nr?: string | null
+          brand?: string | null
           category?: string | null
+          ean?: string | null
           id?: string
           name?: string | null
+          price_ex_vat?: number | null
           sku?: string | null
+          specs?: Json | null
           supplier?: string | null
           unit?: string | null
           unit_cost?: number | null
+          url?: string | null
         }
         Relationships: []
       }
@@ -619,6 +718,53 @@ export type Database = {
           sort_order?: number
         }
         Relationships: []
+      }
+      plan_styles: {
+        Row: {
+          created_at: string | null
+          id: string
+          mood_images: string[] | null
+          name: string
+          palette: Json
+          plan_id: string
+          prompt: string
+          textures: Json | null
+          theme: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mood_images?: string[] | null
+          name: string
+          palette: Json
+          plan_id: string
+          prompt: string
+          textures?: Json | null
+          theme: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mood_images?: string[] | null
+          name?: string
+          palette?: Json
+          plan_id?: string
+          prompt?: string
+          textures?: Json | null
+          theme?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_styles_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
