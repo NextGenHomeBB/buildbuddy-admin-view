@@ -114,13 +114,25 @@ export function useCreatePhaseTemplate() {
         description: "Phase template has been created successfully.",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Error creating phase template:", error);
+      
+      let errorMessage = "Failed to create phase template.";
+      
+      // Provide specific error messages for common issues
+      if (error?.message?.includes("row-level security")) {
+        errorMessage = "You don't have permission to create templates. Please contact an administrator.";
+      } else if (error?.message?.includes("JWT")) {
+        errorMessage = "Please log in to create templates.";
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to create phase template.",
+        description: errorMessage,
         variant: "destructive",
       });
-      console.error("Error creating phase template:", error);
     },
   });
 }
