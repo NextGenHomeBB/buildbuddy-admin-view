@@ -695,6 +695,144 @@ export type Database = {
         }
         Relationships: []
       }
+      phase_expenses: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          expense_date: string
+          expense_type: string
+          id: string
+          phase_id: string
+          receipt_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          expense_date?: string
+          expense_type: string
+          id?: string
+          phase_id: string
+          receipt_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          expense_date?: string
+          expense_type?: string
+          id?: string
+          phase_id?: string
+          receipt_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      phase_labor_costs: {
+        Row: {
+          created_at: string
+          description: string | null
+          hourly_rate: number
+          hours_actual: number | null
+          hours_planned: number | null
+          id: string
+          phase_id: string
+          total_actual_cost: number
+          total_planned_cost: number
+          updated_at: string
+          work_date: string | null
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          hourly_rate?: number
+          hours_actual?: number | null
+          hours_planned?: number | null
+          id?: string
+          phase_id: string
+          total_actual_cost?: number
+          total_planned_cost?: number
+          updated_at?: string
+          work_date?: string | null
+          worker_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          hourly_rate?: number
+          hours_actual?: number | null
+          hours_planned?: number | null
+          id?: string
+          phase_id?: string
+          total_actual_cost?: number
+          total_planned_cost?: number
+          updated_at?: string
+          work_date?: string | null
+          worker_id?: string
+        }
+        Relationships: []
+      }
+      phase_material_costs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          material_id: string | null
+          material_name: string
+          material_sku: string | null
+          notes: string | null
+          phase_id: string
+          quantity: number
+          status: string | null
+          total_cost: number
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          material_id?: string | null
+          material_name: string
+          material_sku?: string | null
+          notes?: string | null
+          phase_id: string
+          quantity?: number
+          status?: string | null
+          total_cost?: number
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          material_id?: string | null
+          material_name?: string
+          material_sku?: string | null
+          notes?: string | null
+          phase_id?: string
+          quantity?: number
+          status?: string | null
+          total_cost?: number
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       phase_templates: {
         Row: {
           created_at: string | null
@@ -875,6 +1013,7 @@ export type Database = {
       }
       project_phases: {
         Row: {
+          budget: number | null
           created_at: string | null
           description: string | null
           end_date: string | null
@@ -885,8 +1024,10 @@ export type Database = {
           project_id: string | null
           start_date: string | null
           status: string | null
+          updated_at: string | null
         }
         Insert: {
+          budget?: number | null
           created_at?: string | null
           description?: string | null
           end_date?: string | null
@@ -897,8 +1038,10 @@ export type Database = {
           project_id?: string | null
           start_date?: string | null
           status?: string | null
+          updated_at?: string | null
         }
         Update: {
+          budget?: number | null
           created_at?: string | null
           description?: string | null
           end_date?: string | null
@@ -909,6 +1052,7 @@ export type Database = {
           project_id?: string | null
           start_date?: string | null
           status?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -1418,6 +1562,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "task_lists"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "phase_costs_vw"
+            referencedColumns: ["phase_id"]
           },
           {
             foreignKeyName: "tasks_phase_id_fkey"
@@ -1960,6 +2111,38 @@ export type Database = {
       }
     }
     Views: {
+      phase_costs_vw: {
+        Row: {
+          budget: number | null
+          expense_cost: number | null
+          forecast: number | null
+          labor_cost_actual: number | null
+          labor_cost_planned: number | null
+          last_updated: string | null
+          material_cost: number | null
+          phase_id: string | null
+          phase_name: string | null
+          project_id: string | null
+          total_committed: number | null
+          variance: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_phases_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_costs_vw"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_phases_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_costs_vw: {
         Row: {
           budget: number | null
