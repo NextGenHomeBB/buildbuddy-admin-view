@@ -2,7 +2,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ProjectLayout } from "@/components/admin/ProjectLayout";
@@ -90,6 +90,9 @@ function App() {
                 <Route path="settings" element={<AdminSettings />} />
                 <Route path="phase-templates" element={<PhaseTemplateListPage />} />
                 <Route path="phase-templates/:id" element={<PhaseTemplateDetailPage />} />
+                {/* Redirect old template URLs to new ones */}
+                <Route path="templates/phases" element={<Navigate to="/admin/phase-templates" replace />} />
+                <Route path="templates/phases/:id" element={<Navigate to="/admin/phase-templates" replace />} />
               </Route>
 
               {/* Project routes */}
