@@ -32,15 +32,17 @@ export function AddLaborCostDialog({ isOpen, onClose, phaseId }: AddLaborCostDia
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const { pricing_type, fixed_price, ...dbFields } = formData;
+    
     const laborData = {
       phase_id: phaseId,
-      ...formData,
-      total_planned_cost: formData.pricing_type === 'hourly' 
+      ...dbFields,
+      total_planned_cost: pricing_type === 'hourly' 
         ? formData.hours_planned * formData.hourly_rate 
-        : formData.fixed_price,
-      total_actual_cost: formData.pricing_type === 'hourly' 
+        : fixed_price,
+      total_actual_cost: pricing_type === 'hourly' 
         ? formData.hours_actual * formData.hourly_rate 
-        : formData.fixed_price,
+        : fixed_price,
     };
 
     addLaborCost.mutate(laborData, {
