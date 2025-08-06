@@ -1,13 +1,5 @@
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { ChevronDown } from 'lucide-react';
 import { useBulkTaskActions } from '@/hooks/useBulkTaskActions';
 import { useTasks, useTasksByPhase } from '@/hooks/useTasks';
 
@@ -84,12 +76,18 @@ export function StatusChip({ status, onStatusChange, disabled, projectId, phaseI
   
   const tasks = phaseId ? phaseTasks : projectTasks;
 
-  const statusOptions = [
-    { value: 'not_started', label: 'Planning' },
-    { value: 'active', label: 'Active' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'blocked', label: 'On Hold' },
-  ];
+  const statusCycle = ['not_started', 'active', 'completed', 'blocked'];
+  
+  const getNextStatus = (currentStatus: string) => {
+    const currentIndex = statusCycle.indexOf(currentStatus);
+    return statusCycle[(currentIndex + 1) % statusCycle.length];
+  };
+
+  const handleStatusClick = () => {
+    if (!onStatusChange || disabled) return;
+    const nextStatus = getNextStatus(status);
+    handleStatusSelect(nextStatus);
+  };
 
   const handleStatusSelect = async (newStatus: string) => {
     if (!onStatusChange || disabled) return;
@@ -133,33 +131,12 @@ export function StatusChip({ status, onStatusChange, disabled, projectId, phaseI
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-auto px-3 py-1.5 text-sm font-medium border-border hover:bg-muted/50"
-        >
-          <Badge 
-            variant={config.variant} 
-            className={`capitalize whitespace-nowrap px-2 py-1 text-xs font-medium border-0 ${config.className || 'bg-transparent text-inherit hover:bg-transparent'}`}
-          >
-            {config.label}
-          </Badge>
-          <ChevronDown className="h-3 w-3 ml-1" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="center">
-        {statusOptions.map((option) => (
-          <DropdownMenuItem
-            key={option.value}
-            onClick={() => handleStatusSelect(option.value)}
-            className={status === option.value ? 'bg-muted' : ''}
-          >
-            {option.label}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Badge 
+      variant={config.variant} 
+      className={`capitalize whitespace-nowrap px-4 py-2 text-sm font-medium cursor-pointer transition-colors ${config.className || 'hover:bg-muted/50'}`}
+      onClick={handleStatusClick}
+    >
+      {config.label}
+    </Badge>
   );
 }
