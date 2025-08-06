@@ -59,53 +59,53 @@ export function ChecklistTemplatesCard({ className }: ChecklistTemplatesCardProp
   }
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6", className)}>
       {phaseTemplates.map((phase) => {
         const isExpanded = expandedPhases.has(phase.id);
         const checklistCount = phase.checklist_templates?.length || 0;
 
         return (
-          <Card key={phase.id} className="w-full">
+          <Card key={phase.id} className="w-full h-fit transition-all duration-200 hover:shadow-md hover:shadow-primary/10">
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0 flex-1">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => togglePhase(phase.id)}
-                    className="h-6 w-6 p-0"
+                    className="h-11 w-11 p-0 shrink-0 hover:bg-accent"
                   >
                     {isExpanded ? (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-5 w-5" />
                     ) : (
-                      <ChevronRight className="h-4 w-4" />
+                      <ChevronRight className="h-5 w-5" />
                     )}
                   </Button>
-                  <div>
-                    <h3 className="font-semibold text-foreground">{phase.name}</h3>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-foreground truncate">{phase.name}</h3>
                     <p className="text-sm text-muted-foreground">
                       {checklistCount} {checklistCount === 1 ? 'item' : 'items'}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 shrink-0">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleSync(phase.id)}
-                    className="h-8 px-3"
+                    className="h-11 px-3 hover:bg-accent hover:border-accent-foreground/20 transition-colors"
                   >
-                    <RefreshCw className="h-3 w-3 mr-1" />
-                    Sync
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Sync</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleEdit(phase.id)}
-                    className="h-8 px-3"
+                    className="h-11 px-3 hover:bg-accent hover:border-accent-foreground/20 transition-colors"
                   >
-                    <Edit className="h-3 w-3 mr-1" />
-                    Edit
+                    <Edit className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Edit</span>
                   </Button>
                 </div>
               </div>
@@ -113,22 +113,22 @@ export function ChecklistTemplatesCard({ className }: ChecklistTemplatesCardProp
             
             {isExpanded && (
               <CardContent className="pt-0">
-                <div className="space-y-3 pl-9">
+                <div className="space-y-4 pl-2 sm:pl-14">
                   {phase.checklist_templates?.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3">
+                    <div key={item.id} className="flex items-center gap-4">
                       <Checkbox 
                         id={`checklist-${item.id}`}
-                        className="h-4 w-4"
+                        className="h-5 w-5"
                       />
                       <label 
                         htmlFor={`checklist-${item.id}`}
-                        className="text-sm text-foreground cursor-pointer flex-1"
+                        className="text-sm text-foreground cursor-pointer flex-1 leading-relaxed"
                       >
                         {item.label}
                       </label>
                     </div>
                   )) || (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground pl-2">
                       No checklist items yet. Edit this template to add items.
                     </p>
                   )}
