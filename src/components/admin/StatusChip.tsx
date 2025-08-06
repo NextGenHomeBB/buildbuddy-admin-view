@@ -9,13 +9,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { useBulkTaskActions } from '@/hooks/useBulkTaskActions';
-import { useTasks } from '@/hooks/useTasks';
+import { useTasks, useTasksByPhase } from '@/hooks/useTasks';
 
 interface StatusChipProps {
   status: string;
   onStatusChange?: (newStatus: string) => void;
   disabled?: boolean;
   projectId?: string;
+  phaseId?: string;
 }
 
 const getStatusConfig = (status: string) => {
@@ -73,10 +74,15 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-export function StatusChip({ status, onStatusChange, disabled, projectId }: StatusChipProps) {
+export function StatusChip({ status, onStatusChange, disabled, projectId, phaseId }: StatusChipProps) {
   const config = getStatusConfig(status);
   const { bulkUpdateTasks } = useBulkTaskActions();
-  const { data: tasks = [] } = useTasks(projectId || '');
+  
+  // Use phase-specific tasks if phaseId is provided, otherwise use project tasks
+  const { data: projectTasks = [] } = useTasks(projectId || '');
+  const { data: phaseTasks = [] } = useTasksByPhase(phaseId || '');
+  
+  const tasks = phaseId ? phaseTasks : projectTasks;
 
   const statusOptions = [
     { value: 'not_started', label: 'Planning' },
@@ -88,8 +94,8 @@ export function StatusChip({ status, onStatusChange, disabled, projectId }: Stat
   const handleStatusSelect = async (newStatus: string) => {
     if (!onStatusChange || disabled) return;
     
-    // If changing to completed and we have a projectId, mark all tasks as completed
-    if (newStatus === 'completed' && projectId && tasks.length > 0) {
+    // If changing to completed and we have tasks to complete
+    if (newStatus === 'completed' && (projectId || phaseId) && tasks.length > 0) {
       const incompleteTasks = tasks.filter(task => task.status !== 'done');
       
       if (incompleteTasks.length > 0) {

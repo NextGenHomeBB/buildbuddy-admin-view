@@ -63,6 +63,28 @@ export function useTasks(projectId: string) {
   });
 }
 
+export function useTasksByPhase(phaseId: string) {
+  return useQuery({
+    queryKey: ['tasks', 'phase', phaseId],
+    queryFn: async (): Promise<Task[]> => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('phase_id', phaseId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      return (data || []).map(task => ({
+        ...task,
+        status: task.status as Task['status'],
+        priority: task.priority as Task['priority']
+      }));
+    },
+    enabled: !!phaseId,
+    staleTime: 30000, // 30 seconds
+  });
+}
+
 export function useCreateTask() {
   const queryClient = useQueryClient();
   const { toast } = useToast();

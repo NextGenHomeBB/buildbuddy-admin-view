@@ -67,7 +67,7 @@ export function PhaseDetailTab({ phaseId, projectId }: PhaseDetailTabProps) {
             status={phase.status} 
             onStatusChange={handleStatusChange}
             disabled={updatePhase.isPending}
-            projectId={projectId}
+            phaseId={phaseId}
           />
         </div>
         
