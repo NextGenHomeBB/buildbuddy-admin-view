@@ -11,8 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { DataTable } from '@/components/admin/DataTable';
 import { PhaseDrawer } from '@/components/admin/PhaseDrawer';
 import { ApplyFastPhasesModal } from '@/components/admin/ApplyFastPhasesModal';
-import { usePhases, ProjectPhase } from '@/hooks/usePhases';
+import { usePhases, ProjectPhase, useUpdatePhase } from '@/hooks/usePhases';
 import { useBulkPhaseUpdate } from '@/hooks/useBulkPhaseUpdate';
+import { StatusChip } from '@/components/admin/StatusChip';
 
 interface PhasesTableTabProps {
   projectId: string;
@@ -32,19 +33,6 @@ const getPhaseStatusIcon = (status: string) => {
   }
 };
 
-const getPhaseStatusBadge = (status: string) => {
-  switch (status) {
-    case 'completed':
-      return <Badge variant="secondary" className="bg-green-100 text-green-800">Completed</Badge>;
-    case 'in_progress':
-      return <Badge variant="default" className="bg-orange-100 text-orange-800">In Progress</Badge>;
-    case 'blocked':
-      return <Badge variant="destructive">Blocked</Badge>;
-    case 'not_started':
-    default:
-      return <Badge variant="outline">Not Started</Badge>;
-  }
-};
 
 export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
   const navigate = useNavigate();
@@ -55,6 +43,7 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
   const [editingPhase, setEditingPhase] = useState<ProjectPhase | null>(null);
   
   const bulkPhaseUpdate = useBulkPhaseUpdate();
+  const updatePhase = useUpdatePhase();
 
   // Get selected phase IDs
   const selectedPhaseIds = Object.keys(selectedPhases).filter(id => selectedPhases[id]);
@@ -76,6 +65,20 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
 
   const handleViewPhase = (phaseId: string) => {
     navigate(`/admin/projects/${projectId}/phase/${phaseId}`);
+  };
+
+  const handleStatusChange = (phaseId: string, newStatus: string) => {
+    const phase = phases.find(p => p.id === phaseId);
+    if (!phase) return;
+    
+    updatePhase.mutate({
+      id: phaseId,
+      name: phase.name,
+      description: phase.description,
+      status: newStatus as "not_started" | "in_progress" | "completed" | "blocked",
+      start_date: phase.start_date,
+      end_date: phase.end_date
+    });
   };
 
   // Define columns for the phases table
@@ -123,8 +126,14 @@ export function PhasesTableTab({ projectId }: PhasesTableTabProps) {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => {
-        const status = row.getValue('status') as string;
-        return getPhaseStatusBadge(status);
+        const phase = row.original;
+        return (
+          <StatusChip
+            status={phase.status}
+            onStatusChange={(newStatus) => handleStatusChange(phase.id, newStatus)}
+            disabled={updatePhase.isPending}
+          />
+        );
       },
     },
     {
