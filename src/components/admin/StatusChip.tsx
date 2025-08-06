@@ -1,5 +1,13 @@
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown } from 'lucide-react';
 import { useBulkTaskActions } from '@/hooks/useBulkTaskActions';
 import { useTasks, useTasksByPhase } from '@/hooks/useTasks';
 
@@ -15,10 +23,9 @@ const getStatusConfig = (status: string) => {
   switch (status) {
     // Project statuses
     case 'active':
-    case 'in_progress':
       return {
         variant: 'outline' as const,
-        label: 'In Progress',
+        label: 'Active',
         className: 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600'
       };
     case 'completed':
@@ -77,20 +84,15 @@ export function StatusChip({ status, onStatusChange, disabled, projectId, phaseI
   
   const tasks = phaseId ? phaseTasks : projectTasks;
 
-  const statusCycle = ['not_started', 'in_progress', 'completed', 'blocked'];
+  const statusOptions = [
+    { value: 'not_started', label: 'Planning' },
+    { value: 'active', label: 'Active' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'blocked', label: 'On Hold' },
+  ];
 
-  const getNextStatus = (currentStatus: string) => {
-    const currentIndex = statusCycle.indexOf(currentStatus);
-    return statusCycle[(currentIndex + 1) % statusCycle.length];
-  };
-
-  const handleClick = async (event: React.MouseEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
-    
+  const handleStatusSelect = async (newStatus: string) => {
     if (!onStatusChange || disabled) return;
-    
-    const newStatus = getNextStatus(status);
     
     // If changing to completed and we have tasks to complete
     if (newStatus === 'completed' && (projectId || phaseId) && tasks.length > 0) {
@@ -131,12 +133,33 @@ export function StatusChip({ status, onStatusChange, disabled, projectId, phaseI
   }
 
   return (
-    <Badge 
-      variant={config.variant} 
-      className={`capitalize whitespace-nowrap px-4 py-2 text-sm font-medium cursor-pointer transition-colors ${config.className} ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}
-      onClick={handleClick}
-    >
-      {config.label}
-    </Badge>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-auto px-3 py-1.5 text-sm font-medium border-border hover:bg-muted/50"
+        >
+          <Badge 
+            variant={config.variant} 
+            className={`capitalize whitespace-nowrap px-2 py-1 text-xs font-medium border-0 ${config.className || 'bg-transparent text-inherit hover:bg-transparent'}`}
+          >
+            {config.label}
+          </Badge>
+          <ChevronDown className="h-3 w-3 ml-1" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center">
+        {statusOptions.map((option) => (
+          <DropdownMenuItem
+            key={option.value}
+            onClick={() => handleStatusSelect(option.value)}
+            className={status === option.value ? 'bg-muted' : ''}
+          >
+            {option.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
