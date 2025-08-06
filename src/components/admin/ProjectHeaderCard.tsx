@@ -1,10 +1,12 @@
 
+import { useState } from 'react';
 import { Edit, MoreHorizontal, Copy, Archive, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { StatusChip } from '@/components/admin/StatusChip';
 import { BudgetProgressBar } from '@/components/admin/BudgetProgressBar';
 import { ProjectWorkersSection } from '@/components/admin/ProjectWorkersSection';
+import { ProjectDrawer } from '@/components/admin/ProjectDrawer';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +22,15 @@ interface ProjectHeaderCardProps {
 }
 
 export function ProjectHeaderCard({ project }: ProjectHeaderCardProps) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const handleEdit = () => {
+    setDrawerOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setDrawerOpen(false);
+  };
 
   return (
     <Card className="relative overflow-hidden">
@@ -58,7 +69,7 @@ export function ProjectHeaderCard({ project }: ProjectHeaderCardProps) {
 
           {/* Actions */}
           <div className="flex lg:flex-col items-center justify-end lg:justify-start gap-2 flex-shrink-0">
-            <Button variant="outline" size="sm" className="gap-2 min-h-[44px] sm:min-h-auto">
+            <Button variant="outline" size="sm" className="gap-2 min-h-[44px] sm:min-h-auto" onClick={handleEdit}>
               <Edit className="h-4 w-4" />
               <span className="hidden sm:inline">Edit</span>
             </Button>
@@ -89,6 +100,13 @@ export function ProjectHeaderCard({ project }: ProjectHeaderCardProps) {
           </div>
         </div>
       </CardContent>
+
+      {/* Project Drawer */}
+      <ProjectDrawer
+        isOpen={drawerOpen}
+        onClose={handleDrawerClose}
+        project={project}
+      />
     </Card>
   );
 }
