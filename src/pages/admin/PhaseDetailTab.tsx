@@ -10,10 +10,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { usePhases } from '@/hooks/usePhases';
+import { usePhases, useUpdatePhase } from '@/hooks/usePhases';
 import { useTasks } from '@/hooks/useTasks';
 import { TaskDrawer } from '@/components/admin/TaskDrawer';
 import { PhaseCostTab } from '@/components/admin/PhaseCostTab';
+import { StatusChip } from '@/components/admin/StatusChip';
 
 interface PhaseDetailTabProps {
   phaseId: string;
@@ -24,6 +25,7 @@ export function PhaseDetailTab({ phaseId, projectId }: PhaseDetailTabProps) {
   const { data: phases = [] } = usePhases(projectId);
   const { data: tasks = [] } = useTasks(projectId);
   const [taskDrawerOpen, setTaskDrawerOpen] = useState(false);
+  const updatePhase = useUpdatePhase();
   
   const phase = phases.find(p => p.id === phaseId);
   const phaseTasks = tasks.filter(task => task.phase_id === phaseId);
@@ -40,6 +42,18 @@ export function PhaseDetailTab({ phaseId, projectId }: PhaseDetailTabProps) {
   const totalTasks = phaseTasks.length;
   const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
+  const handleStatusChange = (newStatus: string) => {
+    updatePhase.mutate({
+      id: phaseId,
+      project_id: projectId,
+      name: phase.name,
+      description: phase.description || '',
+      status: newStatus as 'not_started' | 'in_progress' | 'completed' | 'blocked',
+      start_date: phase.start_date,
+      end_date: phase.end_date
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Phase Header */}
@@ -49,16 +63,12 @@ export function PhaseDetailTab({ phaseId, projectId }: PhaseDetailTabProps) {
             <h2 className="text-2xl font-bold text-foreground">{phase.name}</h2>
             <p className="text-muted-foreground mt-1">{phase.description}</p>
           </div>
-          <Badge 
-            variant={
-              phase.status === 'completed' ? 'secondary' :
-              phase.status === 'in_progress' ? 'default' :
-              phase.status === 'blocked' ? 'destructive' : 'outline'
-            }
-            className="capitalize"
-          >
-            {phase.status.replace('_', ' ')}
-          </Badge>
+          <StatusChip 
+            status={phase.status} 
+            onStatusChange={handleStatusChange}
+            disabled={updatePhase.isPending}
+            projectId={projectId}
+          />
         </div>
         
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
