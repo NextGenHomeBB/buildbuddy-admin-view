@@ -80,7 +80,7 @@ const navigationItems = [
   },
   {
     title: 'Templates',
-    url: '/admin/templates/phases',
+    url: '/admin/phase-templates',
     icon: Clipboard
   },
   {
