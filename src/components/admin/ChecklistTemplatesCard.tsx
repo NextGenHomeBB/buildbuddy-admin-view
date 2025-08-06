@@ -59,7 +59,7 @@ export function ChecklistTemplatesCard({ className }: ChecklistTemplatesCardProp
   }
 
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6", className)}>
+    <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6", className)}>
       {phaseTemplates.map((phase) => {
         const isExpanded = expandedPhases.has(phase.id);
         const checklistCount = phase.checklist_templates?.length || 0;
