@@ -8,11 +8,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
+import { useBulkTaskActions } from '@/hooks/useBulkTaskActions';
+import { useTasks } from '@/hooks/useTasks';
 
 interface StatusChipProps {
   status: string;
   onStatusChange?: (newStatus: string) => void;
   disabled?: boolean;
+  projectId?: string;
 }
 
 const getStatusConfig = (status: string) => {
@@ -76,8 +79,17 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-export function StatusChip({ status, onStatusChange, disabled }: StatusChipProps) {
+const getNextStatus = (currentStatus: string): string => {
+  const statusCycle = ['not_started', 'in_progress', 'completed', 'blocked'];
+  const currentIndex = statusCycle.indexOf(currentStatus);
+  const nextIndex = (currentIndex + 1) % statusCycle.length;
+  return statusCycle[nextIndex];
+};
+
+export function StatusChip({ status, onStatusChange, disabled, projectId }: StatusChipProps) {
   const config = getStatusConfig(status);
+  const { bulkUpdateTasks } = useBulkTaskActions();
+  const { data: tasks = [] } = useTasks(projectId || '');
 
   const statusOptions = [
     { value: 'not_started', label: 'Planning' },
@@ -85,6 +97,28 @@ export function StatusChip({ status, onStatusChange, disabled }: StatusChipProps
     { value: 'completed', label: 'Completed' },
     { value: 'blocked', label: 'On Hold' },
   ];
+
+  const handleStatusClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!onStatusChange || disabled) return;
+    
+    const nextStatus = getNextStatus(status);
+    
+    // If changing to completed and we have a projectId, mark all tasks as completed
+    if (nextStatus === 'completed' && projectId && tasks.length > 0) {
+      const incompleteTasks = tasks.filter(task => task.status !== 'done');
+      
+      if (incompleteTasks.length > 0) {
+        await bulkUpdateTasks.mutateAsync({
+          taskIds: incompleteTasks.map(task => task.id),
+          updates: { status: 'done' }
+        });
+      }
+    }
+    
+    onStatusChange(nextStatus);
+  };
 
   if (!onStatusChange || disabled) {
     return (
@@ -104,7 +138,7 @@ export function StatusChip({ status, onStatusChange, disabled }: StatusChipProps
           variant="outline"
           size="sm"
           className="h-auto px-3 py-1.5 text-sm font-medium border-border hover:bg-muted/50"
-          onClick={(e) => e.stopPropagation()}
+          onClick={handleStatusClick}
         >
           <Badge 
             variant={config.variant} 
