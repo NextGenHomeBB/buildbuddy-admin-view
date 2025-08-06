@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MoreHorizontal, Edit, Trash2, Calendar, CheckCircle2, Clock, AlertCircle, Pause } from 'lucide-react';
-import { ProjectPhase } from '@/hooks/usePhases';
+import { ProjectPhase, useUpdatePhase } from '@/hooks/usePhases';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -40,6 +40,7 @@ const getStatusIcon = (status: string) => {
 export function PhaseCard({ phase, projectId, onEdit, onDelete }: PhaseCardProps) {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
+  const updatePhase = useUpdatePhase();
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't navigate if clicking on dropdown or buttons
@@ -48,6 +49,14 @@ export function PhaseCard({ phase, projectId, onEdit, onDelete }: PhaseCardProps
       return;
     }
     navigate(`/admin/projects/${projectId}/phases/${phase.id}`);
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    updatePhase.mutate({
+      id: phase.id,
+      name: phase.name,
+      status: newStatus as 'not_started' | 'in_progress' | 'completed' | 'blocked',
+    });
   };
 
   const formatDate = (dateString?: string) => {
@@ -126,7 +135,11 @@ export function PhaseCard({ phase, projectId, onEdit, onDelete }: PhaseCardProps
         {/* Status and Progress Section */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <StatusChip status={phase.status} />
+            <StatusChip 
+              status={phase.status} 
+              onStatusChange={handleStatusChange}
+              disabled={updatePhase.isPending}
+            />
             <span className="text-sm font-medium text-card-foreground">
               {Math.round(phase.progress || 0)}%
             </span>
