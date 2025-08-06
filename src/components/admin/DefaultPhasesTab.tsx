@@ -6,11 +6,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePhaseTemplates } from "@/hooks/useTemplates";
+import { usePhaseTemplates, useDeletePhaseTemplate } from "@/hooks/useTemplates";
 
 export function DefaultPhasesTab() {
   const navigate = useNavigate();
   const { data: phaseTemplates, isLoading } = usePhaseTemplates();
+  const deletePhaseTemplate = useDeletePhaseTemplate();
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   const toggleRow = (phaseId: string) => {
@@ -25,6 +26,12 @@ export function DefaultPhasesTab() {
 
   const handleEdit = (phaseId: string) => {
     navigate(`/admin/phase-templates/${phaseId}`);
+  };
+
+  const handleDelete = (phaseId: string, phaseName: string) => {
+    if (confirm(`Are you sure you want to delete the "${phaseName}" template? This action cannot be undone.`)) {
+      deletePhaseTemplate.mutate(phaseId);
+    }
   };
 
   if (isLoading) {
@@ -117,6 +124,8 @@ export function DefaultPhasesTab() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => handleDelete(phase.id, phase.name)}
+                          disabled={deletePhaseTemplate.isPending}
                           className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
