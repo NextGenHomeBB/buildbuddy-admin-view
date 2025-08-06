@@ -23,21 +23,21 @@ const getStatusConfig = (status: string) => {
     // Project statuses
     case 'active':
       return {
-        variant: 'default' as const,
+        variant: 'outline' as const,
         label: 'Active',
-        className: ''
+        className: 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600'
       };
     case 'completed':
       return {
-        variant: 'secondary' as const,
+        variant: 'outline' as const,
         label: 'Completed',
-        className: ''
+        className: 'bg-green-500 text-white border-green-500 hover:bg-green-600'
       };
     case 'on_hold':
       return {
-        variant: 'destructive' as const,
+        variant: 'outline' as const,
         label: 'On Hold',
-        className: ''
+        className: 'bg-red-500 text-white border-red-500 hover:bg-red-600'
       };
     case 'cancelled':
       return {
@@ -58,17 +58,11 @@ const getStatusConfig = (status: string) => {
         label: 'Planning',
         className: ''
       };
-    case 'in_progress':
-      return {
-        variant: 'default' as const,
-        label: 'Active',
-        className: ''
-      };
     case 'blocked':
       return {
-        variant: 'destructive' as const,
+        variant: 'outline' as const,
         label: 'On Hold',
-        className: ''
+        className: 'bg-red-500 text-white border-red-500 hover:bg-red-600'
       };
     default:
       return {
@@ -86,7 +80,7 @@ export function StatusChip({ status, onStatusChange, disabled, projectId }: Stat
 
   const statusOptions = [
     { value: 'not_started', label: 'Planning' },
-    { value: 'in_progress', label: 'Active' },
+    { value: 'active', label: 'Active' },
     { value: 'completed', label: 'Completed' },
     { value: 'blocked', label: 'On Hold' },
   ];
@@ -113,7 +107,7 @@ export function StatusChip({ status, onStatusChange, disabled, projectId }: Stat
     return (
       <Badge 
         variant={config.variant} 
-        className="capitalize whitespace-nowrap px-4 py-2 text-sm font-medium"
+        className={`capitalize whitespace-nowrap px-4 py-2 text-sm font-medium ${config.className}`}
       >
         {config.label}
       </Badge>
@@ -130,7 +124,7 @@ export function StatusChip({ status, onStatusChange, disabled, projectId }: Stat
         >
           <Badge 
             variant={config.variant} 
-            className="capitalize whitespace-nowrap px-2 py-1 text-xs font-medium border-0 bg-transparent text-inherit hover:bg-transparent"
+            className={`capitalize whitespace-nowrap px-2 py-1 text-xs font-medium border-0 ${config.className || 'bg-transparent text-inherit hover:bg-transparent'}`}
           >
             {config.label}
           </Badge>
