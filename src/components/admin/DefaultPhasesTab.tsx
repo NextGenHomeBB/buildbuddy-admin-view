@@ -1,18 +1,20 @@
 import { useState } from "react";
-import { Edit, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { Edit, Trash2, ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDefaultPhaseTemplates, useDeletePhaseTemplate } from "@/hooks/useTemplates";
+import { AddFromTemplateDialog } from "./AddFromTemplateDialog";
 
 export function DefaultPhasesTab() {
   const navigate = useNavigate();
   const { data: phaseTemplates, isLoading } = useDefaultPhaseTemplates();
   const deletePhaseTemplate = useDeletePhaseTemplate();
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [addFromTemplateOpen, setAddFromTemplateOpen] = useState(false);
 
   const toggleRow = (phaseId: string) => {
     const newExpanded = new Set(expandedRows);
@@ -67,6 +69,23 @@ export function DefaultPhasesTab() {
 
   return (
     <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <div>
+          <h3 className="text-lg font-semibold">Default Phase Templates</h3>
+          <p className="text-sm text-muted-foreground">
+            Built-in templates for common construction phases
+          </p>
+        </div>
+        <Button
+          onClick={() => setAddFromTemplateOpen(true)}
+          size="sm"
+          variant="outline"
+          className="gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Add From Template
+        </Button>
+      </CardHeader>
       <CardContent className="p-0">
         <Table>
           <TableHeader>
@@ -158,6 +177,11 @@ export function DefaultPhasesTab() {
           </TableBody>
         </Table>
       </CardContent>
+      
+      <AddFromTemplateDialog
+        open={addFromTemplateOpen}
+        onOpenChange={setAddFromTemplateOpen}
+      />
     </Card>
   );
 }
