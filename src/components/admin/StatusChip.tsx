@@ -106,6 +106,18 @@ export function StatusChip({ status, onStatusChange, disabled, projectId, phaseI
       }
     }
     
+    // If changing back to planning and we have completed tasks to revert
+    if (newStatus === 'not_started' && (projectId || phaseId) && tasks.length > 0) {
+      const completedTasks = tasks.filter(task => task.status === 'done');
+      
+      if (completedTasks.length > 0) {
+        await bulkUpdateTasks.mutateAsync({
+          taskIds: completedTasks.map(task => task.id),
+          updates: { status: 'todo' }
+        });
+      }
+    }
+    
     onStatusChange(newStatus);
   };
 
