@@ -79,13 +79,6 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-const getNextStatus = (currentStatus: string): string => {
-  const statusCycle = ['not_started', 'in_progress', 'completed', 'blocked'];
-  const currentIndex = statusCycle.indexOf(currentStatus);
-  const nextIndex = (currentIndex + 1) % statusCycle.length;
-  return statusCycle[nextIndex];
-};
-
 export function StatusChip({ status, onStatusChange, disabled, projectId }: StatusChipProps) {
   const config = getStatusConfig(status);
   const { bulkUpdateTasks } = useBulkTaskActions();
@@ -98,15 +91,11 @@ export function StatusChip({ status, onStatusChange, disabled, projectId }: Stat
     { value: 'blocked', label: 'On Hold' },
   ];
 
-  const handleStatusClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    
+  const handleStatusSelect = async (newStatus: string) => {
     if (!onStatusChange || disabled) return;
     
-    const nextStatus = getNextStatus(status);
-    
     // If changing to completed and we have a projectId, mark all tasks as completed
-    if (nextStatus === 'completed' && projectId && tasks.length > 0) {
+    if (newStatus === 'completed' && projectId && tasks.length > 0) {
       const incompleteTasks = tasks.filter(task => task.status !== 'done');
       
       if (incompleteTasks.length > 0) {
@@ -117,7 +106,7 @@ export function StatusChip({ status, onStatusChange, disabled, projectId }: Stat
       }
     }
     
-    onStatusChange(nextStatus);
+    onStatusChange(newStatus);
   };
 
   if (!onStatusChange || disabled) {
@@ -138,7 +127,6 @@ export function StatusChip({ status, onStatusChange, disabled, projectId }: Stat
           variant="outline"
           size="sm"
           className="h-auto px-3 py-1.5 text-sm font-medium border-border hover:bg-muted/50"
-          onClick={handleStatusClick}
         >
           <Badge 
             variant={config.variant} 
@@ -153,7 +141,7 @@ export function StatusChip({ status, onStatusChange, disabled, projectId }: Stat
         {statusOptions.map((option) => (
           <DropdownMenuItem
             key={option.value}
-            onClick={() => onStatusChange(option.value)}
+            onClick={() => handleStatusSelect(option.value)}
             className={status === option.value ? 'bg-muted' : ''}
           >
             {option.label}
