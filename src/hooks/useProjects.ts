@@ -22,6 +22,9 @@ export interface CreateProjectData {
   name: string;
   description?: string;
   status: 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled';
+  start_date?: string;
+  budget?: number;
+  location?: string;
 }
 
 export interface UpdateProjectData extends CreateProjectData {

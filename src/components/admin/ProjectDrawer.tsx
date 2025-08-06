@@ -30,6 +30,9 @@ const projectSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
   description: z.string().optional(),
   status: z.enum(['planning', 'active', 'on_hold', 'completed', 'cancelled']),
+  start_date: z.string().optional(),
+  budget: z.coerce.number().optional(),
+  location: z.string().optional(),
 });
 
 type ProjectFormData = z.infer<typeof projectSchema>;
@@ -60,6 +63,9 @@ export function ProjectDrawer({ isOpen, onClose, project }: ProjectDrawerProps) 
       name: '',
       description: '',
       status: 'planning',
+      start_date: '',
+      budget: undefined,
+      location: '',
     },
   });
 
@@ -71,12 +77,18 @@ export function ProjectDrawer({ isOpen, onClose, project }: ProjectDrawerProps) 
         name: project.name,
         description: project.description || '',
         status: project.status as 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled',
+        start_date: project.start_date || '',
+        budget: project.budget || undefined,
+        location: project.location || '',
       });
     } else {
       reset({
         name: '',
         description: '',
         status: 'planning',
+        start_date: '',
+        budget: undefined,
+        location: '',
       });
     }
   }, [project, reset]);
@@ -88,13 +100,19 @@ export function ProjectDrawer({ isOpen, onClose, project }: ProjectDrawerProps) 
           id: project.id,
           name: data.name,
           description: data.description,
-          status: data.status as any
+          status: data.status as any,
+          start_date: data.start_date,
+          budget: data.budget,
+          location: data.location
         });
       } else {
         await createProject.mutateAsync({
           name: data.name,
           description: data.description,
-          status: data.status as any
+          status: data.status as any,
+          start_date: data.start_date,
+          budget: data.budget,
+          location: data.location
         });
       }
       reset();
@@ -219,6 +237,74 @@ export function ProjectDrawer({ isOpen, onClose, project }: ProjectDrawerProps) 
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label 
+              htmlFor="start_date" 
+              className={cn(
+                "font-medium",
+                isMobile ? "text-base" : "text-sm"
+              )}
+            >
+              Start Date
+            </Label>
+            <Input
+              id="start_date"
+              type="date"
+              {...register('start_date')}
+              className={cn(
+                "touch-manipulation",
+                isMobile ? "h-12 text-base" : "h-11"
+              )}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label 
+              htmlFor="budget" 
+              className={cn(
+                "font-medium",
+                isMobile ? "text-base" : "text-sm"
+              )}
+            >
+              Budget (€)
+            </Label>
+            <Input
+              id="budget"
+              type="number"
+              step="0.01"
+              min="0"
+              {...register('budget')}
+              placeholder="Enter budget amount"
+              className={cn(
+                "touch-manipulation",
+                isMobile ? "h-12 text-base" : "h-11"
+              )}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label 
+              htmlFor="location" 
+              className={cn(
+                "font-medium",
+                isMobile ? "text-base" : "text-sm"
+              )}
+            >
+              Location
+            </Label>
+            <Input
+              id="location"
+              {...register('location')}
+              placeholder="Enter project location"
+              className={cn(
+                "touch-manipulation",
+                isMobile ? "h-12 text-base" : "h-11"
+              )}
+              autoComplete="off"
+              autoCapitalize="words"
+            />
           </div>
 
           <div className={cn(
