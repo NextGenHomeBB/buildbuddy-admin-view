@@ -1,9 +1,12 @@
-import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function CustomTemplatesTab() {
+interface CustomTemplatesTabProps {
+  onCreateTemplate: () => void;
+}
+
+export function CustomTemplatesTab({ onCreateTemplate }: CustomTemplatesTabProps) {
   return (
     <Card>
       <CardHeader>
@@ -21,7 +24,7 @@ export function CustomTemplatesTab() {
           <p className="text-muted-foreground mb-4 max-w-sm">
             Start by creating your first custom checklist template to streamline your workflow.
           </p>
-          <Button>
+          <Button onClick={onCreateTemplate}>
             <Plus className="h-4 w-4 mr-2" />
             Create Custom Template
           </Button>

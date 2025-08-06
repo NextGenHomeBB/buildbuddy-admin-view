@@ -40,7 +40,7 @@ export function PhaseTemplateListPage() {
           <TabsTrigger value="default">Default Phases</TabsTrigger>
         </TabsList>
         <TabsContent value="custom" className="mt-6">
-          <CustomTemplatesTab />
+          <CustomTemplatesTab onCreateTemplate={() => setIsDrawerOpen(true)} />
         </TabsContent>
         <TabsContent value="default" className="mt-6">
           <DefaultPhasesTab />
