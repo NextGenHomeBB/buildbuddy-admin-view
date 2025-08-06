@@ -6,11 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePhaseTemplates, useDeletePhaseTemplate } from "@/hooks/useTemplates";
+import { useDefaultPhaseTemplates, useDeletePhaseTemplate } from "@/hooks/useTemplates";
 
 export function DefaultPhasesTab() {
   const navigate = useNavigate();
-  const { data: phaseTemplates, isLoading } = usePhaseTemplates();
+  const { data: phaseTemplates, isLoading } = useDefaultPhaseTemplates();
   const deletePhaseTemplate = useDeletePhaseTemplate();
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 

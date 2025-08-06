@@ -836,24 +836,30 @@ export type Database = {
       phase_templates: {
         Row: {
           created_at: string | null
+          created_by: string | null
           description: string | null
           id: string
           name: string
           sort_order: number
+          template_type: string
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           id?: string
           name: string
           sort_order: number
+          template_type?: string
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           id?: string
           name?: string
           sort_order?: number
+          template_type?: string
         }
         Relationships: []
       }

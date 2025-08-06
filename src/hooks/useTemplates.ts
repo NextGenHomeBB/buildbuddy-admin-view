@@ -8,15 +8,17 @@ export interface PhaseTemplate {
   name: string;
   description: string | null;
   sort_order: number;
+  template_type: 'default' | 'custom';
+  created_by?: string;
   created_at: string;
 }
 
 export interface ChecklistTemplate {
   id: string;
-  phase_template_id: string;
+  phase_template_id?: string;
   label: string;
   sort_order: number;
-  created_at: string;
+  created_at?: string;
 }
 
 export interface PhaseTemplateWithChecklists extends PhaseTemplate {
@@ -65,6 +67,54 @@ export function usePhaseTemplates() {
   });
 }
 
+// Hook to fetch only default phase templates
+export function useDefaultPhaseTemplates() {
+  return useQuery({
+    queryKey: ['defaultPhaseTemplates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('phase_templates')
+        .select(`
+          *,
+          checklist_templates (
+            id,
+            label,
+            sort_order
+          )
+        `)
+        .eq('template_type', 'default')
+        .order('sort_order');
+
+      if (error) throw error;
+      return data as PhaseTemplateWithChecklists[];
+    },
+  });
+}
+
+// Hook to fetch only custom phase templates
+export function useCustomPhaseTemplates() {
+  return useQuery({
+    queryKey: ['customPhaseTemplates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('phase_templates')
+        .select(`
+          *,
+          checklist_templates (
+            id,
+            label,
+            sort_order
+          )
+        `)
+        .eq('template_type', 'custom')
+        .order('sort_order');
+
+      if (error) throw error;
+      return data as PhaseTemplateWithChecklists[];
+    },
+  });
+}
+
 // Fetch single phase template with checklists
 export function usePhaseTemplate(id: string) {
   return useQuery({
@@ -98,9 +148,15 @@ export function useCreatePhaseTemplate() {
 
   return useMutation({
     mutationFn: async (data: CreatePhaseTemplateData) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data: result, error } = await supabase
         .from("phase_templates")
-        .insert(data)
+        .insert({
+          ...data,
+          template_type: 'custom',
+          created_by: user?.id
+        })
         .select()
         .single();
 
@@ -109,6 +165,7 @@ export function useCreatePhaseTemplate() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["phase-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["customPhaseTemplates"] });
       toast({
         title: "Template created",
         description: "Phase template has been created successfully.",
