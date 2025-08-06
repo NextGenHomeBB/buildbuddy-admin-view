@@ -14,7 +14,8 @@ import {
   Clock,
   Zap,
   CalendarDays,
-  Package
+  Package,
+  Clipboard
 } from 'lucide-react';
 import {
   Sidebar,
@@ -76,6 +77,11 @@ const navigationItems = [
     title: 'Materials',
     url: '/admin/materials',
     icon: Package
+  },
+  {
+    title: 'Templates',
+    url: '/admin/templates/phases',
+    icon: Clipboard
   },
   {
     title: 'Costs',
