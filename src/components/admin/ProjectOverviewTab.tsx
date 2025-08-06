@@ -2,8 +2,8 @@
 import { usePhases } from '@/hooks/usePhases';
 import { useTasks } from '@/hooks/useTasks';
 import { Project } from '@/hooks/useProjects';
+import { ProjectOverviewHeader } from '@/components/admin/ProjectOverviewHeader';
 import { 
-  ProjectMetricsCards, 
   ProjectKeyDates, 
   ProjectStatusSummary, 
   ProjectTimeline 
@@ -25,15 +25,8 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
 
   return (
     <div className="space-y-8">
-      {/* Project Metrics Cards */}
-      <ProjectMetricsCards 
-        project={project}
-        phases={phases}
-        totalTasks={totalTasks}
-        completedTasks={completedTasks}
-        inProgressTasks={inProgressTasks}
-        overdueTasks={overdueTasks}
-      />
+      {/* Project Overview Header */}
+      <ProjectOverviewHeader project={project} />
 
       {/* Key Dates and Status Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
