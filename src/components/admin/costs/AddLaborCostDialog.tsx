@@ -17,9 +17,11 @@ interface AddLaborCostDialogProps {
 export function AddLaborCostDialog({ isOpen, onClose, phaseId }: AddLaborCostDialogProps) {
   const [formData, setFormData] = useState({
     worker_id: '',
+    pricing_type: 'hourly' as 'hourly' | 'fixed',
     hours_planned: 0,
     hours_actual: 0,
     hourly_rate: 25, // Default hourly rate
+    fixed_price: 0,
     work_date: new Date().toISOString().split('T')[0], // Today's date
     description: '',
   });
@@ -33,8 +35,12 @@ export function AddLaborCostDialog({ isOpen, onClose, phaseId }: AddLaborCostDia
     const laborData = {
       phase_id: phaseId,
       ...formData,
-      total_planned_cost: formData.hours_planned * formData.hourly_rate,
-      total_actual_cost: formData.hours_actual * formData.hourly_rate,
+      total_planned_cost: formData.pricing_type === 'hourly' 
+        ? formData.hours_planned * formData.hourly_rate 
+        : formData.fixed_price,
+      total_actual_cost: formData.pricing_type === 'hourly' 
+        ? formData.hours_actual * formData.hourly_rate 
+        : formData.fixed_price,
     };
 
     addLaborCost.mutate(laborData, {
@@ -42,9 +48,11 @@ export function AddLaborCostDialog({ isOpen, onClose, phaseId }: AddLaborCostDia
         onClose();
         setFormData({
           worker_id: '',
+          pricing_type: 'hourly',
           hours_planned: 0,
           hours_actual: 0,
           hourly_rate: 25,
+          fixed_price: 0,
           work_date: new Date().toISOString().split('T')[0],
           description: '',
         });
@@ -56,8 +64,12 @@ export function AddLaborCostDialog({ isOpen, onClose, phaseId }: AddLaborCostDia
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const plannedCost = formData.hours_planned * formData.hourly_rate;
-  const actualCost = formData.hours_actual * formData.hourly_rate;
+  const plannedCost = formData.pricing_type === 'hourly' 
+    ? formData.hours_planned * formData.hourly_rate 
+    : formData.fixed_price;
+  const actualCost = formData.pricing_type === 'hourly' 
+    ? formData.hours_actual * formData.hourly_rate 
+    : formData.fixed_price;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -84,6 +96,19 @@ export function AddLaborCostDialog({ isOpen, onClose, phaseId }: AddLaborCostDia
           </div>
 
           <div>
+            <Label htmlFor="pricing_type">Pricing Type</Label>
+            <Select value={formData.pricing_type} onValueChange={(value) => handleChange('pricing_type', value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="hourly">Hourly Rate</SelectItem>
+                <SelectItem value="fixed">Fixed Price</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
             <Label htmlFor="work_date">Work Date</Label>
             <Input
               id="work_date"
@@ -93,44 +118,61 @@ export function AddLaborCostDialog({ isOpen, onClose, phaseId }: AddLaborCostDia
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {formData.pricing_type === 'hourly' ? (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="hours_planned">Planned Hours</Label>
+                  <Input
+                    id="hours_planned"
+                    type="number"
+                    min="0"
+                    step="0.25"
+                    value={formData.hours_planned}
+                    onChange={(e) => handleChange('hours_planned', parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="hours_actual">Actual Hours</Label>
+                  <Input
+                    id="hours_actual"
+                    type="number"
+                    min="0"
+                    step="0.25"
+                    value={formData.hours_actual}
+                    onChange={(e) => handleChange('hours_actual', parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="hourly_rate">Hourly Rate (€) *</Label>
+                <Input
+                  id="hourly_rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.hourly_rate}
+                  onChange={(e) => handleChange('hourly_rate', parseFloat(e.target.value) || 0)}
+                  required
+                />
+              </div>
+            </>
+          ) : (
             <div>
-              <Label htmlFor="hours_planned">Planned Hours</Label>
+              <Label htmlFor="fixed_price">Fixed Price (€) *</Label>
               <Input
-                id="hours_planned"
+                id="fixed_price"
                 type="number"
                 min="0"
-                step="0.25"
-                value={formData.hours_planned}
-                onChange={(e) => handleChange('hours_planned', parseFloat(e.target.value) || 0)}
+                step="0.01"
+                value={formData.fixed_price}
+                onChange={(e) => handleChange('fixed_price', parseFloat(e.target.value) || 0)}
+                required
               />
             </div>
-
-            <div>
-              <Label htmlFor="hours_actual">Actual Hours</Label>
-              <Input
-                id="hours_actual"
-                type="number"
-                min="0"
-                step="0.25"
-                value={formData.hours_actual}
-                onChange={(e) => handleChange('hours_actual', parseFloat(e.target.value) || 0)}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="hourly_rate">Hourly Rate (€) *</Label>
-            <Input
-              id="hourly_rate"
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.hourly_rate}
-              onChange={(e) => handleChange('hourly_rate', parseFloat(e.target.value) || 0)}
-              required
-            />
-          </div>
+          )}
 
           <div>
             <Label htmlFor="description">Description</Label>
