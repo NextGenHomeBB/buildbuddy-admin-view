@@ -139,7 +139,7 @@ export function PhaseCard({ phase, projectId, onEdit, onDelete }: PhaseCardProps
               status={phase.status} 
               onStatusChange={handleStatusChange}
               disabled={updatePhase.isPending}
-              projectId={projectId}
+              phaseId={phase.id}
             />
             <span className="text-sm font-medium text-card-foreground">
               {Math.round(phase.progress || 0)}%
