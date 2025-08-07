@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,16 +23,10 @@ export function CalendarSyncSettings({ open, onOpenChange }: CalendarSyncSetting
   const [localSettings, setLocalSettings] = useState({
     google_enabled: false,
     outlook_enabled: false,
-    apple_enabled: false,
     sync_direction: 'bidirectional' as 'import_only' | 'export_only' | 'bidirectional',
     auto_sync_enabled: true,
-    sync_interval_minutes: 5,
-    apple_username: '',
-    apple_calendar_url: 'https://caldav.icloud.com/'
+    sync_interval_minutes: 5
   });
-
-  const [applePassword, setApplePassword] = useState('');
-  const [isTestingConnection, setIsTestingConnection] = useState(false);
 
   // Update local state when settings are loaded
   useEffect(() => {
@@ -41,12 +34,9 @@ export function CalendarSyncSettings({ open, onOpenChange }: CalendarSyncSetting
       setLocalSettings({
         google_enabled: syncSettings.google_enabled,
         outlook_enabled: syncSettings.outlook_enabled,
-        apple_enabled: syncSettings.apple_enabled,
         sync_direction: syncSettings.sync_direction,
         auto_sync_enabled: syncSettings.auto_sync_enabled,
-        sync_interval_minutes: syncSettings.sync_interval_minutes,
-        apple_username: syncSettings.apple_username || '',
-        apple_calendar_url: syncSettings.apple_calendar_url || 'https://caldav.icloud.com/'
+        sync_interval_minutes: syncSettings.sync_interval_minutes
       });
     }
   }, [syncSettings]);
@@ -95,93 +85,26 @@ export function CalendarSyncSettings({ open, onOpenChange }: CalendarSyncSetting
     }
   };
 
-  const handleConnectApple = async () => {
-    if (!localSettings.apple_username) {
-      toast.error('Please enter your iCloud email address');
-      return;
-    }
-
-    if (!applePassword) {
-      toast.error('Please enter your app-specific password');
-      return;
-    }
-
-    setIsTestingConnection(true);
-    
+  const handleDisconnect = async (provider: 'google' | 'outlook') => {
     try {
-      // Store Apple Calendar credentials
+      // Remove OAuth tokens
       const { error } = await supabase
-        .from('apple_calendar_credentials')
-        .upsert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          username: localSettings.apple_username,
-          app_password: applePassword,
-          caldav_url: localSettings.apple_calendar_url
-        });
+        .from('calendar_oauth_tokens')
+        .delete()
+        .eq('provider', provider);
 
       if (error) {
-        throw error;
-      }
-
-      // Test the connection by trying to discover calendars
-      const testResponse = await supabase.functions.invoke('apple-calendar-sync', {
-        body: { test_connection: true, user_id: (await supabase.auth.getUser()).data.user?.id }
-      });
-
-      if (testResponse.error) {
-        throw new Error(testResponse.error.message || 'Connection test failed');
-      }
-
-      // Enable Apple Calendar sync
-      handleSettingChange('apple_enabled', true);
-      toast.success('Apple Calendar connected successfully!');
-      setApplePassword(''); // Clear password for security
-    } catch (error) {
-      console.error('Apple Calendar connection error:', error);
-      toast.error(`Failed to connect: ${error.message}`);
-    } finally {
-      setIsTestingConnection(false);
-    }
-  };
-
-  const handleDisconnect = async (provider: 'google' | 'outlook' | 'apple') => {
-    try {
-      if (provider === 'apple') {
-        // Remove Apple Calendar credentials
-        const { error } = await supabase
-          .from('apple_calendar_credentials')
-          .delete()
-          .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
-
-        if (error) {
-          console.error('Failed to remove Apple credentials:', error);
-        }
-      } else {
-        // Remove OAuth tokens for Google/Outlook
-        const { error } = await supabase
-          .from('calendar_oauth_tokens')
-          .delete()
-          .eq('provider', provider);
-
-        if (error) {
-          toast.error(`Failed to disconnect ${provider}`);
-          return;
-        }
+        toast.error(`Failed to disconnect ${provider}`);
+        return;
       }
 
       // Update settings
       const updates = provider === 'google' 
         ? { google_enabled: false }
-        : provider === 'outlook'
-        ? { outlook_enabled: false }
-        : { apple_enabled: false, apple_username: '', apple_calendar_url: '' };
+        : { outlook_enabled: false };
 
       await updateSyncSettings.mutateAsync(updates);
       toast.success(`${provider} Calendar disconnected`);
-      
-      if (provider === 'apple') {
-        setApplePassword('');
-      }
     } catch (error) {
       toast.error(`Failed to disconnect ${provider}`);
       console.error(`${provider} disconnect error:`, error);
@@ -219,97 +142,6 @@ export function CalendarSyncSettings({ open, onOpenChange }: CalendarSyncSetting
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Calendar Connections</h3>
             
-            {/* Apple Calendar */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 rounded bg-[#007AFF]"></div>
-                    <CardTitle className="text-base">Apple Calendar</CardTitle>
-                    {localSettings.apple_enabled ? (
-                      <Badge variant="default">Connected</Badge>
-                    ) : (
-                      <Badge variant="secondary">Not Connected</Badge>
-                    )}
-                  </div>
-                  
-                  {localSettings.apple_enabled ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDisconnect('apple')}
-                    >
-                      <Unlink className="h-4 w-4 mr-2" />
-                      Disconnect
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleConnectApple}
-                      disabled={isTestingConnection}
-                    >
-                      {isTestingConnection ? (
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Link className="h-4 w-4 mr-2" />
-                      )}
-                      {isTestingConnection ? 'Testing...' : 'Connect'}
-                    </Button>
-                  )}
-                </div>
-                <CardDescription>
-                  Sync with your iCloud Calendar using CalDAV protocol.
-                </CardDescription>
-              </CardHeader>
-              {!localSettings.apple_enabled && (
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="apple-email">iCloud Email</Label>
-                    <Input
-                      id="apple-email"
-                      type="email"
-                      placeholder="your-email@icloud.com"
-                      value={localSettings.apple_username}
-                      onChange={(e) => handleSettingChange('apple_username', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="apple-password">App-Specific Password</Label>
-                    <Input
-                      id="apple-password"
-                      type="password"
-                      placeholder="xxxx-xxxx-xxxx-xxxx"
-                      value={applePassword}
-                      onChange={(e) => setApplePassword(e.target.value)}
-                    />
-                    <div className="text-xs text-muted-foreground">
-                      <a 
-                        href="https://support.apple.com/en-us/HT204397" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="text-primary hover:underline"
-                      >
-                        Generate app-specific password for Calendar access
-                      </a>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="caldav-url">CalDAV Server URL</Label>
-                    <Input
-                      id="caldav-url"
-                      type="url"
-                      value={localSettings.apple_calendar_url}
-                      onChange={(e) => handleSettingChange('apple_calendar_url', e.target.value)}
-                    />
-                    <div className="text-xs text-muted-foreground">
-                      Use https://caldav.icloud.com/ for iCloud Calendar
-                    </div>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-
             {/* Google Calendar */}
             <Card>
               <CardHeader className="pb-3">
@@ -460,7 +292,7 @@ export function CalendarSyncSettings({ open, onOpenChange }: CalendarSyncSetting
           </div>
 
           {/* Warning */}
-          {(localSettings.google_enabled || localSettings.outlook_enabled || localSettings.apple_enabled) && (
+          {(localSettings.google_enabled || localSettings.outlook_enabled) && (
             <div className="flex items-start space-x-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
               <div className="text-sm">

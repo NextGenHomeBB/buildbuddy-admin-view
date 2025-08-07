@@ -13,7 +13,7 @@ export interface CalendarEvent {
   all_day: boolean;
   location?: string;
   external_id?: string;
-  provider: 'google' | 'outlook' | 'apple' | 'internal';
+  provider: 'google' | 'outlook' | 'internal';
   sync_status: 'pending' | 'synced' | 'error';
   last_synced?: string;
   task_id?: string;
@@ -26,15 +26,11 @@ export interface CalendarSyncSettings {
   user_id: string;
   google_enabled: boolean;
   outlook_enabled: boolean;
-  apple_enabled: boolean;
   sync_direction: 'import_only' | 'export_only' | 'bidirectional';
   auto_sync_enabled: boolean;
   sync_interval_minutes: number;
   google_calendar_id?: string;
   outlook_calendar_id?: string;
-  apple_calendar_id?: string;
-  apple_calendar_url?: string;
-  apple_username?: string;
   created_at: string;
   updated_at: string;
 }
