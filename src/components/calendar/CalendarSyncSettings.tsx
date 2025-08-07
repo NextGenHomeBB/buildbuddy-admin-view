@@ -7,19 +7,23 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Link, Unlink, RefreshCw, AlertCircle } from 'lucide-react';
+import { Settings, Link, Unlink, RefreshCw, AlertCircle, Download } from 'lucide-react';
 import { useCalendarSyncSettings, useUpdateSyncSettings } from '@/hooks/useCalendarEvents';
+import { useCalendarExport } from '@/hooks/useCalendarExport';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface CalendarSyncSettingsProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  phases?: any[];
+  projectName?: string;
 }
 
-export function CalendarSyncSettings({ open, onOpenChange }: CalendarSyncSettingsProps) {
+export function CalendarSyncSettings({ open, onOpenChange, phases = [], projectName = 'Project' }: CalendarSyncSettingsProps) {
   const { data: syncSettings } = useCalendarSyncSettings();
   const updateSyncSettings = useUpdateSyncSettings();
+  const { exportToCalendar, isExporting, canExport } = useCalendarExport({ phases, projectName });
   
   const [localSettings, setLocalSettings] = useState({
     google_enabled: false,
@@ -176,25 +180,40 @@ export function CalendarSyncSettings({ open, onOpenChange }: CalendarSyncSetting
                     )}
                   </div>
                   
-                  {localSettings.apple_enabled ? (
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDisconnect('apple')}
+                      onClick={exportToCalendar}
+                      disabled={!canExport || isExporting}
                     >
-                      <Unlink className="h-4 w-4 mr-2" />
-                      Disconnect
+                      {isExporting ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4 mr-2" />
+                      )}
+                      Export
                     </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleConnectApple}
-                    >
-                      <Link className="h-4 w-4 mr-2" />
-                      Connect
-                    </Button>
-                  )}
+                    {localSettings.apple_enabled ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDisconnect('apple')}
+                      >
+                        <Unlink className="h-4 w-4 mr-2" />
+                        Disconnect
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleConnectApple}
+                      >
+                        <Link className="h-4 w-4 mr-2" />
+                        Connect
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <CardDescription>
                   Sync with your iCloud Calendar using CalDAV protocol.
@@ -240,25 +259,40 @@ export function CalendarSyncSettings({ open, onOpenChange }: CalendarSyncSetting
                     )}
                   </div>
                   
-                  {localSettings.google_enabled ? (
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDisconnect('google')}
+                      onClick={exportToCalendar}
+                      disabled={!canExport || isExporting}
                     >
-                      <Unlink className="h-4 w-4 mr-2" />
-                      Disconnect
+                      {isExporting ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4 mr-2" />
+                      )}
+                      Export
                     </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleConnectGoogle}
-                    >
-                      <Link className="h-4 w-4 mr-2" />
-                      Connect
-                    </Button>
-                  )}
+                    {localSettings.google_enabled ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDisconnect('google')}
+                      >
+                        <Unlink className="h-4 w-4 mr-2" />
+                        Disconnect
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleConnectGoogle}
+                      >
+                        <Link className="h-4 w-4 mr-2" />
+                        Connect
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <CardDescription>
                   Sync with your Google Calendar to keep events in sync across platforms.
@@ -280,25 +314,40 @@ export function CalendarSyncSettings({ open, onOpenChange }: CalendarSyncSetting
                     )}
                   </div>
                   
-                  {localSettings.outlook_enabled ? (
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDisconnect('outlook')}
+                      onClick={exportToCalendar}
+                      disabled={!canExport || isExporting}
                     >
-                      <Unlink className="h-4 w-4 mr-2" />
-                      Disconnect
+                      {isExporting ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4 mr-2" />
+                      )}
+                      Export
                     </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleConnectOutlook}
-                    >
-                      <Link className="h-4 w-4 mr-2" />
-                      Connect
-                    </Button>
-                  )}
+                    {localSettings.outlook_enabled ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDisconnect('outlook')}
+                      >
+                        <Unlink className="h-4 w-4 mr-2" />
+                        Disconnect
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleConnectOutlook}
+                      >
+                        <Link className="h-4 w-4 mr-2" />
+                        Connect
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <CardDescription>
                   Sync with Microsoft Outlook Calendar for seamless integration.
