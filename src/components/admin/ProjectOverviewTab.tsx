@@ -41,7 +41,7 @@ export function ProjectOverviewTab({ project }: ProjectOverviewTabProps) {
       </div>
 
       {/* Project Timeline */}
-      <ProjectTimeline phases={phases} />
+      <ProjectTimeline phases={phases} projectName={project.name} />
     </div>
   );
 }

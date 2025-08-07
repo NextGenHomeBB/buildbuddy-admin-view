@@ -1,13 +1,21 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 import { ProjectPhase } from '@/hooks/usePhases';
+import { useCalendarExport } from '@/hooks/useCalendarExport';
 
 interface ProjectTimelineProps {
   phases: ProjectPhase[];
+  projectName?: string;
 }
 
-export function ProjectTimeline({ phases }: ProjectTimelineProps) {
+export function ProjectTimeline({ phases, projectName = 'Project' }: ProjectTimelineProps) {
+  const { exportToCalendar, isExporting, canExport } = useCalendarExport({
+    phases,
+    projectName,
+  });
   if (phases.length === 0) {
     return (
       <Card className="relative overflow-hidden">
@@ -28,8 +36,22 @@ export function ProjectTimeline({ phases }: ProjectTimelineProps) {
   return (
     <Card className="relative overflow-hidden">
       <CardHeader className="relative">
-        <CardTitle>Project Timeline</CardTitle>
-        <CardDescription>Phase progression and status overview</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Project Timeline</CardTitle>
+            <CardDescription>Phase progression and status overview</CardDescription>
+          </div>
+          <Button
+            onClick={exportToCalendar}
+            disabled={!canExport || isExporting}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            {isExporting ? 'Exporting...' : 'Export to Calendar'}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="relative">
         <div className="space-y-6">
