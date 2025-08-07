@@ -74,6 +74,36 @@ export type Database = {
         }
         Relationships: []
       }
+      apple_calendar_credentials: {
+        Row: {
+          app_password: string
+          caldav_url: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          app_password: string
+          caldav_url?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          app_password?: string
+          caldav_url?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           all_day: boolean
@@ -169,6 +199,10 @@ export type Database = {
       }
       calendar_sync_settings: {
         Row: {
+          apple_calendar_id: string | null
+          apple_calendar_url: string | null
+          apple_enabled: boolean | null
+          apple_username: string | null
           auto_sync_enabled: boolean | null
           created_at: string
           google_calendar_id: string | null
@@ -182,6 +216,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          apple_calendar_id?: string | null
+          apple_calendar_url?: string | null
+          apple_enabled?: boolean | null
+          apple_username?: string | null
           auto_sync_enabled?: boolean | null
           created_at?: string
           google_calendar_id?: string | null
@@ -195,6 +233,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          apple_calendar_id?: string | null
+          apple_calendar_url?: string | null
+          apple_enabled?: boolean | null
+          apple_username?: string | null
           auto_sync_enabled?: boolean | null
           created_at?: string
           google_calendar_id?: string | null
