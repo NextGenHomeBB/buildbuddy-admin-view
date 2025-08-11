@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from './AuthContext';
+import { setCurrentOrgId, clearCurrentOrgId } from '@/lib/supabase-org-helper';
 
 interface Organization {
   id: string;
@@ -8,21 +9,11 @@ interface Organization {
   created_at: string;
 }
 
-interface Membership {
-  id: string;
-  org_id: string;
-  role: string;
-  status: string;
-  expires_at?: string;
-  organization: Organization;
-}
-
 interface OrganizationContextType {
   currentOrg: Organization | null;
-  memberships: Membership[];
   loading: boolean;
-  switchOrganization: (orgId: string) => void;
-  refreshMemberships: () => Promise<void>;
+  error: string | null;
+  refreshOrganization: () => Promise<void>;
 }
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
@@ -30,73 +21,57 @@ const OrganizationContext = createContext<OrganizationContextType | undefined>(u
 export function OrganizationProvider({ children }: { children: ReactNode }) {
   const { user } = useAuthContext();
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
-  const [memberships, setMemberships] = useState<Membership[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchMemberships = async () => {
+  const fetchDefaultOrganization = async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('organization_members')
+      setError(null);
+      
+      // Get user's default organization from profiles
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
         .select(`
-          org_id,
-          role,
-          status,
-          expires_at,
-          created_at,
+          default_org_id,
           organizations!inner (
             id,
             name,
             created_at
           )
         `)
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .order('created_at', { ascending: true });
+        .eq('id', user.id)
+        .single();
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
-      const formattedMemberships: Membership[] = data?.map((item: any) => ({
-        id: item.org_id, // Use org_id as membership identifier
-        org_id: item.org_id,
-        role: item.role,
-        status: item.status || 'active',
-        expires_at: item.expires_at,
-        organization: item.organizations as Organization
-      })) || [];
-
-      setMemberships(formattedMemberships);
-
-      // Set current org if not set (first membership)
-      if (!currentOrg && formattedMemberships.length > 0) {
-        const savedOrgId = localStorage.getItem('currentOrgId');
-        const savedOrg = formattedMemberships.find(m => m.org_id === savedOrgId);
-        setCurrentOrg(savedOrg?.organization || formattedMemberships[0].organization);
+      if (!profile?.default_org_id) {
+        setError('No organization found. Please contact support.');
+        setLoading(false);
+        return;
       }
+
+      const org = profile.organizations as Organization;
+      setCurrentOrg(org);
+      setCurrentOrgId(org.id);
+      
     } catch (error) {
-      console.error('Error fetching memberships:', error);
+      console.error('Error fetching default organization:', error);
+      setError('Failed to load organization');
     }
   };
 
-  const switchOrganization = (orgId: string) => {
-    const membership = memberships.find(m => m.org_id === orgId);
-    if (membership) {
-      setCurrentOrg(membership.organization);
-      localStorage.setItem('currentOrgId', orgId);
-    }
-  };
-
-  const refreshMemberships = async () => {
-    await fetchMemberships();
+  const refreshOrganization = async () => {
+    await fetchDefaultOrganization();
   };
 
   useEffect(() => {
     if (user) {
-      fetchMemberships().finally(() => setLoading(false));
+      fetchDefaultOrganization().finally(() => setLoading(false));
     } else {
       setCurrentOrg(null);
-      setMemberships([]);
+      clearCurrentOrgId();
       setLoading(false);
     }
   }, [user]);
@@ -104,10 +79,9 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   return (
     <OrganizationContext.Provider value={{
       currentOrg,
-      memberships,
       loading,
-      switchOrganization,
-      refreshMemberships
+      error,
+      refreshOrganization
     }}>
       {children}
     </OrganizationContext.Provider>

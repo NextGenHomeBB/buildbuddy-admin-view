@@ -12,20 +12,34 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { OrganizationSwitcher } from './OrganizationSwitcher';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 export function AdminHeader() {
   const { user, signOut } = useAuthContext();
+  const { currentOrg, error } = useOrganization();
 
   return (
     <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm">
       <div className="flex h-full items-center justify-between px-6">
-        {/* Left side - Mobile menu trigger, org switcher and search */}
+        {/* Left side - Mobile menu trigger, org name and search */}
         <div className="flex items-center gap-4 flex-1">
           <SidebarTrigger className="md:hidden" />
           
-          <OrganizationSwitcher />
+          {/* Organization Name Display */}
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 bg-primary rounded-md flex items-center justify-center">
+              <span className="text-primary-foreground text-sm font-semibold">
+                {currentOrg?.name?.charAt(0)?.toUpperCase() || 'O'}
+              </span>
+            </div>
+            <span className="font-medium text-foreground">
+              {currentOrg?.name || 'Loading...'}
+            </span>
+            {error && (
+              <span className="text-destructive text-sm">({error})</span>
+            )}
+          </div>
           
           <div className="hidden md:flex items-center gap-2 max-w-md flex-1">
             <div className="relative flex-1">
