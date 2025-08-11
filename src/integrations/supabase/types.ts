@@ -1080,6 +1080,7 @@ export type Database = {
           bio: string | null
           company_id: string | null
           created_at: string | null
+          default_org_id: string | null
           full_name: string | null
           id: string
           work_role: Json | null
@@ -1089,6 +1090,7 @@ export type Database = {
           bio?: string | null
           company_id?: string | null
           created_at?: string | null
+          default_org_id?: string | null
           full_name?: string | null
           id: string
           work_role?: Json | null
@@ -1098,6 +1100,7 @@ export type Database = {
           bio?: string | null
           company_id?: string | null
           created_at?: string | null
+          default_org_id?: string | null
           full_name?: string | null
           id?: string
           work_role?: Json | null
@@ -1108,6 +1111,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_default_org_id_fkey"
+            columns: ["default_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -2475,7 +2485,14 @@ export type Database = {
         }[]
       }
       invite_user: {
-        Args: { p_org_id: string; p_email: string; p_role: string }
+        Args:
+          | { p_org_id: string; p_email: string; p_role: string }
+          | {
+              p_org_id: string
+              p_email: string
+              p_role: string
+              p_expires_at?: string
+            }
         Returns: Json
       }
       is_org_member: {
