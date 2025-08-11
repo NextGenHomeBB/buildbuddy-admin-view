@@ -30,29 +30,51 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     try {
       setError(null);
       
-      // Get user's default organization from profiles
+      // First try to get user's default organization from profiles
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select(`
-          default_org_id,
-          organizations!inner (
-            id,
-            name,
-            created_at
-          )
-        `)
+        .select('default_org_id')
         .eq('id', user.id)
         .single();
 
       if (profileError) throw profileError;
 
-      if (!profile?.default_org_id) {
-        setError('No organization found. Please contact support.');
-        setLoading(false);
-        return;
+      let orgId = profile?.default_org_id;
+
+      // If no default org, try to get user's first membership
+      if (!orgId) {
+        const { data: membership, error: membershipError } = await supabase
+          .from('organization_members')
+          .select('org_id')
+          .eq('user_id', user.id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .single();
+
+        if (membershipError || !membership) {
+          setError('No organization found. Please contact support.');
+          return;
+        }
+
+        orgId = membership.org_id;
+
+        // Update profile with this default org
+        await supabase
+          .from('profiles')
+          .update({ default_org_id: orgId })
+          .eq('id', user.id);
       }
 
-      const org = profile.organizations as Organization;
+      // Get organization details
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .select('id, name, created_at')
+        .eq('id', orgId)
+        .single();
+
+      if (orgError) throw orgError;
+
       setCurrentOrg(org);
       setCurrentOrgId(org.id);
       
