@@ -75,7 +75,8 @@ export function InvitationManagement() {
       const { data, error } = await supabase.rpc('invite_user', {
         p_org_id: currentOrg.id,
         p_email: formData.email,
-        p_role: formData.role
+        p_role: formData.role,
+        p_expires_at: null
       });
 
       if (error) throw error;

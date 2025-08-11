@@ -2485,14 +2485,12 @@ export type Database = {
         }[]
       }
       invite_user: {
-        Args:
-          | { p_org_id: string; p_email: string; p_role: string }
-          | {
-              p_org_id: string
-              p_email: string
-              p_role: string
-              p_expires_at?: string
-            }
+        Args: {
+          p_org_id: string
+          p_email: string
+          p_role: string
+          p_expires_at?: string
+        }
         Returns: Json
       }
       is_org_member: {
