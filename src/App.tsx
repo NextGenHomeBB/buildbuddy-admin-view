@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ProjectLayout } from "@/components/admin/ProjectLayout";
 import { RequireAdmin } from "@/components/RequireAdmin";
@@ -38,6 +39,7 @@ import { WorkerDashboard } from "./pages/worker/WorkerDashboard";
 import { WorkerProjects } from "./pages/worker/WorkerProjects";
 import { WorkerLists } from "./pages/worker/WorkerLists";
 import { WorkerProjectDetail } from "./pages/worker/WorkerProjectDetail";
+import { AcceptInvite } from "./pages/AcceptInvite";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,11 +64,13 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <AuthProvider>
-            <Toaster />
-            <BrowserRouter>
+            <OrganizationProvider>
+              <Toaster />
+              <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/invite/:token" element={<AcceptInvite />} />
               
               {/* Admin routes */}
               <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
@@ -109,7 +113,8 @@ function App() {
               
               <Route path="*" element={<NotFound />} />
               </Routes>
-            </BrowserRouter>
+              </BrowserRouter>
+            </OrganizationProvider>
           </AuthProvider>
         </TooltipProvider>
       </QueryClientProvider>

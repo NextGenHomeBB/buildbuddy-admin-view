@@ -12,14 +12,20 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { OrganizationSwitcher } from './OrganizationSwitcher';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 export function AdminHeader() {
+  const { user, signOut } = useAuthContext();
+
   return (
     <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm">
       <div className="flex h-full items-center justify-between px-6">
-        {/* Left side - Mobile menu trigger and search */}
+        {/* Left side - Mobile menu trigger, org switcher and search */}
         <div className="flex items-center gap-4 flex-1">
           <SidebarTrigger className="md:hidden" />
+          
+          <OrganizationSwitcher />
           
           <div className="hidden md:flex items-center gap-2 max-w-md flex-1">
             <div className="relative flex-1">
@@ -51,19 +57,23 @@ export function AdminHeader() {
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar className="h-10 w-10">
                   <AvatarImage 
-                    src="https://images.unsplash.com/photo-1494790108755-2616b152890a?w=100&h=100&fit=crop&crop=face" 
-                    alt="Sarah Johnson" 
+                    src={user?.user_metadata?.avatar_url} 
+                    alt={user?.email || 'User'} 
                   />
-                  <AvatarFallback>SJ</AvatarFallback>
+                  <AvatarFallback>
+                    {user?.email?.charAt(0)?.toUpperCase() || 'U'}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Sarah Johnson</p>
+                  <p className="text-sm font-medium leading-none">
+                    {user?.user_metadata?.full_name || user?.email}
+                  </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    admin@buildbuddy.com
+                    {user?.email}
                   </p>
                 </div>
               </DropdownMenuLabel>
@@ -78,7 +88,7 @@ export function AdminHeader() {
                 Billing
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
+              <DropdownMenuItem className="text-destructive" onClick={signOut}>
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>

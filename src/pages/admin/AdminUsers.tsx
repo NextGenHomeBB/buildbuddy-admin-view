@@ -11,6 +11,8 @@ import { SkeletonCard } from '@/components/ui/skeleton-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { InvitationManagement } from '@/components/admin/InvitationManagement';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +51,8 @@ const getRoleBadgeVariant = (role: string) => {
 };
 
 export function AdminUsers() {
+  const isMobile = useIsMobile();
+  const { currentOrg } = useOrganization();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -56,7 +60,6 @@ export function AdminUsers() {
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const isMobile = useIsMobile();
 
   const fetchUsers = async (isRefresh = false) => {
     try {
@@ -364,6 +367,13 @@ export function AdminUsers() {
           setSelectedUser(null);
         }}
       />
+
+      {/* Organization-specific invitation management */}
+      {currentOrg && (
+        <div className="mt-8">
+          <InvitationManagement />
+        </div>
+      )}
     </div>
   );
 }
