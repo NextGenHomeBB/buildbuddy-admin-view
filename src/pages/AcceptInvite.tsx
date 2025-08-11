@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 export function AcceptInvite() {
   const { token } = useParams<{ token: string }>();
   const { user } = useAuthContext();
-  const { refreshMemberships } = useOrganization();
+  const { refreshOrganization } = useOrganization();
   const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'unauthorized'>('loading');
   const [inviteData, setInviteData] = useState<any>(null);
@@ -45,7 +45,7 @@ export function AcceptInvite() {
         setInviteData(result);
         setStatus('success');
         toast.success('Successfully joined organization!');
-        await refreshMemberships();
+        await refreshOrganization();
         
         // Redirect to admin after short delay
         setTimeout(() => {

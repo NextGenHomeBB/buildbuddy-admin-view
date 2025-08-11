@@ -29,7 +29,7 @@ const roleColors = {
 };
 
 export function OrganizationSwitcher() {
-  const { currentOrg, memberships, loading, switchOrganization } = useOrganization();
+  const { currentOrg, loading } = useOrganization();
 
   if (loading) {
     return (
@@ -41,57 +41,11 @@ export function OrganizationSwitcher() {
     return null;
   }
 
+  // For single-org scoping, this is now just a display component
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-10 justify-between min-w-[200px]">
-          <div className="flex items-center gap-2">
-            <Building className="h-4 w-4" />
-            <span className="font-medium truncate">{currentOrg.name}</span>
-          </div>
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-64" align="start">
-        <DropdownMenuLabel>Switch Organization</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {memberships.map((membership) => {
-          const RoleIcon = roleIcons[membership.role as keyof typeof roleIcons];
-          const isExpiring = membership.expires_at && 
-            new Date(membership.expires_at) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-          
-          return (
-            <DropdownMenuItem
-              key={membership.id}
-              onClick={() => switchOrganization(membership.org_id)}
-              className={`cursor-pointer ${
-                currentOrg.id === membership.org_id ? 'bg-accent' : ''
-              }`}
-            >
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center gap-2">
-                  <Building className="h-4 w-4" />
-                  <span className="font-medium">{membership.organization.name}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  {isExpiring && (
-                    <Badge variant="outline" className="text-xs">
-                      Expiring
-                    </Badge>
-                  )}
-                  <Badge 
-                    variant="secondary" 
-                    className={`text-xs ${roleColors[membership.role as keyof typeof roleColors]}`}
-                  >
-                    <RoleIcon className="h-3 w-3 mr-1" />
-                    {membership.role}
-                  </Badge>
-                </div>
-              </div>
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex items-center gap-2 h-10 px-3 py-2 bg-muted/50 rounded-md">
+      <Building className="h-4 w-4" />
+      <span className="font-medium text-sm">{currentOrg.name}</span>
+    </div>
   );
 }
