@@ -30,15 +30,12 @@ export function AdminHeader() {
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 bg-primary rounded-md flex items-center justify-center">
               <span className="text-primary-foreground text-sm font-semibold">
-                {currentOrg?.name?.charAt(0)?.toUpperCase() || 'O'}
+                N
               </span>
             </div>
             <span className="font-medium text-foreground">
-              {currentOrg?.name || 'Loading...'}
+              NextGenHome
             </span>
-            {error && (
-              <span className="text-destructive text-sm">({error})</span>
-            )}
           </div>
           
           <div className="hidden md:flex items-center gap-2 max-w-md flex-1">
