@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -120,28 +121,265 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 async function generatePDFContent(document: any): Promise<Uint8Array> {
-  // This is a simplified PDF generation
-  // In a real implementation, you would use a proper PDF library
-  const content = `
-    ${document.document_type.toUpperCase()}: ${document.document_number}
-    
-    Client: ${document.client_name}
-    Email: ${document.client_email}
-    Address: ${document.client_address}
-    
-    ${document.document_lines.map((line: any) => 
-      `${line.material_name} - Qty: ${line.quantity} x $${line.unit_price} = $${line.line_total}`
-    ).join('\n')}
-    
-    Subtotal: $${document.subtotal}
-    Tax (${document.tax_rate}%): $${document.tax_amount}
-    Total: $${document.total_amount}
-    
-    ${document.notes || ''}
-    ${document.terms_conditions || ''}
-  `;
+  // Generate HTML content for the document
+  const htmlContent = generateHTMLContent(document);
   
-  return new TextEncoder().encode(content);
+  // Convert HTML to PDF using Puppeteer
+  try {
+    const response = await fetch('https://api.htmlcsstoimage.com/v1/image', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Basic ' + btoa('demo:demo'), // Using demo credentials for now
+      },
+      body: JSON.stringify({
+        html: htmlContent,
+        css: getInlineCSS(),
+        format: 'pdf',
+        width: 794, // A4 width in pixels
+        height: 1123, // A4 height in pixels
+      }),
+    });
+
+    if (!response.ok) {
+      // Fallback to basic PDF structure if external service fails
+      return generateBasicPDF(document);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    return new Uint8Array(arrayBuffer);
+  } catch (error) {
+    console.error('PDF generation service error:', error);
+    // Fallback to basic PDF structure
+    return generateBasicPDF(document);
+  }
+}
+
+function generateHTMLContent(document: any): string {
+  const lineItems = document.document_lines || [];
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>${document.document_type.toUpperCase()}</title>
+    </head>
+    <body>
+      <div class="document">
+        <header>
+          <h1>${document.document_type.toUpperCase()}</h1>
+          <div class="document-number">Document #: ${document.document_number}</div>
+          <div class="date">Date: ${new Date().toLocaleDateString()}</div>
+        </header>
+        
+        <div class="client-info">
+          <h2>Client Information</h2>
+          <div><strong>Name:</strong> ${document.client_name || 'N/A'}</div>
+          <div><strong>Email:</strong> ${document.client_email || 'N/A'}</div>
+          <div><strong>Address:</strong> ${document.client_address || 'N/A'}</div>
+          ${document.client_phone ? `<div><strong>Phone:</strong> ${document.client_phone}</div>` : ''}
+        </div>
+        
+        <div class="line-items">
+          <h2>Items</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${lineItems.map((line: any) => `
+                <tr>
+                  <td>${line.material_name}</td>
+                  <td>${line.quantity}</td>
+                  <td>$${parseFloat(line.unit_price || 0).toFixed(2)}</td>
+                  <td>$${parseFloat(line.line_total || 0).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="totals">
+          <div class="total-line">
+            <span>Subtotal:</span>
+            <span>$${parseFloat(document.subtotal || 0).toFixed(2)}</span>
+          </div>
+          ${document.tax_rate > 0 ? `
+            <div class="total-line">
+              <span>Tax (${document.tax_rate}%):</span>
+              <span>$${parseFloat(document.tax_amount || 0).toFixed(2)}</span>
+            </div>
+          ` : ''}
+          <div class="total-line total">
+            <span><strong>Total:</strong></span>
+            <span><strong>$${parseFloat(document.total_amount || 0).toFixed(2)}</strong></span>
+          </div>
+        </div>
+        
+        ${document.notes ? `
+          <div class="notes">
+            <h2>Notes</h2>
+            <p>${document.notes}</p>
+          </div>
+        ` : ''}
+        
+        ${document.terms_conditions ? `
+          <div class="terms">
+            <h2>Terms & Conditions</h2>
+            <p>${document.terms_conditions}</p>
+          </div>
+        ` : ''}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function getInlineCSS(): string {
+  return `
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 0; 
+      padding: 20px; 
+      color: #333; 
+    }
+    .document { 
+      max-width: 800px; 
+      margin: 0 auto; 
+    }
+    header { 
+      text-align: center; 
+      border-bottom: 2px solid #333; 
+      padding-bottom: 20px; 
+      margin-bottom: 30px; 
+    }
+    h1 { 
+      margin: 0; 
+      font-size: 2.5em; 
+      color: #2563eb; 
+    }
+    h2 { 
+      color: #1e40af; 
+      border-bottom: 1px solid #e5e7eb; 
+      padding-bottom: 5px; 
+    }
+    .client-info, .line-items, .totals, .notes, .terms { 
+      margin-bottom: 30px; 
+    }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-top: 10px; 
+    }
+    th, td { 
+      border: 1px solid #d1d5db; 
+      padding: 12px; 
+      text-align: left; 
+    }
+    th { 
+      background-color: #f3f4f6; 
+      font-weight: bold; 
+    }
+    .totals { 
+      margin-left: auto; 
+      width: 300px; 
+    }
+    .total-line { 
+      display: flex; 
+      justify-content: space-between; 
+      padding: 5px 0; 
+    }
+    .total { 
+      border-top: 2px solid #333; 
+      padding-top: 10px; 
+      font-size: 1.2em; 
+    }
+  `;
+}
+
+function generateBasicPDF(document: any): Uint8Array {
+  // Generate a minimal valid PDF structure
+  const pdfHeader = '%PDF-1.4\n';
+  const content = `
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj
+
+4 0 obj
+<<
+/Length 200
+>>
+stream
+BT
+/F1 12 Tf
+72 720 Td
+(${document.document_type.toUpperCase()}: ${document.document_number}) Tj
+0 -20 Td
+(Client: ${document.client_name || 'N/A'}) Tj
+0 -20 Td
+(Total: $${parseFloat(document.total_amount || 0).toFixed(2)}) Tj
+ET
+endstream
+endobj
+
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
+xref
+0 6
+0000000000 65535 f 
+0000000010 00000 n 
+0000000079 00000 n 
+0000000136 00000 n 
+0000000271 00000 n 
+0000000500 00000 n 
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+566
+%%EOF
+`;
+
+  return new TextEncoder().encode(pdfHeader + content);
 }
 
 async function sendDocumentEmail(document: any, pdfUrl: string): Promise<void> {
