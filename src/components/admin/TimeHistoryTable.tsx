@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { format } from 'date-fns';
 import { SkeletonCard } from '@/components/ui/skeleton-card';
 import { Clock, Calendar, DollarSign, Filter } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TimeSheetEntry {
   id: string;
@@ -34,6 +35,7 @@ export function TimeHistoryTable() {
   const [filterDays, setFilterDays] = useState(7);
   const [selectedWorkerId, setSelectedWorkerId] = useState<string>('all');
   const [selectedShiftType, setSelectedShiftType] = useState<string>('all');
+  const isMobile = useIsMobile();
 
   // Fetch workers list for the dropdown
   const { data: workers = [] } = useQuery({
@@ -186,13 +188,14 @@ export function TimeHistoryTable() {
       </div>
 
       {/* Filter Buttons */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {[7, 14, 30].map((days) => (
           <Button
             key={days}
             variant={filterDays === days ? "default" : "outline"}
-            size="sm"
+            size={isMobile ? "sm" : "sm"}
             onClick={() => setFilterDays(days)}
+            className="flex-1 sm:flex-none min-w-0"
           >
             Last {days} days
           </Button>
@@ -210,69 +213,132 @@ export function TimeHistoryTable() {
             {selectedShiftType !== 'all' && ` - ${selectedShiftType} shifts only`}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Worker</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Hours</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Notes</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+        <CardContent className="p-0 sm:p-6">
+          {isMobile ? (
+            // Mobile card view
+            <div className="space-y-3 p-4">
               {timesheets.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    No time entries found for {selectedWorkerName} in the last {filterDays} days
-                    {selectedShiftType !== 'all' && ` with ${selectedShiftType} shift type`}
-                  </TableCell>
-                </TableRow>
+                <div className="text-center text-muted-foreground py-8">
+                  No time entries found for {selectedWorkerName} in the last {filterDays} days
+                  {selectedShiftType !== 'all' && ` with ${selectedShiftType} shift type`}
+                </div>
               ) : (
                 timesheets.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell className="font-medium">
-                      {entry.profiles?.full_name || 'Unknown Worker'}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(entry.work_date), 'MMM dd, yyyy')}
-                    </TableCell>
-                    <TableCell>
-                      {entry.projects?.name || 'No Project'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{entry.hours.toFixed(1)}h</span>
-                        {entry.break_duration > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            Break: {Math.round(entry.break_duration)}min
-                          </span>
+                  <Card key={entry.id} className="border border-border">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <h4 className="font-medium text-sm">
+                            {entry.profiles?.full_name || 'Unknown Worker'}
+                          </h4>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(entry.work_date), 'MMM dd, yyyy')}
+                          </p>
+                        </div>
+                        <div className="text-right space-y-1">
+                          <div className="font-medium text-sm">{entry.hours.toFixed(1)}h</div>
+                          {entry.break_duration > 0 && (
+                            <div className="text-xs text-muted-foreground">
+                              Break: {Math.round(entry.break_duration)}min
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Project: </span>
+                          <span className="font-medium">{entry.projects?.name || 'No Project'}</span>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant={entry.shift_type === 'overtime' ? 'destructive' : 'secondary'} className="text-xs">
+                            {entry.shift_type || 'regular'}
+                          </Badge>
+                          <Badge variant="outline" className="text-green-600 border-green-200 text-xs">
+                            Auto-Approved
+                          </Badge>
+                        </div>
+                        
+                        {entry.note && (
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">Notes: </span>
+                            <span>{entry.note}</span>
+                          </div>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={entry.shift_type === 'overtime' ? 'destructive' : 'secondary'}>
-                        {entry.shift_type || 'regular'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-green-600 border-green-200">
-                        Auto-Approved
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-xs">
-                      <span className="text-sm text-muted-foreground truncate">
-                        {entry.note || '-'}
-                      </span>
-                    </TableCell>
-                  </TableRow>
+                    </CardContent>
+                  </Card>
                 ))
               )}
-            </TableBody>
-          </Table>
+            </div>
+          ) : (
+            // Desktop table view
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Worker</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Project</TableHead>
+                    <TableHead>Hours</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Notes</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {timesheets.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        No time entries found for {selectedWorkerName} in the last {filterDays} days
+                        {selectedShiftType !== 'all' && ` with ${selectedShiftType} shift type`}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    timesheets.map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell className="font-medium">
+                          {entry.profiles?.full_name || 'Unknown Worker'}
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(entry.work_date), 'MMM dd, yyyy')}
+                        </TableCell>
+                        <TableCell>
+                          {entry.projects?.name || 'No Project'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{entry.hours.toFixed(1)}h</span>
+                            {entry.break_duration > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                Break: {Math.round(entry.break_duration)}min
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={entry.shift_type === 'overtime' ? 'destructive' : 'secondary'}>
+                            {entry.shift_type || 'regular'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-green-600 border-green-200">
+                            Auto-Approved
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-xs">
+                          <span className="text-sm text-muted-foreground truncate">
+                            {entry.note || '-'}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
