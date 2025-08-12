@@ -23,12 +23,14 @@ import {
   User,
   X,
   DollarSign,
-  Link
+  Link,
+  Trash2
 } from 'lucide-react';
 import { useDocuments, type Document } from '@/hooks/useDocuments';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PaymentDialog } from '@/components/admin/quotation/PaymentDialog';
+import { DeleteDocumentDialog } from '@/components/admin/DeleteDocumentDialog';
 
 const AdminQuotations: React.FC = () => {
   console.log('AdminQuotations component loading...');
@@ -37,7 +39,9 @@ const AdminQuotations: React.FC = () => {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentDocument, setPaymentDocument] = useState<Document | null>(null);
-  const { documents, loading, fetchDocuments, convertToInvoice, getSignedPdfUrl } = useDocuments();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteDocument, setDeleteDocument] = useState<Document | null>(null);
+  const { documents, loading, fetchDocuments, convertToInvoice, deleteDocument: removeDocument, getSignedPdfUrl } = useDocuments();
   const navigate = useNavigate();
 
   const projectId = searchParams.get('project');
@@ -69,6 +73,16 @@ const AdminQuotations: React.FC = () => {
   };
 
   const handlePaymentAdded = () => {
+    fetchDocuments(projectId || undefined);
+  };
+
+  const handleDelete = (document: Document) => {
+    setDeleteDocument(document);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async (id: string) => {
+    await removeDocument(id);
     fetchDocuments(projectId || undefined);
   };
 
@@ -313,12 +327,19 @@ const AdminQuotations: React.FC = () => {
                               Convert to Invoice
                             </Button>
                           )}
-                          {document.converted_to_invoice_id && (
-                            <Badge variant="secondary">
-                              Converted
-                            </Badge>
-                          )}
-                        </div>
+                           {document.converted_to_invoice_id && (
+                             <Badge variant="secondary">
+                               Converted
+                             </Badge>
+                           )}
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => handleDelete(document)}
+                           >
+                             <Trash2 className="h-4 w-4" />
+                           </Button>
+                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -406,6 +427,17 @@ const AdminQuotations: React.FC = () => {
             open={showPaymentDialog}
             onOpenChange={setShowPaymentDialog}
             onPaymentAdded={handlePaymentAdded}
+          />
+        )}
+
+        {/* Delete Dialog */}
+        {deleteDocument && (
+          <DeleteDocumentDialog
+            open={showDeleteDialog}
+            onOpenChange={setShowDeleteDialog}
+            documentId={deleteDocument.id}
+            documentNumber={deleteDocument.document_number}
+            onDelete={confirmDelete}
           />
         )}
       </div>
