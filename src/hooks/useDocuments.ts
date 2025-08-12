@@ -19,10 +19,16 @@ export interface Document {
   tax_rate: number;
   tax_amount: number;
   total_amount: number;
+  amount_paid: number;
   status: string;
+  payment_status: string;
   pdf_url?: string;
   source_document_id?: string;
   converted_to_invoice_id?: string;
+  acceptance_token: string;
+  accepted_at?: string;
+  accepted_by_name?: string;
+  accepted_by_email?: string;
   created_at: string;
   updated_at: string;
 }

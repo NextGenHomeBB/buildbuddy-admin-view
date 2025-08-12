@@ -21,17 +21,22 @@ import {
   Eye,
   Calendar,
   User,
-  X
+  X,
+  DollarSign,
+  Link
 } from 'lucide-react';
 import { useDocuments, type Document } from '@/hooks/useDocuments';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { PaymentDialog } from '@/components/admin/quotation/PaymentDialog';
 
 const AdminQuotations: React.FC = () => {
   console.log('AdminQuotations component loading...');
   const [searchParams] = useSearchParams();
   const [showWizard, setShowWizard] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentDocument, setPaymentDocument] = useState<Document | null>(null);
   const { documents, loading, fetchDocuments, convertToInvoice } = useDocuments();
   const navigate = useNavigate();
 
@@ -56,6 +61,19 @@ const AdminQuotations: React.FC = () => {
     } catch (error) {
       // Error is already handled in the hook
     }
+  };
+
+  const handleRecordPayment = (document: Document) => {
+    setPaymentDocument(document);
+    setShowPaymentDialog(true);
+  };
+
+  const handlePaymentAdded = () => {
+    fetchDocuments(projectId || undefined);
+  };
+
+  const getAcceptanceUrl = (document: Document) => {
+    return `${window.location.origin}/quotation/${document.acceptance_token}`;
   };
 
   const getStatusColor = (status: string): "default" | "secondary" | "destructive" | "outline" => {
@@ -185,6 +203,7 @@ const AdminQuotations: React.FC = () => {
                     <TableHead>Client</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Total</TableHead>
+                    <TableHead>Payment</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead>Valid Until</TableHead>
                     <TableHead></TableHead>
@@ -215,6 +234,23 @@ const AdminQuotations: React.FC = () => {
                         ${document.total_amount.toFixed(2)}
                       </TableCell>
                       <TableCell>
+                        {document.document_type === 'invoice' ? (
+                          <div className="text-sm">
+                            <div className="font-medium">
+                              ${document.amount_paid.toFixed(2)} / ${document.total_amount.toFixed(2)}
+                            </div>
+                            <Badge 
+                              variant={
+                                document.payment_status === 'paid' ? 'default' :
+                                document.payment_status === 'partial' ? 'secondary' : 'outline'
+                              }
+                            >
+                              {document.payment_status}
+                            </Badge>
+                          </div>
+                        ) : '—'}
+                      </TableCell>
+                      <TableCell>
                         {format(new Date(document.created_at), 'MMM d, yyyy')}
                       </TableCell>
                       <TableCell>
@@ -239,6 +275,25 @@ const AdminQuotations: React.FC = () => {
                               onClick={() => window.open(document.pdf_url, '_blank')}
                             >
                               <Download className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {document.document_type === 'quotation' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => navigator.clipboard.writeText(getAcceptanceUrl(document))}
+                              title="Copy acceptance link"
+                            >
+                              <Link className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {document.document_type === 'invoice' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRecordPayment(document)}
+                            >
+                              <DollarSign className="h-4 w-4" />
                             </Button>
                           )}
                           {document.status === 'accepted' && !document.converted_to_invoice_id && (
@@ -334,6 +389,18 @@ const AdminQuotations: React.FC = () => {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Payment Dialog */}
+        {paymentDocument && (
+          <PaymentDialog
+            documentId={paymentDocument.id}
+            totalAmount={paymentDocument.total_amount}
+            amountPaid={paymentDocument.amount_paid}
+            open={showPaymentDialog}
+            onOpenChange={setShowPaymentDialog}
+            onPaymentAdded={handlePaymentAdded}
+          />
+        )}
       </div>
   );
 };

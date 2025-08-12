@@ -19,6 +19,7 @@ export type Database = {
           break_start: string | null
           created_at: string
           id: string
+          org_id: string | null
           project_id: string | null
           shift_start: string
           shift_type: string | null
@@ -30,6 +31,7 @@ export type Database = {
           break_start?: string | null
           created_at?: string
           id?: string
+          org_id?: string | null
           project_id?: string | null
           shift_start?: string
           shift_type?: string | null
@@ -41,6 +43,7 @@ export type Database = {
           break_start?: string | null
           created_at?: string
           id?: string
+          org_id?: string | null
           project_id?: string | null
           shift_start?: string
           shift_type?: string | null
@@ -48,7 +51,15 @@ export type Database = {
           updated_at?: string
           worker_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "active_shifts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_prompt_templates: {
         Row: {
@@ -416,6 +427,53 @@ export type Database = {
           },
         ]
       }
+      document_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          document_id: string
+          id: string
+          method: string | null
+          notes: string | null
+          payment_date: string
+          reference: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by: string
+          document_id: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+          payment_date?: string
+          reference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          document_id?: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+          payment_date?: string
+          reference?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_payments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_sequences: {
         Row: {
           created_at: string
@@ -448,6 +506,13 @@ export type Database = {
       }
       documents: {
         Row: {
+          acceptance_ip: string | null
+          acceptance_note: string | null
+          acceptance_token: string
+          accepted_at: string | null
+          accepted_by_email: string | null
+          accepted_by_name: string | null
+          amount_paid: number
           client_address: string | null
           client_email: string | null
           client_name: string
@@ -477,6 +542,13 @@ export type Database = {
           valid_until: string | null
         }
         Insert: {
+          acceptance_ip?: string | null
+          acceptance_note?: string | null
+          acceptance_token?: string
+          accepted_at?: string | null
+          accepted_by_email?: string | null
+          accepted_by_name?: string | null
+          amount_paid?: number
           client_address?: string | null
           client_email?: string | null
           client_name: string
@@ -506,6 +578,13 @@ export type Database = {
           valid_until?: string | null
         }
         Update: {
+          acceptance_ip?: string | null
+          acceptance_note?: string | null
+          acceptance_token?: string
+          accepted_at?: string | null
+          accepted_by_email?: string | null
+          accepted_by_name?: string | null
+          amount_paid?: number
           client_address?: string | null
           client_email?: string | null
           client_name?: string
@@ -1801,6 +1880,7 @@ export type Database = {
           id: string
           org_id: string | null
           project_id: string | null
+          shift_id: string | null
           start_at: string
           task_id: string | null
           updated_at: string
@@ -1813,6 +1893,7 @@ export type Database = {
           id?: string
           org_id?: string | null
           project_id?: string | null
+          shift_id?: string | null
           start_at?: string
           task_id?: string | null
           updated_at?: string
@@ -1825,6 +1906,7 @@ export type Database = {
           id?: string
           org_id?: string | null
           project_id?: string | null
+          shift_id?: string | null
           start_at?: string
           task_id?: string | null
           updated_at?: string
@@ -1850,6 +1932,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_logs_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "active_shifts"
             referencedColumns: ["id"]
           },
           {
@@ -1879,6 +1968,7 @@ export type Database = {
           id: string
           location: string | null
           note: string | null
+          org_id: string | null
           project_id: string | null
           rejection_reason: string | null
           shift_type: string | null
@@ -1899,6 +1989,7 @@ export type Database = {
           id?: string
           location?: string | null
           note?: string | null
+          org_id?: string | null
           project_id?: string | null
           rejection_reason?: string | null
           shift_type?: string | null
@@ -1919,6 +2010,7 @@ export type Database = {
           id?: string
           location?: string | null
           note?: string | null
+          org_id?: string | null
           project_id?: string | null
           rejection_reason?: string | null
           shift_type?: string | null
@@ -1930,6 +2022,13 @@ export type Database = {
           work_date?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "time_sheets_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "time_sheets_project_id_fkey"
             columns: ["project_id"]
@@ -2421,6 +2520,16 @@ export type Database = {
         Args: { p_token: string }
         Returns: Json
       }
+      accept_quotation_by_token: {
+        Args: {
+          p_token: string
+          p_name: string
+          p_email: string
+          p_note: string
+          p_ip: string
+        }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: {
           operation_name: string
@@ -2470,6 +2579,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_document_public: {
+        Args: { p_token: string }
+        Returns: {
+          document_number: string
+          client_name: string
+          total_amount: number
+          notes: string
+          status: string
+          document_type: string
+          valid_until: string
+        }[]
+      }
       get_my_tasks: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2503,6 +2624,10 @@ export type Database = {
       }
       notify_shift_proposals: {
         Args: { proposal_count: number; target_date: string }
+        Returns: undefined
+      }
+      refresh_document_payment_status: {
+        Args: { p_document_id: string }
         Returns: undefined
       }
       setup_demo_data: {
