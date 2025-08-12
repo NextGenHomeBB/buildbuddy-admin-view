@@ -29,6 +29,7 @@ import { PhaseTemplateListPage } from "./pages/admin/PhaseTemplateListPage";
 import { PhaseTemplateDetailPage } from "./pages/admin/PhaseTemplateDetailPage";
 import { Reports } from "./pages/admin/Reports";
 import AdminQuotations from "./pages/admin/AdminQuotations";
+import AdminQuotationTemplates from "./pages/admin/AdminQuotationTemplates";
 import AdminScheduleAuto from "./pages/admin/AdminScheduleAuto";
 import AdminScheduleManual from "./pages/admin/AdminScheduleManual";
 import AdminMaterials from "./pages/admin/AdminMaterials";
@@ -90,6 +91,7 @@ function App() {
                 <Route path="costs" element={<AdminCosts />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="quotations" element={<AdminQuotations />} />
+                <Route path="quotation-templates" element={<AdminQuotationTemplates />} />
                 <Route path="schedule/auto" element={<AdminScheduleAuto />} />
                 <Route path="schedule/manual" element={<AdminScheduleManual />} />
                 <Route path="system" element={<SystemOverview />} />

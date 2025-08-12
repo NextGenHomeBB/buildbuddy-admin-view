@@ -1390,6 +1390,104 @@ export type Database = {
           },
         ]
       }
+      quotation_template_lines: {
+        Row: {
+          category: string | null
+          default_quantity: number
+          default_unit_price: number
+          id: string
+          is_optional: boolean | null
+          material_description: string | null
+          material_name: string
+          material_sku: string | null
+          material_unit: string | null
+          sort_order: number
+          template_id: string
+        }
+        Insert: {
+          category?: string | null
+          default_quantity: number
+          default_unit_price: number
+          id?: string
+          is_optional?: boolean | null
+          material_description?: string | null
+          material_name: string
+          material_sku?: string | null
+          material_unit?: string | null
+          sort_order: number
+          template_id: string
+        }
+        Update: {
+          category?: string | null
+          default_quantity?: number
+          default_unit_price?: number
+          id?: string
+          is_optional?: boolean | null
+          material_description?: string | null
+          material_name?: string
+          material_sku?: string | null
+          material_unit?: string | null
+          sort_order?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_template_lines_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "quotation_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotation_templates: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string
+          default_notes: string | null
+          default_tax_rate: number | null
+          default_terms_conditions: string | null
+          default_valid_days: number | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          org_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by: string
+          default_notes?: string | null
+          default_tax_rate?: number | null
+          default_terms_conditions?: string | null
+          default_valid_days?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          org_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          default_notes?: string | null
+          default_tax_rate?: number | null
+          default_terms_conditions?: string | null
+          default_valid_days?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          org_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           attempt_count: number | null
