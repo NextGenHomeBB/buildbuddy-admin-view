@@ -31,6 +31,7 @@ import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PaymentDialog } from '@/components/admin/quotation/PaymentDialog';
 import { DeleteDocumentDialog } from '@/components/admin/DeleteDocumentDialog';
+import { SendEmailDialog } from '@/components/admin/quotation/SendEmailDialog';
 
 const AdminQuotations: React.FC = () => {
   console.log('AdminQuotations component loading...');
@@ -41,6 +42,8 @@ const AdminQuotations: React.FC = () => {
   const [paymentDocument, setPaymentDocument] = useState<Document | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteDocument, setDeleteDocument] = useState<Document | null>(null);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [emailDocument, setEmailDocument] = useState<Document | null>(null);
   const { documents, loading, fetchDocuments, convertToInvoice, deleteDocument: removeDocument, getSignedPdfUrl } = useDocuments();
   const navigate = useNavigate();
 
@@ -79,6 +82,15 @@ const AdminQuotations: React.FC = () => {
   const handleDelete = (document: Document) => {
     setDeleteDocument(document);
     setShowDeleteDialog(true);
+  };
+
+  const handleSendEmail = (document: Document) => {
+    setEmailDocument(document);
+    setShowEmailDialog(true);
+  };
+
+  const handleEmailSent = () => {
+    fetchDocuments(projectId || undefined);
   };
 
   const confirmDelete = async (id: string) => {
@@ -299,14 +311,24 @@ const AdminQuotations: React.FC = () => {
                              </Button>
                            )}
                           {document.document_type === 'quotation' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigator.clipboard.writeText(getAcceptanceUrl(document))}
-                              title="Copy acceptance link"
-                            >
-                              <Link className="h-4 w-4" />
-                            </Button>
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSendEmail(document)}
+                                title="Send via email"
+                              >
+                                <Mail className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigator.clipboard.writeText(getAcceptanceUrl(document))}
+                                title="Copy acceptance link"
+                              >
+                                <Link className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
                           {document.document_type === 'invoice' && (
                             <Button
@@ -440,6 +462,14 @@ const AdminQuotations: React.FC = () => {
             onDelete={confirmDelete}
           />
         )}
+
+        {/* Email Dialog */}
+        <SendEmailDialog
+          open={showEmailDialog}
+          onOpenChange={setShowEmailDialog}
+          document={emailDocument}
+          onEmailSent={handleEmailSent}
+        />
       </div>
   );
 };
