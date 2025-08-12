@@ -264,14 +264,16 @@ export const useDocuments = () => {
     if (!document.pdf_url) return null;
     
     try {
-      // Extract the file path from the full URL
-      const url = new URL(document.pdf_url);
-      const filePath = url.pathname.replace('/storage/v1/object/public/documents/', '');
+      // Extract just the filename from the URL (everything after the last /)
+      const filename = document.pdf_url.split('/').pop();
+      if (!filename) {
+        throw new Error('Could not extract filename from URL');
+      }
       
       // Generate a signed URL for private access
       const { data, error } = await supabase.storage
         .from('documents')
-        .createSignedUrl(filePath, 3600); // 1 hour expiry
+        .createSignedUrl(filename, 3600); // 1 hour expiry
       
       if (error) {
         console.error('Error creating signed URL:', error);
