@@ -260,6 +260,41 @@ export const useDocuments = () => {
     }
   };
 
+  const getSignedPdfUrl = async (document: Document): Promise<string | null> => {
+    if (!document.pdf_url) return null;
+    
+    try {
+      // Extract the file path from the full URL
+      const url = new URL(document.pdf_url);
+      const filePath = url.pathname.replace('/storage/v1/object/public/documents/', '');
+      
+      // Generate a signed URL for private access
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(filePath, 3600); // 1 hour expiry
+      
+      if (error) {
+        console.error('Error creating signed URL:', error);
+        toast({
+          title: "Error",
+          description: "Failed to generate download link",
+          variant: "destructive",
+        });
+        return null;
+      }
+      
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error parsing PDF URL:', error);
+      toast({
+        title: "Error", 
+        description: "Invalid PDF URL format",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
   return {
     documents,
     loading,
@@ -268,6 +303,7 @@ export const useDocuments = () => {
     updateDocument,
     deleteDocument,
     convertToInvoice,
+    getSignedPdfUrl,
   };
 };
 

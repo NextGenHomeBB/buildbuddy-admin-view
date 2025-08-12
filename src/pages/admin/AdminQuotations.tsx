@@ -37,7 +37,7 @@ const AdminQuotations: React.FC = () => {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentDocument, setPaymentDocument] = useState<Document | null>(null);
-  const { documents, loading, fetchDocuments, convertToInvoice } = useDocuments();
+  const { documents, loading, fetchDocuments, convertToInvoice, getSignedPdfUrl } = useDocuments();
   const navigate = useNavigate();
 
   const projectId = searchParams.get('project');
@@ -70,6 +70,13 @@ const AdminQuotations: React.FC = () => {
 
   const handlePaymentAdded = () => {
     fetchDocuments(projectId || undefined);
+  };
+
+  const handleDownloadPdf = async (document: Document) => {
+    const signedUrl = await getSignedPdfUrl(document);
+    if (signedUrl) {
+      window.open(signedUrl, '_blank');
+    }
   };
 
   const getAcceptanceUrl = (document: Document) => {
@@ -268,15 +275,15 @@ const AdminQuotations: React.FC = () => {
                            >
                              <Eye className="h-4 w-4" />
                            </Button>
-                          {document.pdf_url && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => window.open(document.pdf_url, '_blank')}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          )}
+                           {document.pdf_url && (
+                             <Button 
+                               variant="ghost" 
+                               size="sm"
+                               onClick={() => handleDownloadPdf(document)}
+                             >
+                               <Download className="h-4 w-4" />
+                             </Button>
+                           )}
                           {document.document_type === 'quotation' && (
                             <Button
                               variant="ghost"
@@ -372,15 +379,15 @@ const AdminQuotations: React.FC = () => {
                 )}
 
                 <div className="flex justify-end space-x-2 pt-4">
-                  {selectedDocument.pdf_url && (
-                    <Button 
-                      variant="outline"
-                      onClick={() => window.open(selectedDocument.pdf_url, '_blank')}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download PDF
-                    </Button>
-                  )}
+                   {selectedDocument.pdf_url && (
+                     <Button 
+                       variant="outline"
+                       onClick={() => handleDownloadPdf(selectedDocument)}
+                     >
+                       <Download className="h-4 w-4 mr-2" />
+                       Download PDF
+                     </Button>
+                   )}
                   <Button onClick={() => setSelectedDocument(null)}>
                     Close
                   </Button>
