@@ -20,15 +20,18 @@ import {
   Download, 
   Eye,
   Calendar,
-  User
+  User,
+  X
 } from 'lucide-react';
 import { useDocuments, type Document } from '@/hooks/useDocuments';
 import { format } from 'date-fns';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const AdminQuotations: React.FC = () => {
   console.log('AdminQuotations component loading...');
   const [searchParams] = useSearchParams();
   const [showWizard, setShowWizard] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const { documents, loading, fetchDocuments, convertToInvoice } = useDocuments();
   const navigate = useNavigate();
 
@@ -222,9 +225,13 @@ const AdminQuotations: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-1">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                           <Button 
+                             variant="ghost" 
+                             size="sm"
+                             onClick={() => setSelectedDocument(document)}
+                           >
+                             <Eye className="h-4 w-4" />
+                           </Button>
                           {document.pdf_url && (
                             <Button 
                               variant="ghost" 
@@ -258,6 +265,75 @@ const AdminQuotations: React.FC = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Quotation Detail Modal */}
+        <Dialog open={!!selectedDocument} onOpenChange={() => setSelectedDocument(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Quotation Details</DialogTitle>
+            </DialogHeader>
+            {selectedDocument && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-medium text-sm text-muted-foreground">Quotation Number</h3>
+                    <p className="text-lg font-semibold">{selectedDocument.document_number}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-sm text-muted-foreground">Status</h3>
+                    <Badge variant={getStatusColor(selectedDocument.status)} className="mt-1">
+                      {selectedDocument.status}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-medium text-sm text-muted-foreground">Client Name</h3>
+                    <p>{selectedDocument.client_name}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-sm text-muted-foreground">Email</h3>
+                    <p>{selectedDocument.client_email || '—'}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-medium text-sm text-muted-foreground">Total Amount</h3>
+                    <p className="text-2xl font-bold">${selectedDocument.total_amount.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-sm text-muted-foreground">Valid Until</h3>
+                    <p>{selectedDocument.valid_until ? format(new Date(selectedDocument.valid_until), 'MMM d, yyyy') : '—'}</p>
+                  </div>
+                </div>
+
+                {selectedDocument.notes && (
+                  <div>
+                    <h3 className="font-medium text-sm text-muted-foreground">Notes</h3>
+                    <p className="text-sm">{selectedDocument.notes}</p>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-2 pt-4">
+                  {selectedDocument.pdf_url && (
+                    <Button 
+                      variant="outline"
+                      onClick={() => window.open(selectedDocument.pdf_url, '_blank')}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF
+                    </Button>
+                  )}
+                  <Button onClick={() => setSelectedDocument(null)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
   );
 };
