@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { SkeletonCard } from '@/components/ui/skeleton-card';
-import { Clock, Calendar, DollarSign } from 'lucide-react';
+import { Clock, Calendar, DollarSign, Filter } from 'lucide-react';
 
 interface TimeSheetEntry {
   id: string;
@@ -31,21 +32,49 @@ interface TimeSheetEntry {
 
 export function TimeHistoryTable() {
   const [filterDays, setFilterDays] = useState(7);
+  const [selectedWorkerId, setSelectedWorkerId] = useState<string>('all');
+  const [selectedShiftType, setSelectedShiftType] = useState<string>('all');
+
+  // Fetch workers list for the dropdown
+  const { data: workers = [] } = useQuery({
+    queryKey: ['workers-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .order('full_name');
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const { data: timesheets = [], isLoading } = useQuery({
-    queryKey: ['timesheet-history', filterDays],
+    queryKey: ['timesheet-history', filterDays, selectedWorkerId, selectedShiftType],
     queryFn: async (): Promise<TimeSheetEntry[]> => {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - filterDays);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('time_sheets')
         .select(`
           *,
           profiles:user_id(full_name),
           projects:project_id(name)
         `)
-        .gte('work_date', startDate.toISOString().split('T')[0])
+        .gte('work_date', startDate.toISOString().split('T')[0]);
+
+      // Apply worker filter
+      if (selectedWorkerId !== 'all') {
+        query = query.eq('user_id', selectedWorkerId);
+      }
+
+      // Apply shift type filter
+      if (selectedShiftType !== 'all') {
+        query = query.eq('shift_type', selectedShiftType);
+      }
+
+      const { data, error } = await query
         .order('work_date', { ascending: false })
         .order('created_at', { ascending: false });
 
@@ -62,9 +91,58 @@ export function TimeHistoryTable() {
   const totalHours = timesheets.reduce((sum, entry) => sum + entry.hours, 0);
   const totalEntries = timesheets.length;
   const avgHoursPerDay = totalEntries > 0 ? totalHours / Math.max(filterDays, 1) : 0;
+  
+  const selectedWorkerName = selectedWorkerId === 'all' 
+    ? 'All Workers' 
+    : workers.find(w => w.id === selectedWorkerId)?.full_name || 'Unknown Worker';
 
   return (
     <div className="space-y-4">
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filters
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <label className="text-sm font-medium mb-2 block">Worker</label>
+              <Select value={selectedWorkerId} onValueChange={setSelectedWorkerId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select worker" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Workers</SelectItem>
+                  {workers.map((worker) => (
+                    <SelectItem key={worker.id} value={worker.id}>
+                      {worker.full_name || 'Unknown Worker'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex-1">
+              <label className="text-sm font-medium mb-2 block">Shift Type</label>
+              <Select value={selectedShiftType} onValueChange={setSelectedShiftType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select shift type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="regular">Regular</SelectItem>
+                  <SelectItem value="overtime">Overtime</SelectItem>
+                  <SelectItem value="weekend">Weekend</SelectItem>
+                  <SelectItem value="holiday">Holiday</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       {/* Summary Cards */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
         <Card>
@@ -75,7 +153,7 @@ export function TimeHistoryTable() {
           <CardContent>
             <div className="text-2xl font-bold">{totalHours.toFixed(1)}</div>
             <p className="text-xs text-muted-foreground">
-              Last {filterDays} days
+              {selectedWorkerName} - Last {filterDays} days
             </p>
           </CardContent>
         </Card>
@@ -126,7 +204,10 @@ export function TimeHistoryTable() {
         <CardHeader>
           <CardTitle>Time Sheet History</CardTitle>
           <CardDescription>
-            Automatically approved time entries for all workers
+            {selectedWorkerId === 'all' 
+              ? 'Automatically approved time entries for all workers'
+              : `Time entries for ${selectedWorkerName}`}
+            {selectedShiftType !== 'all' && ` - ${selectedShiftType} shifts only`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -146,7 +227,8 @@ export function TimeHistoryTable() {
               {timesheets.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    No time entries found for the last {filterDays} days
+                    No time entries found for {selectedWorkerName} in the last {filterDays} days
+                    {selectedShiftType !== 'all' && ` with ${selectedShiftType} shift type`}
                   </TableCell>
                 </TableRow>
               ) : (
