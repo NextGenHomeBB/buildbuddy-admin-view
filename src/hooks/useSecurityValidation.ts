@@ -2,9 +2,45 @@ import { useCallback } from 'react';
 import { useInputValidation } from './useInputValidation';
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/utils/logger';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useSecurityValidation = () => {
   const { validateEmail, validateText, sanitizeHtml } = useInputValidation();
+
+  // Security monitoring function
+  const logSecurityEvent = useCallback(async (eventType: string, severity: 'low' | 'medium' | 'high' = 'medium', details: any = {}) => {
+    try {
+      await supabase.rpc('log_security_event', {
+        event_type: eventType,
+        severity,
+        details
+      });
+    } catch (error) {
+      logger.error('Failed to log security event', { eventType, error });
+    }
+  }, []);
+
+  // Enhanced credential validation
+  const validateCredentialAccess = useCallback(async (credentialType: string, action: string) => {
+    try {
+      // Log credential access attempt
+      await logSecurityEvent('CREDENTIAL_ACCESS_ATTEMPT', 'medium', {
+        credential_type: credentialType,
+        action,
+        timestamp: new Date().toISOString()
+      });
+      
+      return true;
+    } catch (error) {
+      logger.error('Credential access validation failed', error);
+      await logSecurityEvent('CREDENTIAL_ACCESS_FAILED', 'high', {
+        credential_type: credentialType,
+        action,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      return false;
+    }
+  }, [logSecurityEvent]);
 
   // Enhanced validation for quotation data
   const validateQuotationData = useCallback((data: {
@@ -204,6 +240,8 @@ export const useSecurityValidation = () => {
     validateLineItemData,
     validateOrganizationAccess,
     handleSecurityViolation,
+    validateCredentialAccess,
+    logSecurityEvent,
     sanitizeHtml
   };
 };

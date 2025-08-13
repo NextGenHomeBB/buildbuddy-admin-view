@@ -87,28 +87,40 @@ export type Database = {
       }
       apple_calendar_credentials: {
         Row: {
+          access_count: number | null
           app_password: string
           caldav_url: string
           created_at: string
+          encrypted_password: string | null
+          encryption_key_id: string | null
           id: string
+          last_accessed: string | null
           updated_at: string
           user_id: string
           username: string
         }
         Insert: {
+          access_count?: number | null
           app_password: string
           caldav_url?: string
           created_at?: string
+          encrypted_password?: string | null
+          encryption_key_id?: string | null
           id?: string
+          last_accessed?: string | null
           updated_at?: string
           user_id: string
           username: string
         }
         Update: {
+          access_count?: number | null
           app_password?: string
           caldav_url?: string
           created_at?: string
+          encrypted_password?: string | null
+          encryption_key_id?: string | null
           id?: string
+          last_accessed?: string | null
           updated_at?: string
           user_id?: string
           username?: string
@@ -176,34 +188,49 @@ export type Database = {
         Row: {
           access_token: string | null
           created_at: string
+          created_ip: string | null
           expires_at: string | null
           id: string
+          last_ip: string | null
+          last_used: string | null
           provider: string
           refresh_token: string | null
           scope: string | null
+          suspicious_activity: boolean | null
           updated_at: string
+          usage_count: number | null
           user_id: string
         }
         Insert: {
           access_token?: string | null
           created_at?: string
+          created_ip?: string | null
           expires_at?: string | null
           id?: string
+          last_ip?: string | null
+          last_used?: string | null
           provider: string
           refresh_token?: string | null
           scope?: string | null
+          suspicious_activity?: boolean | null
           updated_at?: string
+          usage_count?: number | null
           user_id: string
         }
         Update: {
           access_token?: string | null
           created_at?: string
+          created_ip?: string | null
           expires_at?: string | null
           id?: string
+          last_ip?: string | null
+          last_used?: string | null
           provider?: string
           refresh_token?: string | null
           scope?: string | null
+          suspicious_activity?: boolean | null
           updated_at?: string
+          usage_count?: number | null
           user_id?: string
         }
         Relationships: []
@@ -2747,6 +2774,10 @@ export type Database = {
       is_org_member: {
         Args: { check_org: string }
         Returns: boolean
+      }
+      log_security_event: {
+        Args: { event_type: string; severity?: string; details?: Json }
+        Returns: undefined
       }
       next_document_number: {
         Args: { doc_type: string }
