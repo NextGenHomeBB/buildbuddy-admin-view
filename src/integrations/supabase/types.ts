@@ -452,6 +452,13 @@ export type Database = {
             referencedRelation: "documents"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "document_lines_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "secure_customer_data"
+            referencedColumns: ["id"]
+          },
         ]
       }
       document_payments: {
@@ -497,6 +504,13 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_payments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "secure_customer_data"
             referencedColumns: ["id"]
           },
         ]
@@ -649,6 +663,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "documents_converted_to_invoice_id_fkey"
+            columns: ["converted_to_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "secure_customer_data"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "documents_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -674,6 +695,13 @@ export type Database = {
             columns: ["source_document_id"]
             isOneToOne: false
             referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "secure_customer_data"
             referencedColumns: ["id"]
           },
         ]
@@ -2619,6 +2647,66 @@ export type Database = {
         }
         Relationships: []
       }
+      secure_customer_data: {
+        Row: {
+          amount_paid: number | null
+          client_email: string | null
+          client_name: string | null
+          client_phone: string | null
+          created_at: string | null
+          document_number: string | null
+          document_type: string | null
+          id: string | null
+          project_id: string | null
+          status: string | null
+          total_amount: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount_paid?: never
+          client_email?: never
+          client_name?: never
+          client_phone?: never
+          created_at?: string | null
+          document_number?: string | null
+          document_type?: string | null
+          id?: string | null
+          project_id?: string | null
+          status?: string | null
+          total_amount?: never
+          updated_at?: string | null
+        }
+        Update: {
+          amount_paid?: never
+          client_email?: never
+          client_name?: never
+          client_phone?: never
+          created_at?: string | null
+          document_number?: string | null
+          document_type?: string | null
+          id?: string | null
+          project_id?: string | null
+          status?: string | null
+          total_amount?: never
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_costs_vw"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_monitor_vw: {
         Row: {
           action: string | null
@@ -2817,6 +2905,10 @@ export type Database = {
       is_org_member: {
         Args: { check_org: string }
         Returns: boolean
+      }
+      log_high_risk_activity: {
+        Args: { event_type: string; risk_level?: string; details?: Json }
+        Returns: undefined
       }
       log_security_event: {
         Args: { event_type: string; severity?: string; details?: Json }
