@@ -16,6 +16,27 @@ interface EmailRequest {
   message?: string;
 }
 
+// Security: HTML sanitization function
+const sanitizeHtml = (input: string): string => {
+  if (!input) return '';
+  return input.replace(/[<>&"']/g, (char) => {
+    const entities: { [key: string]: string } = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '&': '&amp;',
+      '"': '&quot;',
+      "'": '&#x27;'
+    };
+    return entities[char];
+  });
+};
+
+// Security: Email validation
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email) && email.length <= 254;
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -36,7 +57,42 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const { documentId, recipientEmail, subject, message }: EmailRequest = await req.json();
+    // Check rate limiting for email sending
+    const { data: rateLimitOk, error: rateLimitError } = await supabaseClient
+      .rpc('check_rate_limit_enhanced', {
+        operation_name: 'email_send',
+        max_attempts: 5,
+        window_minutes: 15
+      });
+
+    if (rateLimitError || !rateLimitOk) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Rate limit exceeded. Please try again later.' 
+        }),
+        {
+          status: 429,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    const requestBody = await req.json();
+    const { documentId, recipientEmail, subject, message }: EmailRequest = requestBody;
+
+    // Security: Validate and sanitize inputs
+    if (!documentId || typeof documentId !== 'string' || documentId.length > 100) {
+      throw new Error('Invalid document ID');
+    }
+
+    if (recipientEmail && (!validateEmail(recipientEmail) || recipientEmail.length > 254)) {
+      throw new Error('Invalid recipient email format');
+    }
+
+    // Sanitize user inputs
+    const sanitizedSubject = subject ? sanitizeHtml(subject.substring(0, 200)) : '';
+    const sanitizedMessage = message ? sanitizeHtml(message.substring(0, 2000)) : '';
 
     // Fetch document details
     const { data: document, error: docError } = await supabaseClient
@@ -58,28 +114,28 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate acceptance link
     const acceptanceUrl = `${Deno.env.get('SUPABASE_URL')}/quotation/${document.acceptance_token}`;
 
-    // Create email content
-    const emailSubject = subject || `Quotation ${document.document_number} - ${document.client_name}`;
+    // Create email content with sanitized inputs
+    const emailSubject = sanitizedSubject || `Quotation ${sanitizeHtml(document.document_number)} - ${sanitizeHtml(document.client_name)}`;
     const emailBody = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Quotation ${document.document_number}</h2>
+        <h2>Quotation ${sanitizeHtml(document.document_number)}</h2>
         
-        <p>Dear ${document.client_name},</p>
+        <p>Dear ${sanitizeHtml(document.client_name)},</p>
         
-        <p>${message || 'Please find your quotation details below:'}</p>
+        <p>${sanitizedMessage || 'Please find your quotation details below:'}</p>
         
         <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3>Quotation Details</h3>
-          <p><strong>Document Number:</strong> ${document.document_number}</p>
-          <p><strong>Total Amount:</strong> €${document.total_amount}</p>
+          <p><strong>Document Number:</strong> ${sanitizeHtml(document.document_number)}</p>
+          <p><strong>Total Amount:</strong> €${Number(document.total_amount).toFixed(2)}</p>
           ${document.valid_until ? `<p><strong>Valid Until:</strong> ${new Date(document.valid_until).toLocaleDateString()}</p>` : ''}
-          ${document.notes ? `<p><strong>Notes:</strong> ${document.notes}</p>` : ''}
+          ${document.notes ? `<p><strong>Notes:</strong> ${sanitizeHtml(document.notes)}</p>` : ''}
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
           <a href="${acceptanceUrl}" 
              style="background: #3478F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-            View & Accept Quotation
+            View &amp; Accept Quotation
           </a>
         </div>
         

@@ -1341,6 +1341,7 @@ export type Database = {
           location: string | null
           manager_id: string | null
           name: string
+          org_id: string | null
           progress: number | null
           start_date: string | null
           status: string | null
@@ -1355,6 +1356,7 @@ export type Database = {
           location?: string | null
           manager_id?: string | null
           name: string
+          org_id?: string | null
           progress?: number | null
           start_date?: string | null
           status?: string | null
@@ -1369,6 +1371,7 @@ export type Database = {
           location?: string | null
           manager_id?: string | null
           name?: string
+          org_id?: string | null
           progress?: number | null
           start_date?: string | null
           status?: string | null
@@ -1386,6 +1389,13 @@ export type Database = {
             columns: ["manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1493,6 +1503,7 @@ export type Database = {
           attempt_count: number | null
           created_at: string | null
           id: string
+          ip_address: string | null
           operation: string
           user_id: string
           window_start: string | null
@@ -1501,6 +1512,7 @@ export type Database = {
           attempt_count?: number | null
           created_at?: string | null
           id?: string
+          ip_address?: string | null
           operation: string
           user_id: string
           window_start?: string | null
@@ -1509,6 +1521,7 @@ export type Database = {
           attempt_count?: number | null
           created_at?: string | null
           id?: string
+          ip_address?: string | null
           operation?: string
           user_id?: string
           window_start?: string | null
@@ -2243,6 +2256,7 @@ export type Database = {
           assigned_at: string | null
           assigned_by: string | null
           id: string
+          org_id: string | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -2250,6 +2264,7 @@ export type Database = {
           assigned_at?: string | null
           assigned_by?: string | null
           id?: string
+          org_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -2257,10 +2272,19 @@ export type Database = {
           assigned_at?: string | null
           assigned_by?: string | null
           id?: string
+          org_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       worker_availability: {
         Row: {
@@ -2629,6 +2653,14 @@ export type Database = {
         Returns: Json
       }
       check_rate_limit: {
+        Args: {
+          operation_name: string
+          max_attempts?: number
+          window_minutes?: number
+        }
+        Returns: boolean
+      }
+      check_rate_limit_enhanced: {
         Args: {
           operation_name: string
           max_attempts?: number
