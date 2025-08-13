@@ -2693,6 +2693,10 @@ export type Database = {
         }
         Returns: Json
       }
+      can_access_security_monitor: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       check_rate_limit: {
         Args: {
           operation_name: string
