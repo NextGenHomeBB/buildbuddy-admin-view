@@ -2619,6 +2619,20 @@ export type Database = {
         }
         Relationships: []
       }
+      security_monitor_vw: {
+        Row: {
+          action: string | null
+          event_category: string | null
+          id: string | null
+          ip_address: string | null
+          severity_level: string | null
+          table_name: string | null
+          timestamp: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Relationships: []
+      }
       "worker.my_tasks_view": {
         Row: {
           assigned_worker_id: string | null
@@ -2762,6 +2776,31 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_org_scoped_data: {
+        Args: {
+          table_name: string
+          org_id_param: string
+          additional_filters?: Json
+        }
+        Returns: Json
+      }
+      get_phase_costs_secure: {
+        Args: { p_project_id?: string }
+        Returns: {
+          phase_id: string
+          project_id: string
+          phase_name: string
+          budget: number
+          material_cost: number
+          labor_cost_planned: number
+          labor_cost_actual: number
+          expense_cost: number
+          total_committed: number
+          forecast: number
+          variance: number
+          last_updated: string
+        }[]
+      }
       invite_user: {
         Args: {
           p_org_id: string
@@ -2790,6 +2829,14 @@ export type Database = {
       refresh_document_payment_status: {
         Args: { p_document_id: string }
         Returns: undefined
+      }
+      secure_credential_operation: {
+        Args: {
+          operation_type: string
+          credential_type: string
+          credential_data?: Json
+        }
+        Returns: Json
       }
       setup_demo_data: {
         Args: { manager_id: string; worker_id: string }
