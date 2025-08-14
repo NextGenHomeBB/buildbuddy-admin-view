@@ -395,13 +395,6 @@ export type Database = {
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "daily_task_assignments_task_template_id_fkey"
-            columns: ["task_template_id"]
-            isOneToOne: false
-            referencedRelation: "worker.my_tasks_view"
-            referencedColumns: ["id"]
-          },
         ]
       }
       document_lines: {
@@ -1288,13 +1281,6 @@ export type Database = {
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "project_materials_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "worker.my_tasks_view"
-            referencedColumns: ["id"]
-          },
         ]
       }
       project_phases: {
@@ -1693,13 +1679,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_shifts_task_id"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "worker.my_tasks_view"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "fk_shifts_worker_id"
             columns: ["worker_id"]
             isOneToOne: false
@@ -1732,13 +1711,6 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shifts_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "worker.my_tasks_view"
             referencedColumns: ["id"]
           },
           {
@@ -1866,24 +1838,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "task_relations_dest_task_fkey"
-            columns: ["dest_task"]
-            isOneToOne: false
-            referencedRelation: "worker.my_tasks_view"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "task_relations_src_task_fkey"
             columns: ["src_task"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "task_relations_src_task_fkey"
-            columns: ["src_task"]
-            isOneToOne: false
-            referencedRelation: "worker.my_tasks_view"
             referencedColumns: ["id"]
           },
         ]
@@ -2084,13 +2042,6 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "time_logs_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "worker.my_tasks_view"
             referencedColumns: ["id"]
           },
         ]
@@ -2619,64 +2570,6 @@ export type Database = {
         }
         Relationships: []
       }
-      security_monitor_vw: {
-        Row: {
-          action: string | null
-          event_category: string | null
-          id: string | null
-          ip_address: string | null
-          severity_level: string | null
-          table_name: string | null
-          timestamp: string | null
-          user_id: string | null
-          user_name: string | null
-        }
-        Relationships: []
-      }
-      "worker.my_tasks_view": {
-        Row: {
-          assigned_worker_id: string | null
-          created_at: string | null
-          description: string | null
-          due_date: string | null
-          id: string | null
-          priority: string | null
-          status: string | null
-          title: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          assigned_worker_id?: string | null
-          created_at?: string | null
-          description?: string | null
-          due_date?: never
-          id?: string | null
-          priority?: string | null
-          status?: never
-          title?: string | null
-          updated_at?: never
-        }
-        Update: {
-          assigned_worker_id?: string | null
-          created_at?: string | null
-          description?: string | null
-          due_date?: never
-          id?: string | null
-          priority?: string | null
-          status?: never
-          title?: string | null
-          updated_at?: never
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_assignee_fkey"
-            columns: ["assigned_worker_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Functions: {
       accept_invite: {
@@ -2822,6 +2715,20 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_my_tasks_secure: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          assigned_worker_id: string
+          created_at: string
+          description: string
+          due_date: string
+          id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }[]
+      }
       get_org_scoped_data: {
         Args: {
           additional_filters?: Json
@@ -2876,6 +2783,20 @@ export type Database = {
           status: string
           total_amount: number
           updated_at: string
+        }[]
+      }
+      get_security_monitor_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          action: string
+          event_category: string
+          event_timestamp: string
+          id: string
+          ip_address: string
+          severity_level: string
+          table_name: string
+          user_id: string
+          user_name: string
         }[]
       }
       invite_user: {
