@@ -2917,6 +2917,23 @@ export type Database = {
           variance: number
         }[]
       }
+      get_project_costs_secure: {
+        Args: { p_project_id?: string }
+        Returns: {
+          budget: number
+          expense_cost: number
+          forecast: number
+          labor_cost_actual: number
+          labor_cost_planned: number
+          last_updated: string
+          material_cost: number
+          phase_id: string
+          phase_name: string
+          project_id: string
+          total_committed: number
+          variance: number
+        }[]
+      }
       get_project_worker_basic_info: {
         Args: { p_worker_id: string }
         Returns: {
