@@ -76,6 +76,13 @@ export function AdminOverview() {
       console.log('Starting data fetch for admin user:', user.id);
       setLoading(true);
       setError(null);
+      
+      // Set a backup timeout in case something goes wrong
+      const timeoutId = setTimeout(() => {
+        console.log('Fetch timeout reached, stopping loading');
+        setLoading(false);
+        setError('Data fetch timed out. Using basic display.');
+      }, 15000);
 
       try {
         // Fetch basic project stats first
@@ -139,6 +146,7 @@ export function AdminOverview() {
         console.error('Error fetching overview data:', error);
         setError(error instanceof Error ? error.message : 'Unknown error occurred');
       } finally {
+        clearTimeout(timeoutId);
         console.log('Setting loading to false');
         setLoading(false);
       }
@@ -179,14 +187,29 @@ export function AdminOverview() {
     );
   }
 
-  // Show loading while fetching data
+  // Show loading while fetching data - but don't get stuck
   if (loading) {
     console.log('Rendering data loading state');
+    
+    // Add fallback timeout to prevent infinite loading
+    setTimeout(() => {
+      if (loading) {
+        console.log('Forcing loading to false after timeout');
+        setLoading(false);
+      }
+    }, 10000); // 10 second timeout
+    
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="text-muted-foreground">Loading dashboard...</p>
+          <button 
+            onClick={() => setLoading(false)}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90"
+          >
+            Skip Loading
+          </button>
         </div>
       </div>
     );
