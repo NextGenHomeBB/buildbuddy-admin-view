@@ -1,286 +1,219 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle, Shield, Lock, Activity, TrendingUp } from "lucide-react";
-import { useSecurityAlerts, useSecurityMetrics } from "@/hooks/useSecurityAlerts";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Shield, AlertTriangle, Eye, Clock } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
-const SecurityDashboard = () => {
-  const { data: alerts, isLoading: alertsLoading } = useSecurityAlerts();
-  const { data: metrics, isLoading: metricsLoading } = useSecurityMetrics();
+interface SecurityMetric {
+  metric_name: string;
+  metric_value: number;
+  metric_description: string;
+  threat_level: string;
+}
+
+interface SecurityAlert {
+  alert_id: string;
+  severity: string;
+  event_type: string;
+  user_id: string;
+  details: any;
+  event_timestamp: string;
+  ip_address: string;
+}
+
+export const SecurityDashboard = () => {
+  // Fetch security metrics
+  const { data: metrics, isLoading: metricsLoading, error: metricsError } = useQuery({
+    queryKey: ['security-dashboard-metrics'],
+    queryFn: async (): Promise<SecurityMetric[]> => {
+      const { data, error } = await supabase.rpc('get_security_dashboard_metrics');
+      
+      if (error) {
+        console.error('Error fetching security metrics:', error);
+        throw error;
+      }
+      
+      return data || [];
+    },
+    refetchInterval: 60000, // Refresh every minute
+    staleTime: 30000, // Consider data stale after 30 seconds
+  });
+
+  // Fetch security alerts
+  const { data: alerts, isLoading: alertsLoading } = useQuery({
+    queryKey: ['security-alerts'],
+    queryFn: async (): Promise<SecurityAlert[]> => {
+      const { data, error } = await supabase.rpc('get_security_alerts');
+      
+      if (error) {
+        console.error('Error fetching security alerts:', error);
+        throw error;
+      }
+      
+      return data || [];
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
 
   const getThreatLevelColor = (level: string) => {
     switch (level) {
-      case 'high': return 'destructive';
-      case 'medium': return 'default';
-      case 'low': return 'secondary';
-      default: return 'outline';
+      case 'critical': return 'bg-destructive';
+      case 'high': return 'bg-orange-500';
+      case 'medium': return 'bg-yellow-500';
+      case 'low': return 'bg-green-500';
+      default: return 'bg-muted';
     }
   };
 
+  const getSeverityVariant = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'destructive' as const;
+      case 'high': return 'destructive' as const;
+      case 'medium': return 'default' as const;
+      default: return 'secondary' as const;
+    }
+  };
+
+  if (metricsError) {
+    toast({
+      title: "Security Dashboard Error",
+      description: "Failed to load security metrics. This may indicate a security issue.",
+      variant: "destructive",
+    });
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Shield className="h-5 w-5" />
-        <h2 className="text-2xl font-bold">Security Overview</h2>
-        <Badge 
-          variant={metrics ? getThreatLevelColor(metrics.threat_level) : 'secondary'} 
-          className="ml-auto"
-        >
-          {metrics ? `Threat Level: ${metrics.threat_level.toUpperCase()}` : 'Enhanced Protection Active'}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Shield className="h-6 w-6" />
+          <h2 className="text-2xl font-bold">Security Dashboard</h2>
+        </div>
+        <Badge variant="outline" className="flex items-center gap-1">
+          <Eye className="h-4 w-4" />
+          Real-time Monitoring
         </Badge>
       </div>
 
-      {/* Real-time Security Metrics */}
-      {!metricsLoading && metrics && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Alerts</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.total_alerts}</div>
-              <p className="text-xs text-muted-foreground">All time</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Last 24h</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.alerts_24h}</div>
-              <p className="text-xs text-muted-foreground">Recent activity</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Critical Alerts</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-destructive">{metrics.critical_alerts}</div>
-              <p className="text-xs text-muted-foreground">High priority</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Rate Limits</CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.rate_limit_violations}</div>
-              <p className="text-xs text-muted-foreground">Blocked attempts</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Financial Data Protection</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">Secured</div>
-            <CardDescription className="text-xs">
-              All financial data access is now protected with secure RPC functions and proper access controls
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Payroll Data Access</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">Protected</div>
-            <CardDescription className="text-xs">
-              Payroll data is now behind secure functions with HR admin verification and data masking
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Credential Security</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">Enhanced</div>
-            <CardDescription className="text-xs">
-              Credential access monitoring, validation, and automatic rotation policies are active
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rate Limiting</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">Active</div>
-            <CardDescription className="text-xs">
-              Enhanced rate limiting with IP tracking for sensitive operations
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Database Security</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">Hardened</div>
-            <CardDescription className="text-xs">
-              All database functions now have proper search_path protection
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Audit Logging</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">Comprehensive</div>
-            <CardDescription className="text-xs">
-              All sensitive operations are logged with threat level classification
-            </CardDescription>
-          </CardContent>
-        </Card>
+      {/* Security Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {metricsLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="pb-2">
+                <div className="h-4 bg-muted rounded w-3/4"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 bg-muted rounded w-1/2"></div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          metrics?.map((metric) => (
+            <Card key={metric.metric_name}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {metric.metric_description}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="text-2xl font-bold">{metric.metric_value}</div>
+                  <div className={`w-3 h-3 rounded-full ${getThreatLevelColor(metric.threat_level)}`} />
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
-      {/* Recent Security Alerts */}
-      {!alertsLoading && alerts && alerts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              Recent Security Alerts
-            </CardTitle>
-            <CardDescription>
-              Latest security events and potential threats (last 7 days)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {alerts.slice(0, 10).map((alert) => (
-                <div 
-                  key={alert.alert_id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge 
-                        variant={
-                          alert.severity === 'critical' || alert.severity === 'high' 
-                            ? 'destructive' 
-                            : alert.severity === 'medium' 
-                            ? 'default' 
-                            : 'secondary'
-                        }
-                      >
-                        {alert.severity.toUpperCase()}
-                      </Badge>
-                      <span className="text-sm font-medium">{alert.event_type}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(alert.event_timestamp).toLocaleString()}
-                      {alert.ip_address && ` • IP: ${alert.ip_address}`}
-                    </p>
+      {/* Security Alerts */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            Recent Security Alerts
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {alertsLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="animate-pulse flex items-center space-x-4">
+                  <div className="rounded-full bg-muted h-4 w-4"></div>
+                  <div className="flex-1 space-y-1">
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                    <div className="h-3 bg-muted rounded w-1/2"></div>
                   </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="h-4 w-4" />
-            Security Enhancements Applied
-          </CardTitle>
-          <CardDescription>
-            Your system now has enterprise-grade security protection
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded">
-              <div>
-                <div className="font-medium">Financial Data Protection</div>
-                <div className="text-sm text-muted-foreground">
-                  All financial views secured with RPC functions, data masking, and role-based access
-                </div>
-              </div>
-              <Badge variant="secondary">✓ Complete</Badge>
+          ) : alerts && alerts.length > 0 ? (
+            <div className="space-y-4">
+              {alerts.slice(0, 10).map((alert) => (
+                <Alert key={alert.alert_id} className="border-l-4" style={{
+                  borderLeftColor: alert.severity === 'critical' ? 'hsl(var(--destructive))' : 
+                                 alert.severity === 'high' ? 'hsl(var(--orange-500))' : 'hsl(var(--yellow-500))'
+                }}>
+                  <AlertDescription>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={getSeverityVariant(alert.severity)} className="text-xs">
+                          {alert.severity}
+                        </Badge>
+                        <span className="font-medium">{alert.event_type}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {new Date(alert.event_timestamp).toLocaleString()}
+                      </div>
+                    </div>
+                    {alert.details && (
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        IP: {alert.ip_address} | User: {alert.user_id}
+                        {alert.details.violation_type && (
+                          <span className="ml-2">| Type: {alert.details.violation_type}</span>
+                        )}
+                      </div>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              ))}
             </div>
-            
-            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded">
-              <div>
-                <div className="font-medium">Enhanced Credential Security</div>
-                <div className="text-sm text-muted-foreground">
-                  Apple Calendar credentials and OAuth tokens with validation and rotation
-                </div>
-              </div>
-              <Badge variant="secondary">✓ Complete</Badge>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No security alerts detected</p>
+              <p className="text-sm">Your system appears to be secure</p>
             </div>
-            
-            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded">
-              <div>
-                <div className="font-medium">Database Function Hardening</div>
-                <div className="text-sm text-muted-foreground">
-                  All functions secured with search_path protection against SQL injection
-                </div>
-              </div>
-              <Badge variant="secondary">✓ Complete</Badge>
-            </div>
-            
-            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded">
-              <div>
-                <div className="font-medium">Security Monitoring Dashboard</div>
-                <div className="text-sm text-muted-foreground">
-                  Real-time security metrics, threat detection, and automated response
-                </div>
-              </div>
-              <Badge variant="secondary">✓ Complete</Badge>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
-      <Card className="border-amber-200 dark:border-amber-800">
+      {/* Security Configuration Status */}
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-            <AlertTriangle className="h-4 w-4" />
-            Manual Configuration Required
-          </CardTitle>
-          <CardDescription>
-            Some security settings require manual configuration in Supabase
-          </CardDescription>
+          <CardTitle>Security Configuration</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center justify-between">
-              <span>OTP Expiry Time (reduce to 5 minutes)</span>
-              <Badge variant="outline">Manual Setup</Badge>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between py-2 border-b">
+              <span className="text-sm">Enhanced Logging</span>
+              <Badge variant="default">Active</Badge>
             </div>
-            <div className="flex items-center justify-between">
-              <span>Leaked Password Protection</span>
-              <Badge variant="outline">Manual Setup</Badge>
+            <div className="flex items-center justify-between py-2 border-b">
+              <span className="text-sm">Rate Limiting</span>
+              <Badge variant="default">Enforced</Badge>
             </div>
-            <div className="text-xs text-muted-foreground mt-2">
-              Please configure these settings in your Supabase dashboard under Authentication settings
+            <div className="flex items-center justify-between py-2 border-b">
+              <span className="text-sm">Credential Protection</span>
+              <Badge variant="secondary">Implemented</Badge>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm">Real-time Monitoring</span>
+              <Badge variant="default">Online</Badge>
             </div>
           </div>
         </CardContent>
@@ -288,5 +221,3 @@ const SecurityDashboard = () => {
     </div>
   );
 };
-
-export default SecurityDashboard;

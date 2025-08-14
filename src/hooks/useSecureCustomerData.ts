@@ -28,6 +28,14 @@ export const useSecureCustomerData = (
   return useQuery({
     queryKey: ['secure-customer-data', projectId, documentType, includePaymentData],
     queryFn: async (): Promise<SecureCustomerData[]> => {
+      // Enhanced audit logging for customer data access
+      await supabase.rpc('audit_sensitive_operation', {
+        operation_type: 'customer_data_access',
+        table_name: 'documents',
+        record_id: null,
+        sensitive_data_accessed: ['client_name', 'client_email', 'client_phone', 'financial_data']
+      });
+
       const { data, error } = await supabase.rpc('get_customer_data_secure', {
         p_project_id: projectId || null,
         p_document_type: documentType || null,
@@ -36,6 +44,12 @@ export const useSecureCustomerData = (
 
       if (error) {
         console.error('Error fetching secure customer data:', error);
+        // Log security failure
+        await supabase.rpc('log_critical_security_event', {
+          event_type: 'CUSTOMER_DATA_ACCESS_FAILED',
+          threat_level: 'critical',
+          details: { error: error.message, projectId, documentType }
+        });
         throw error;
       }
 

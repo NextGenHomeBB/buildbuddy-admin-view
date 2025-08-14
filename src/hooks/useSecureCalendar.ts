@@ -10,6 +10,14 @@ export const useSecureCalendar = () => {
   // Secure Apple Calendar credential access using secure RPC function
   const getAppleCredentials = useCallback(async (userId?: string) => {
     try {
+      // Log access attempt for audit trail
+      await supabase.rpc('audit_sensitive_operation', {
+        operation_type: 'apple_credentials_access',
+        table_name: 'apple_calendar_credentials',
+        record_id: null,
+        sensitive_data_accessed: ['username', 'app_password', 'caldav_url']
+      });
+
       // Use secure RPC function that handles all validation and logging internally
       const { data, error } = await supabase
         .rpc('get_apple_credentials_secure', { 
@@ -94,6 +102,14 @@ export const useSecureCalendar = () => {
     caldav_url?: string;
   }) => {
     try {
+      // Enhanced audit logging for credential storage
+      await supabase.rpc('audit_sensitive_operation', {
+        operation_type: 'apple_credentials_storage',
+        table_name: 'apple_calendar_credentials',
+        record_id: null,
+        sensitive_data_accessed: ['username', 'app_password', 'caldav_url']
+      });
+
       // Use secure RPC function that handles all validation, rate limiting, and logging
       const { data, error } = await supabase
         .rpc('store_apple_credentials_secure', {
@@ -114,9 +130,27 @@ export const useSecureCalendar = () => {
     }
   }, []);
 
+  // Secure credential deletion
+  const deleteAppleCredentials = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.rpc('delete_apple_credentials_secure');
+
+      if (error) {
+        logger.error('Failed to delete Apple credentials securely', error);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      logger.error('Failed to delete Apple credentials', error);
+      throw error;
+    }
+  }, []);
+
   return {
     getAppleCredentials,
     getOAuthToken,
-    storeAppleCredentials
+    storeAppleCredentials,
+    deleteAppleCredentials
   };
 };

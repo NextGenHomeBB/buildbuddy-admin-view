@@ -186,7 +186,7 @@ const EnhancedSecurityMonitor = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Total Events (7 days)</p>
-                  <p className="text-2xl font-bold">{dashboardMetrics[0]?.total_events || 0}</p>
+                  <p className="text-2xl font-bold">{dashboardMetrics.find(m => m.metric_name === 'total_security_events')?.metric_value || 0}</p>
                 </div>
                 <Shield className="h-8 w-8 text-primary" />
               </div>
@@ -198,7 +198,7 @@ const EnhancedSecurityMonitor = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Critical Events</p>
-                  <p className="text-2xl font-bold text-destructive">{dashboardMetrics[0]?.critical_events || 0}</p>
+                  <p className="text-2xl font-bold text-destructive">{dashboardMetrics.find(m => m.metric_name === 'critical_security_events')?.metric_value || 0}</p>
                 </div>
                 <AlertTriangle className="h-8 w-8 text-destructive" />
               </div>
@@ -210,14 +210,14 @@ const EnhancedSecurityMonitor = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Events (24h)</p>
-                  <p className="text-2xl font-bold">{dashboardMetrics[0]?.events_last_24h || 0}</p>
+                  <p className="text-2xl font-bold">{dashboardMetrics.find(m => m.metric_name === 'events_last_24h')?.metric_value || 0}</p>
                 </div>
-                <Badge variant={
-                  dashboardMetrics[0]?.threat_level === 'critical' ? 'destructive' :
-                  dashboardMetrics[0]?.threat_level === 'high' ? 'destructive' :
-                  dashboardMetrics[0]?.threat_level === 'medium' ? 'default' : 'secondary'
-                }>
-                  {dashboardMetrics[0]?.threat_level || 'low'}
+                 <Badge variant={
+                   dashboardMetrics.find(m => m.metric_name === 'overall_threat_level')?.threat_level === 'critical' ? 'destructive' :
+                   dashboardMetrics.find(m => m.metric_name === 'overall_threat_level')?.threat_level === 'high' ? 'destructive' :
+                   dashboardMetrics.find(m => m.metric_name === 'overall_threat_level')?.threat_level === 'medium' ? 'default' : 'secondary'
+                 }>
+                   {dashboardMetrics.find(m => m.metric_name === 'overall_threat_level')?.threat_level || 'low'}
                 </Badge>
               </div>
             </CardContent>

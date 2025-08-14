@@ -2594,6 +2594,15 @@ export type Database = {
         }
         Returns: Json
       }
+      audit_sensitive_operation: {
+        Args: {
+          operation_type: string
+          record_id: string
+          sensitive_data_accessed?: string[]
+          table_name: string
+        }
+        Returns: undefined
+      }
       can_access_project_financial_data: {
         Args: { p_project_id: string }
         Returns: boolean
@@ -2621,6 +2630,15 @@ export type Database = {
           window_minutes?: number
         }
         Returns: boolean
+      }
+      check_security_configuration: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          current_value: string
+          recommended_value: string
+          security_risk: string
+          setting_name: string
+        }[]
       }
       check_shift_overlap: {
         Args: {
@@ -2970,12 +2988,10 @@ export type Database = {
       get_security_dashboard_metrics: {
         Args: Record<PropertyKey, never>
         Returns: {
-          critical_events: number
-          events_last_24h: number
-          failed_logins: number
-          rate_limit_violations: number
+          metric_description: string
+          metric_name: string
+          metric_value: number
           threat_level: string
-          total_events: number
         }[]
       }
       get_security_monitor_data: {
