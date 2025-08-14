@@ -60,18 +60,19 @@ export function usePhaseCosts(phaseId: string) {
   return useQuery({
     queryKey: ['phase-costs', phaseId],
     queryFn: async (): Promise<PhaseCostData | null> => {
-      const { data, error } = await supabase
-        .from('phase_costs_vw')
-        .select('*')
-        .eq('phase_id', phaseId)
-        .single();
+      // Use secure RPC function instead of direct view access
+      const { data, error } = await supabase.rpc('get_phase_costs_secure', {
+        p_project_id: null // Will be filtered by phase_id below
+      });
 
       if (error) {
         console.error('Error fetching phase costs:', error);
         return null;
       }
 
-      return data;
+      // Filter for the specific phase
+      const phaseData = data?.find((item: any) => item.phase_id === phaseId);
+      return phaseData || null;
     },
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
