@@ -2728,6 +2728,18 @@ export type Database = {
           work_role: Json
         }[]
       }
+      get_financial_summary_secure: {
+        Args: { p_project_id?: string }
+        Returns: {
+          access_level: string
+          budget_variance: number
+          completion_percentage: number
+          project_id: string
+          project_name: string
+          total_budget: number
+          total_spent: number
+        }[]
+      }
       get_my_current_rate_secure: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2772,6 +2784,19 @@ export type Database = {
           table_name: string
         }
         Returns: Json
+      }
+      get_payroll_data_secure: {
+        Args: { p_date_from?: string; p_date_to?: string; p_worker_id?: string }
+        Returns: {
+          amount: number
+          hourly_rate: number
+          hours_worked: number
+          masked_worker_name: string
+          payment_date: string
+          payment_type: string
+          project_name: string
+          worker_id: string
+        }[]
       }
       get_phase_costs_secure: {
         Args: { p_project_id?: string }
