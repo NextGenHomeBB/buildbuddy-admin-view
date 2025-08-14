@@ -3140,14 +3140,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      safe_log_critical_security_event: {
-        Args: {
-          event_details?: Json
-          event_type: string
-          threat_level?: string
-        }
-        Returns: boolean
-      }
       safe_log_security_event: {
         Args: { details?: Json; event_type: string; severity?: string }
         Returns: boolean
