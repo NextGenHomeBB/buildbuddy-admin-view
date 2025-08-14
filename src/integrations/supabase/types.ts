@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -2773,11 +2773,11 @@ export type Database = {
       }
       accept_quotation_by_token: {
         Args: {
-          p_token: string
-          p_name: string
           p_email: string
-          p_note: string
           p_ip: string
+          p_name: string
+          p_note: string
+          p_token: string
         }
         Returns: Json
       }
@@ -2787,34 +2787,34 @@ export type Database = {
       }
       check_rate_limit: {
         Args: {
-          operation_name: string
           max_attempts?: number
+          operation_name: string
           window_minutes?: number
         }
         Returns: boolean
       }
       check_rate_limit_enhanced: {
         Args: {
-          operation_name: string
           max_attempts?: number
+          operation_name: string
           window_minutes?: number
         }
         Returns: boolean
       }
       check_shift_overlap: {
         Args: {
-          p_worker_id: string
-          p_start_time: string
           p_end_time: string
           p_exclude_shift_id?: string
+          p_start_time: string
+          p_worker_id: string
         }
         Returns: boolean
       }
       check_timer_overlap: {
         Args: {
-          p_user_id: string
-          p_start_time?: string
           p_exclude_id?: string
+          p_start_time?: string
+          p_user_id: string
         }
         Returns: boolean
       }
@@ -2823,7 +2823,7 @@ export type Database = {
         Returns: Json
       }
       create_user_profile: {
-        Args: { user_id: string; user_email?: string }
+        Args: { user_email?: string; user_id: string }
         Returns: Json
       }
       expire_old_daily_tasks: {
@@ -2845,60 +2845,60 @@ export type Database = {
       get_document_public: {
         Args: { p_token: string }
         Returns: {
-          document_number: string
           client_name: string
-          total_amount: number
+          document_number: string
+          document_type: string
           notes: string
           status: string
-          document_type: string
+          total_amount: number
           valid_until: string
         }[]
       }
       get_my_tasks: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          title: string
-          description: string
-          status: string
-          priority: string
           assigned_worker_id: string
-          due_date: string
           created_at: string
+          description: string
+          due_date: string
+          id: string
+          priority: string
+          status: string
+          title: string
           updated_at: string
         }[]
       }
       get_org_scoped_data: {
         Args: {
-          table_name: string
-          org_id_param: string
           additional_filters?: Json
+          org_id_param: string
+          table_name: string
         }
         Returns: Json
       }
       get_phase_costs_secure: {
         Args: { p_project_id?: string }
         Returns: {
-          phase_id: string
-          project_id: string
-          phase_name: string
           budget: number
-          material_cost: number
-          labor_cost_planned: number
-          labor_cost_actual: number
           expense_cost: number
-          total_committed: number
           forecast: number
-          variance: number
+          labor_cost_actual: number
+          labor_cost_planned: number
           last_updated: string
+          material_cost: number
+          phase_id: string
+          phase_name: string
+          project_id: string
+          total_committed: number
+          variance: number
         }[]
       }
       invite_user: {
         Args: {
-          p_org_id: string
           p_email: string
-          p_role: string
           p_expires_at?: string
+          p_org_id: string
+          p_role: string
         }
         Returns: Json
       }
@@ -2907,11 +2907,11 @@ export type Database = {
         Returns: boolean
       }
       log_high_risk_activity: {
-        Args: { event_type: string; risk_level?: string; details?: Json }
+        Args: { details?: Json; event_type: string; risk_level?: string }
         Returns: undefined
       }
       log_security_event: {
-        Args: { event_type: string; severity?: string; details?: Json }
+        Args: { details?: Json; event_type: string; severity?: string }
         Returns: undefined
       }
       next_document_number: {
@@ -2928,9 +2928,9 @@ export type Database = {
       }
       secure_credential_operation: {
         Args: {
-          operation_type: string
-          credential_type: string
           credential_data?: Json
+          credential_type: string
+          operation_type: string
         }
         Returns: Json
       }
@@ -2948,8 +2948,8 @@ export type Database = {
       }
       user_has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
