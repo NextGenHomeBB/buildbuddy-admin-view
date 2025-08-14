@@ -2912,17 +2912,13 @@ export type Database = {
         Args: { p_project_id?: string }
         Returns: {
           budget: number
-          expense_cost: number
-          forecast: number
-          labor_cost_actual: number
-          labor_cost_planned: number
-          last_updated: string
-          material_cost: number
-          phase_id: string
-          phase_name: string
+          budget_variance: number
           project_id: string
-          total_committed: number
-          variance: number
+          project_name: string
+          total_cost: number
+          total_expense_cost: number
+          total_labor_cost: number
+          total_material_cost: number
         }[]
       }
       get_project_worker_basic_info: {
@@ -3030,15 +3026,14 @@ export type Database = {
       get_worker_rates_masked: {
         Args: { p_worker_id?: string }
         Returns: {
-          created_at: string
           effective_date: string
           end_date: string
           hourly_rate: number
           id: string
           monthly_salary: number
           payment_type: string
-          updated_at: string
           worker_id: string
+          worker_name: string
         }[]
       }
       get_worker_rates_secure: {
