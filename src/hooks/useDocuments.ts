@@ -65,15 +65,17 @@ export const useDocuments = () => {
   const fetchDocuments = async (projectId?: string) => {
     setLoading(true);
     try {
-      // Use secure function instead of direct table access
-      const { data, error } = await supabase.rpc('get_secure_customer_data', {
-        p_project_id: projectId,
-        p_document_type: null
-      });
+      let query = supabase.from('documents').select('*');
+      
+      if (projectId) {
+        query = query.eq('project_id', projectId);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;
       
-      setDocuments((data || []) as Document[]);
+      setDocuments(data || []);
     } catch (error) {
       console.error('Error fetching documents:', error);
       toast({

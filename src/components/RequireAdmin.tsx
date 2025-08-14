@@ -16,38 +16,45 @@ const Loader = () => (
 export const RequireAdmin = ({ children }: RequireAdminProps) => {
   const { user, session, loading } = useAuth();
   const navigate = useNavigate();
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
   useEffect(() => {
-    // Only redirect after loading is complete
-    if (!loading) {
+    // Only check auth after loading is complete and we have session data
+    if (!loading && hasCheckedAuth) {
+      // If no session, redirect to auth
       if (!session) {
-        console.log('No session, redirecting to auth');
         navigate('/auth');
         return;
       }
 
-      if (!user || user.role !== 'admin') {
-        console.log('User is not admin, redirecting to home', { user: user?.role });
+      // If we have a session but user is not admin, redirect to home
+      if (session && user && user.role !== 'admin') {
         navigate('/');
         return;
       }
     }
-  }, [loading, session, user, navigate]);
+  }, [loading, session, user?.role, navigate, hasCheckedAuth]);
 
-  // Show loader while loading
-  if (loading) {
+  useEffect(() => {
+    // Mark that we've finished the initial auth check
+    if (!loading) {
+      setHasCheckedAuth(true);
+    }
+  }, [loading]);
+
+  // Show loader while still loading or while we haven't checked auth yet
+  if (loading || !hasCheckedAuth) {
     return <Loader />;
   }
 
-  // If no session after loading, show loader (will redirect)
+  // If no session after loading, show loader (will redirect via useEffect)
   if (!session) {
     return <Loader />;
   }
 
-  // If user is not admin after loading, show loader (will redirect)
+  // If user is not admin after loading, show loader (will redirect via useEffect)
   if (!user || user.role !== 'admin') {
     return <Loader />;
   }
-  
   return <>{children}</>;
 };

@@ -10,7 +10,6 @@ import { useDeviceType } from '@/hooks/useDeviceType';
 import { cn } from '@/lib/utils';
 import { logger } from '@/utils/logger';
 import { OverviewModal } from '@/components/admin/OverviewModal';
-import EnhancedSecurityMonitor from '@/components/admin/EnhancedSecurityMonitor';
 
 interface Stats {
   total_projects: number;
@@ -39,93 +38,80 @@ export function AdminOverview() {
     active_users: 0
   });
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Add extensive debug logging
-  console.log('AdminOverview render:', { 
-    authLoading, 
-    hasSession: !!session, 
-    hasUser: !!user, 
-    isAdmin,
-    userRole: user?.role,
-    userId: user?.id,
-    loading
-  });
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log('AdminOverview fetchData called:', { authLoading, session: !!session, user: !!user, isAdmin });
-      
-      // Only fetch if we have a valid authenticated admin user
-      if (authLoading) {
-        console.log('Still loading auth, skipping data fetch');
-        return;
-      }
-      
-      if (!session || !user) {
-        console.log('No session or user, skipping data fetch');
-        return;
-      }
-      
-      if (!isAdmin) {
-        console.log('User is not admin, skipping data fetch');
+      // Don't fetch data until auth is ready and user is confirmed admin
+      if (authLoading || !session || !user || !isAdmin) {
+        logger.debug('AdminOverview: Waiting for auth...', { 
+          authLoading, 
+          hasSession: !!session, 
+          hasUser: !!user, 
+          isAdmin,
+          userRole: user?.role,
+          userId: user?.id 
+        });
         return;
       }
 
-      console.log('Starting data fetch for admin user:', user.id);
+      // Prevent duplicate fetches
+      if (hasInitialized) {
+        logger.debug('AdminOverview: Data already initialized, skipping fetch');
+        return;
+      }
+
+      logger.debug('AdminOverview: Starting data fetch for admin user:', user.id);
       setLoading(true);
       setError(null);
-      
-      // Set a backup timeout in case something goes wrong
-      const timeoutId = setTimeout(() => {
-        console.log('Fetch timeout reached, stopping loading');
-        setLoading(false);
-        setError('Data fetch timed out. Using basic display.');
-      }, 15000);
+      setHasInitialized(true);
 
       try {
-        // Fetch basic project stats first
-        console.log('Fetching projects...');
+        // Test the current user role function first
+        const { data: roleTest, error: roleError } = await supabase.rpc('get_current_user_role');
+        logger.debug('Role test result:', { roleTest, roleError });
+
+        // Fetch projects stats
+        logger.debug('Fetching projects...');
         const { data: projects, error: projectsError } = await supabase
           .from('projects')
-          .select('id, status')
-          .limit(10);
+          .select('status');
         
-        console.log('Projects result:', { projects, projectsError });
+        logger.debug('Projects query result:', { projects, projectsError });
 
-        if (projectsError) {
-          throw new Error(`Projects error: ${projectsError.message}`);
-        }
-
-        // Fetch basic user count
-        console.log('Fetching profiles...');
+        // Fetch users stats  
+        logger.debug('Fetching profiles...');
         const { data: users, error: usersError } = await supabase
           .from('profiles')
-          .select('id')
-          .limit(10);
+          .select('id');
 
-        console.log('Users result:', { users, usersError });
+        // Just get basic user count for now
+        const { data: userCount, error: rolesError } = await supabase
+          .rpc('get_current_user_role'); // This will validate our connection
 
-        if (usersError) {
-          throw new Error(`Users error: ${usersError.message}`);
-        }
+        logger.debug('Role test result:', { userCount, rolesError });
 
         // Fetch recent projects
-        console.log('Fetching recent projects...');
+        logger.debug('Fetching recent projects...');
         const { data: recent, error: recentError } = await supabase
           .from('projects')
           .select('id, name, description, status, progress')
           .order('created_at', { ascending: false })
           .limit(3);
 
-        console.log('Recent projects result:', { recent, recentError });
+        logger.debug('Recent projects result:', { recent, recentError });
 
-        if (recentError) {
-          throw new Error(`Recent projects error: ${recentError.message}`);
+        // Check for any errors
+        if (projectsError || usersError || rolesError || recentError) {
+          const errorMsg = `Data fetch errors: ${[projectsError?.message, usersError?.message, rolesError?.message, recentError?.message].filter(Boolean).join(', ')}`;
+          logger.error(errorMsg);
+          setError(errorMsg);
+          return;
         }
 
-        // Calculate stats safely
+        // Calculate stats
         const projectStats = projects || [];
         const userStats = users || [];
         
@@ -134,94 +120,64 @@ export function AdminOverview() {
           active_projects: projectStats.filter(p => p.status === 'active').length,
           completed_projects: projectStats.filter(p => p.status === 'completed').length,
           total_users: userStats.length,
-          active_users: userStats.length
+          active_users: userStats.length // Simplified for now
         };
 
-        console.log('Setting stats:', newStats);
+        logger.debug('Calculated stats:', newStats);
         setStats(newStats);
         setRecentProjects(recent || []);
-        console.log('Data fetch completed successfully');
+        logger.debug('AdminOverview: Data fetch completed successfully');
 
       } catch (error) {
-        console.error('Error fetching overview data:', error);
-        setError(error instanceof Error ? error.message : 'Unknown error occurred');
+        logger.error('Error fetching overview data:', error);
+        setError(`Failed to load dashboard data: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
-        clearTimeout(timeoutId);
-        console.log('Setting loading to false');
+        logger.debug('AdminOverview: Setting loading to false');
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [authLoading, session, user, isAdmin]);
-
-  // Always render something - never return empty
-  console.log('About to render, final checks:', { authLoading, session: !!session, user: !!user, isAdmin, loading, error });
+  }, [authLoading, session, user, isAdmin]); // Depend on auth state
 
   // Show loading while auth is loading
   if (authLoading) {
-    console.log('Rendering auth loading state');
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Authenticating...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-2 text-muted-foreground">Authenticating...</span>
       </div>
     );
   }
 
   // Show error if not admin or no session
   if (!session || !user || !isAdmin) {
-    console.log('Rendering access denied state');
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center space-y-4">
-          <p className="text-destructive text-lg">Access denied</p>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center space-y-2">
+          <p className="text-destructive">Access denied</p>
           <p className="text-sm text-muted-foreground">Admin access required</p>
-          <p className="text-xs text-muted-foreground">
-            Debug: session={session ? 'yes' : 'no'}, user={user ? 'yes' : 'no'}, isAdmin={isAdmin ? 'yes' : 'no'}
-          </p>
         </div>
       </div>
     );
   }
 
-  // Show loading while fetching data - but don't get stuck
+  // Show loading while fetching data
   if (loading) {
-    console.log('Rendering data loading state');
-    
-    // Add fallback timeout to prevent infinite loading
-    setTimeout(() => {
-      if (loading) {
-        console.log('Forcing loading to false after timeout');
-        setLoading(false);
-      }
-    }, 10000); // 10 second timeout
-    
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading dashboard...</p>
-          <button 
-            onClick={() => setLoading(false)}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90"
-          >
-            Skip Loading
-          </button>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-2 text-muted-foreground">Loading dashboard...</span>
       </div>
     );
   }
 
   // Show error if data fetch failed
   if (error) {
-    console.log('Rendering error state');
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center space-y-4">
-          <p className="text-destructive text-lg">Error loading dashboard</p>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center space-y-2">
+          <p className="text-destructive">Error loading dashboard</p>
           <p className="text-sm text-muted-foreground">{error}</p>
           <button 
             onClick={() => window.location.reload()}
@@ -233,8 +189,6 @@ export function AdminOverview() {
       </div>
     );
   }
-
-  console.log('Rendering main dashboard content');
 
 
   return (
@@ -343,15 +297,6 @@ export function AdminOverview() {
             </button>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Security Monitoring Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-foreground">Security Status</h2>
-          <Badge variant="secondary">Enhanced Protection</Badge>
-        </div>
-        <EnhancedSecurityMonitor />
       </div>
     </div>
   );

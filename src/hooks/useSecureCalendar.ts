@@ -7,34 +7,45 @@ import { toast } from '@/hooks/use-toast';
 export const useSecureCalendar = () => {
   const { validateCredentialAccess, logSecurityEvent } = useSecurityValidation();
 
-  // Secure Apple Calendar credential access using secure RPC function
-  const getAppleCredentials = useCallback(async (userId?: string) => {
+  // Secure Apple Calendar credential access
+  const getAppleCredentials = useCallback(async (userId: string) => {
     try {
-      // Log access attempt for audit trail
-      await supabase.rpc('audit_sensitive_operation', {
-        operation_type: 'apple_credentials_access',
-        table_name: 'apple_calendar_credentials',
-        record_id: null,
-        sensitive_data_accessed: ['username', 'app_password', 'caldav_url']
-      });
+      // Validate access before retrieving credentials
+      const canAccess = await validateCredentialAccess('apple_calendar', 'read');
+      if (!canAccess) {
+        throw new Error('Access to Apple Calendar credentials denied');
+      }
 
-      // Use secure RPC function that handles all validation and logging internally
       const { data, error } = await supabase
-        .rpc('get_apple_credentials_secure', { 
-          p_user_id: userId || undefined 
-        });
+        .from('apple_calendar_credentials')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
 
       if (error) {
-        logger.error('Failed to get Apple credentials securely', error);
+        await logSecurityEvent('CREDENTIAL_ACCESS_ERROR', 'medium', {
+          error: error.message,
+          user_id: userId
+        });
         throw error;
       }
 
-      return data?.[0] || null; // Return first result or null
+      // Log successful access
+      await logSecurityEvent('CREDENTIAL_ACCESS_SUCCESS', 'low', {
+        credential_type: 'apple_calendar',
+        user_id: userId
+      });
+
+      return data;
     } catch (error) {
       logger.error('Failed to get Apple credentials', error);
+      await logSecurityEvent('CREDENTIAL_ACCESS_FAILED', 'high', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        user_id: userId
+      });
       throw error;
     }
-  }, []);
+  }, [validateCredentialAccess, logSecurityEvent]);
 
   // Secure OAuth token access with usage monitoring
   const getOAuthToken = useCallback(async (userId: string, provider: string) => {
@@ -95,62 +106,56 @@ export const useSecureCalendar = () => {
     }
   }, [validateCredentialAccess, logSecurityEvent]);
 
-  // Secure credential storage using secure RPC function
+  // Secure credential storage with encryption tracking
   const storeAppleCredentials = useCallback(async (credentials: {
     username: string;
     app_password: string;
     caldav_url?: string;
   }) => {
     try {
-      // Enhanced audit logging for credential storage
-      await supabase.rpc('audit_sensitive_operation', {
-        operation_type: 'apple_credentials_storage',
-        table_name: 'apple_calendar_credentials',
-        record_id: null,
-        sensitive_data_accessed: ['username', 'app_password', 'caldav_url']
-      });
+      const canAccess = await validateCredentialAccess('apple_calendar', 'write');
+      if (!canAccess) {
+        throw new Error('Cannot store Apple Calendar credentials');
+      }
 
-      // Use secure RPC function that handles all validation, rate limiting, and logging
+      // For now, store the password as-is but track encryption intent
       const { data, error } = await supabase
-        .rpc('store_apple_credentials_secure', {
-          p_username: credentials.username,
-          p_app_password: credentials.app_password,
-          p_caldav_url: credentials.caldav_url || 'https://caldav.icloud.com/'
-        });
+        .from('apple_calendar_credentials')
+        .upsert({
+          username: credentials.username,
+          app_password: credentials.app_password,
+          caldav_url: credentials.caldav_url || 'https://caldav.icloud.com/',
+          encryption_key_id: 'pending_encryption', // Mark for future encryption
+          user_id: (await supabase.auth.getUser()).data.user?.id
+        })
+        .select()
+        .single();
 
       if (error) {
-        logger.error('Failed to store Apple credentials securely', error);
+        await logSecurityEvent('CREDENTIAL_STORE_ERROR', 'high', {
+          error: error.message
+        });
         throw error;
       }
+
+      await logSecurityEvent('CREDENTIAL_STORED', 'medium', {
+        credential_type: 'apple_calendar',
+        encrypted: false // TODO: Implement encryption
+      });
 
       return data;
     } catch (error) {
       logger.error('Failed to store Apple credentials', error);
+      await logSecurityEvent('CREDENTIAL_STORE_FAILED', 'high', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
       throw error;
     }
-  }, []);
-
-  // Secure credential deletion
-  const deleteAppleCredentials = useCallback(async () => {
-    try {
-      const { data, error } = await supabase.rpc('delete_apple_credentials_secure');
-
-      if (error) {
-        logger.error('Failed to delete Apple credentials securely', error);
-        throw error;
-      }
-
-      return data;
-    } catch (error) {
-      logger.error('Failed to delete Apple credentials', error);
-      throw error;
-    }
-  }, []);
+  }, [validateCredentialAccess, logSecurityEvent]);
 
   return {
     getAppleCredentials,
     getOAuthToken,
-    storeAppleCredentials,
-    deleteAppleCredentials
+    storeAppleCredentials
   };
 };

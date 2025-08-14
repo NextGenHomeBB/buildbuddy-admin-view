@@ -45,17 +45,14 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   useEffect(() => {
     const fetchDocument = async () => {
       try {
-        const { data, error } = await supabase.rpc('get_document_secure', {
-          p_document_id: documentId,
-          p_include_payment_data: false
-        });
-        
-        const documentData = data?.[0]; // Function returns array
+        const { data, error } = await supabase
+          .from('documents')
+          .select('*')
+          .eq('id', documentId)
+          .single();
         
         if (error) throw error;
-        if (documentData) {
-          setDocument(documentData as unknown as Document);
-        }
+        setDocument(data as Document);
       } catch (error) {
         console.error('Error fetching document:', error);
         toast({
@@ -88,14 +85,15 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
         description: data.message || "PDF generated successfully",
       });
 
-      // Fetch updated document using secure function
-      const { data: updatedData, error: fetchError } = await supabase.rpc('get_document_secure', {
-        p_document_id: documentId,
-        p_include_payment_data: false
-      });
+      // Fetch updated document
+      const { data: updatedDoc, error: fetchError } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('id', documentId)
+        .single();
 
-      if (!fetchError && updatedData?.[0]) {
-        onComplete(updatedData[0] as unknown as Document);
+      if (!fetchError && updatedDoc) {
+        onComplete(updatedDoc as Document);
       }
     } catch (error) {
       console.error('Error generating PDF:', error);

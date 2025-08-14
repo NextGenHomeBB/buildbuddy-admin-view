@@ -32,26 +32,25 @@ export function useCalendarExport({ phases, projectName }: UseCalendarExportProp
     queryFn: async (): Promise<Map<string, PhaseCostData>> => {
       const costMap = new Map<string, PhaseCostData>();
       
-      // Fetch cost data for each phase in parallel using secure RPC
+      // Fetch cost data for each phase in parallel
       const costPromises = phases.map(async (phase) => {
         try {
           const { data } = await import('@/integrations/supabase/client').then(({ supabase }) => 
-            supabase.rpc('get_project_costs_secure', {
-              p_project_id: phase.project_id
-            })
+            supabase
+              .from('phase_costs_vw')
+              .select('*')
+              .eq('phase_id', phase.id)
+              .single()
           );
           
-          // Find the specific phase data from the results
-          const phaseData = data?.find(cost => cost.phase_id === phase.id);
-          
-          if (phaseData) {
+          if (data) {
             costMap.set(phase.id, {
-              budget: phaseData.budget,
-              material_cost: phaseData.material_cost || 0,
-              labor_cost_actual: phaseData.labor_cost_actual || 0,
-              expense_cost: phaseData.expense_cost || 0,
-              total_committed: phaseData.total_committed || 0,
-              variance: phaseData.variance,
+              budget: data.budget,
+              material_cost: data.material_cost || 0,
+              labor_cost_actual: data.labor_cost_actual || 0,
+              expense_cost: data.expense_cost || 0,
+              total_committed: data.total_committed || 0,
+              variance: data.variance,
             });
           }
         } catch (error) {

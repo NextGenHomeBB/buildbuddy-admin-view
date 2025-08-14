@@ -21,43 +21,18 @@ export function useProjectCosts(projectId: string) {
   const query = useQuery({
     queryKey: ['project-costs', projectId],
     queryFn: async (): Promise<ProjectCosts | null> => {
-      // Use secure RPC function to get phase costs for this project
-      const { data, error } = await supabase.rpc('get_phase_costs_secure', {
-        p_project_id: projectId
-      });
+      const { data, error } = await supabase
+        .from('project_costs_vw')
+        .select('*')
+        .eq('project_id', projectId)
+        .single();
 
       if (error) {
         console.error('Error fetching project costs:', error);
         throw error;
       }
 
-      if (!data || data.length === 0) {
-        return null;
-      }
-
-      // Aggregate phase costs to project level
-      const totalBudget = data.reduce((sum, phase) => sum + (phase.budget || 0), 0);
-      const totalMaterialCost = data.reduce((sum, phase) => sum + (phase.material_cost || 0), 0);
-      const totalLaborCost = data.reduce((sum, phase) => sum + (phase.labor_cost_actual || phase.labor_cost_planned || 0), 0);
-      const totalExpenseCost = data.reduce((sum, phase) => sum + (phase.expense_cost || 0), 0);
-      const totalCommitted = data.reduce((sum, phase) => sum + (phase.total_committed || 0), 0);
-      const totalVariance = data.reduce((sum, phase) => sum + (phase.variance || 0), 0);
-      const totalForecast = data.reduce((sum, phase) => sum + (phase.forecast || 0), 0);
-
-      return {
-        project_id: projectId,
-        project_name: `Project ${projectId}`, // Could be enhanced with actual project name
-        budget: totalBudget,
-        project_status: 'active',
-        labor_cost: totalLaborCost,
-        total_hours: 0, // Would need to be calculated from time_sheets
-        material_cost: totalMaterialCost,
-        expense_cost: totalExpenseCost,
-        total_committed: totalCommitted,
-        variance: totalVariance,
-        forecast: totalForecast,
-        last_updated: new Date().toISOString()
-      };
+      return data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 30, // 30 minutes
