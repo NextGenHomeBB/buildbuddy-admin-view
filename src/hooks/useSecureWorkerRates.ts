@@ -8,7 +8,7 @@ export interface SecureWorkerRate {
   worker_id: string;
   hourly_rate?: number;
   monthly_salary?: number;
-  payment_type: 'hourly' | 'salary' | 'contract';
+  payment_type: string;
   effective_date: string;
   end_date?: string;
   worker_name: string;
@@ -61,6 +61,6 @@ export function useSecureWorkerRates(workerId?: string) {
       return failureCount < 2;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 }
