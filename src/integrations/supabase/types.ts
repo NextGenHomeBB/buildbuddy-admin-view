@@ -2912,6 +2912,20 @@ export type Database = {
           payment_type: string
         }[]
       }
+      get_worker_rates_secure: {
+        Args: { p_include_salary_details?: boolean; p_worker_id?: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          effective_date: string
+          end_date: string
+          hourly_rate: number
+          id: string
+          monthly_salary: number
+          payment_type: string
+          worker_id: string
+        }[]
+      }
       get_worker_salary_hr_secure: {
         Args: { p_justification?: string; p_worker_id: string }
         Returns: {
@@ -2963,6 +2977,19 @@ export type Database = {
       log_security_event: {
         Args: { details?: Json; event_type: string; severity?: string }
         Returns: undefined
+      }
+      manage_worker_rates_secure: {
+        Args: {
+          p_effective_date?: string
+          p_end_date?: string
+          p_hourly_rate?: number
+          p_monthly_salary?: number
+          p_operation: string
+          p_payment_type?: string
+          p_rate_id?: string
+          p_worker_id?: string
+        }
+        Returns: Json
       }
       next_document_number: {
         Args: { doc_type: string }
