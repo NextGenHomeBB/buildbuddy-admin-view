@@ -2656,6 +2656,10 @@ export type Database = {
         Args: { user_email?: string; user_id: string }
         Returns: Json
       }
+      delete_apple_credentials_secure: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       expire_old_daily_tasks: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -3022,6 +3026,14 @@ export type Database = {
         Returns: Json
       }
       store_apple_credentials_secure: {
+        Args: {
+          p_app_password: string
+          p_caldav_url?: string
+          p_username: string
+        }
+        Returns: Json
+      }
+      update_apple_credentials_secure: {
         Args: {
           p_app_password: string
           p_caldav_url?: string
