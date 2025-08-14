@@ -1,5 +1,6 @@
-// Service Worker for PWA offline functionality
-const CACHE_NAME = 'buildbuddy-v1';
+// Service Worker for PWA offline functionality with version control
+const APP_VERSION = '1.0.0';
+const CACHE_NAME = `buildbuddy-v${APP_VERSION}`;
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -16,18 +17,33 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches and handle version updates
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME && cacheName.startsWith('buildbuddy-')) {
+              console.log('Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      // Take control of all clients
+      self.clients.claim(),
+      // Notify clients of version update
+      self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({
+            type: 'SW_VERSION_UPDATE',
+            version: APP_VERSION
+          });
+        });
+      })
+    ])
   );
 });
 

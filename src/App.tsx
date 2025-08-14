@@ -3,8 +3,11 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import React from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
+import { OrganizationErrorBoundary } from "@/components/OrganizationErrorBoundary";
+import { cacheManager } from "@/utils/cacheManager";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ProjectLayout } from "@/components/admin/ProjectLayout";
 import { RequireAdmin } from "@/components/RequireAdmin";
@@ -61,12 +64,18 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  // Initialize cache manager on app start
+  React.useEffect(() => {
+    cacheManager.initialize();
+  }, []);
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <AuthProvider>
-            <OrganizationProvider>
+            <OrganizationErrorBoundary>
+              <OrganizationProvider>
               <Toaster />
               <BrowserRouter>
             <Routes>
@@ -119,6 +128,7 @@ function App() {
               </Routes>
               </BrowserRouter>
             </OrganizationProvider>
+            </OrganizationErrorBoundary>
           </AuthProvider>
         </TooltipProvider>
       </QueryClientProvider>
