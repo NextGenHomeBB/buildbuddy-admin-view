@@ -4,9 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useSecurityMonitoring } from '@/hooks/useSecurityMonitoring';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import { Shield, AlertTriangle, Eye, Clock, RefreshCw, AlertCircle, CheckCircle, Lock, Activity, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
 export const SecurityDashboard = () => {
