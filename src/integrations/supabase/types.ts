@@ -3036,6 +3036,20 @@ export type Database = {
           payment_type: string
         }[]
       }
+      get_worker_rates_masked: {
+        Args: { p_worker_id?: string }
+        Returns: {
+          created_at: string
+          effective_date: string
+          end_date: string
+          hourly_rate: number
+          id: string
+          monthly_salary: number
+          payment_type: string
+          updated_at: string
+          worker_id: string
+        }[]
+      }
       get_worker_rates_secure: {
         Args:
           | { p_effective_date?: string; p_worker_id?: string }
@@ -3088,12 +3102,14 @@ export type Database = {
         Returns: boolean
       }
       log_critical_security_event: {
-        Args: {
-          auto_response?: string
-          details?: Json
-          event_type: string
-          threat_level?: string
-        }
+        Args:
+          | {
+              auto_response?: string
+              details?: Json
+              event_type: string
+              threat_level?: string
+            }
+          | { details?: Json; event_type: string; severity?: string }
         Returns: undefined
       }
       log_high_risk_activity: {
