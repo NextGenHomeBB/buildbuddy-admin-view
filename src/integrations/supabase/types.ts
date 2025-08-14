@@ -2660,6 +2660,7 @@ export type Database = {
         Args: { p_user_id?: string }
         Returns: {
           access_count: number
+          app_password: string
           caldav_url: string
           created_at: string
           id: string
