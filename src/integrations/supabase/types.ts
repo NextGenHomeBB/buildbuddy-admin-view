@@ -2672,11 +2672,19 @@ export type Database = {
         }[]
       }
       get_audit_trail_secure: {
-        Args: {
-          p_action_filter?: string
-          p_hours_back?: number
-          p_user_id?: string
-        }
+        Args:
+          | {
+              p_action?: string
+              p_end_date?: string
+              p_limit?: number
+              p_start_date?: string
+              p_user_id?: string
+            }
+          | {
+              p_action_filter?: string
+              p_hours_back?: number
+              p_user_id?: string
+            }
         Returns: {
           audit_id: string
           event_action: string
@@ -3005,6 +3013,10 @@ export type Database = {
           metric_value: number
           threat_level: string
         }[]
+      }
+      get_security_dashboard_data: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_security_dashboard_metrics: {
         Args: Record<PropertyKey, never>
