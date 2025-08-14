@@ -189,29 +189,49 @@ const EnhancedSecurityMonitor = () => {
       )}
 
       {/* Security Metrics Summary */}
-      {dashboardMetrics && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {dashboardMetrics.slice(0, 4).map((metric) => (
-            <Card key={metric.metric_name}>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium capitalize">
-                      {metric.metric_name.replace(/_/g, ' ')}
-                    </p>
-                    <p className="text-2xl font-bold">{metric.metric_value}</p>
-                  </div>
-                  <Badge variant={
-                    metric.threat_level === 'critical' ? 'destructive' :
-                    metric.threat_level === 'high' ? 'destructive' :
-                    metric.threat_level === 'medium' ? 'default' : 'secondary'
-                  }>
-                    {metric.threat_level}
-                  </Badge>
+      {dashboardMetrics && dashboardMetrics.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Total Events (7 days)</p>
+                  <p className="text-2xl font-bold">{dashboardMetrics[0]?.total_events || 0}</p>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+                <Shield className="h-8 w-8 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Critical Events</p>
+                  <p className="text-2xl font-bold text-destructive">{dashboardMetrics[0]?.critical_events || 0}</p>
+                </div>
+                <AlertTriangle className="h-8 w-8 text-destructive" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Events (24h)</p>
+                  <p className="text-2xl font-bold">{dashboardMetrics[0]?.events_last_24h || 0}</p>
+                </div>
+                <Badge variant={
+                  dashboardMetrics[0]?.threat_level === 'critical' ? 'destructive' :
+                  dashboardMetrics[0]?.threat_level === 'high' ? 'destructive' :
+                  dashboardMetrics[0]?.threat_level === 'medium' ? 'default' : 'secondary'
+                }>
+                  {dashboardMetrics[0]?.threat_level || 'low'}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 

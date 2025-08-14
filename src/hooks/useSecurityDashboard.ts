@@ -13,16 +13,16 @@ export const useSecurityDashboard = () => {
   const { isAdmin } = useAuthContext();
 
   return useQuery({
-    queryKey: ['security-dashboard'],
-    queryFn: async (): Promise<SecurityMetric[]> => {
+    queryKey: ['security-dashboard-metrics'],
+    queryFn: async () => {
       if (!isAdmin) {
         throw new Error('Access denied: only administrators can access security dashboard');
       }
 
-      const { data, error } = await supabase.rpc('get_security_dashboard');
+      const { data, error } = await supabase.rpc('get_security_dashboard_metrics');
 
       if (error) {
-        console.error('Error fetching security dashboard:', error);
+        console.error('Error fetching security dashboard metrics:', error);
         throw error;
       }
 

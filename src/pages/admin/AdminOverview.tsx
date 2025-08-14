@@ -10,6 +10,7 @@ import { useDeviceType } from '@/hooks/useDeviceType';
 import { cn } from '@/lib/utils';
 import { logger } from '@/utils/logger';
 import { OverviewModal } from '@/components/admin/OverviewModal';
+import EnhancedSecurityMonitor from '@/components/admin/EnhancedSecurityMonitor';
 
 interface Stats {
   total_projects: number;
@@ -297,6 +298,15 @@ export function AdminOverview() {
             </button>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Security Monitoring Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-foreground">Security Status</h2>
+          <Badge variant="secondary">Enhanced Protection</Badge>
+        </div>
+        <EnhancedSecurityMonitor />
       </div>
     </div>
   );

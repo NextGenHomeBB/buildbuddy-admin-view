@@ -2967,6 +2967,17 @@ export type Database = {
           threat_level: string
         }[]
       }
+      get_security_dashboard_metrics: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          critical_events: number
+          events_last_24h: number
+          failed_logins: number
+          rate_limit_violations: number
+          threat_level: string
+          total_events: number
+        }[]
+      }
       get_security_monitor_data: {
         Args: Record<PropertyKey, never>
         Returns: {
