@@ -2570,6 +2570,14 @@ export type Database = {
         }
         Relationships: []
       }
+      security_metrics_summary: {
+        Row: {
+          metric_name: string | null
+          metric_value: number | null
+          threat_level: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_invite: {
@@ -2635,6 +2643,10 @@ export type Database = {
           is_current: boolean
           payment_type: string
         }[]
+      }
+      cleanup_old_security_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       complete_daily_task: {
         Args: { assignment_id: string }

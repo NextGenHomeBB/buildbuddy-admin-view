@@ -10,9 +10,10 @@ export const useSecurityValidation = () => {
   // Security monitoring function
   const logSecurityEvent = useCallback(async (eventType: string, severity: 'low' | 'medium' | 'high' = 'medium', details: any = {}) => {
     try {
-      await supabase.rpc('log_security_event', {
+      // Use the enhanced critical security event logging
+      await supabase.rpc('log_critical_security_event', {
         event_type: eventType,
-        severity,
+        threat_level: severity,
         details
       });
     } catch (error) {
