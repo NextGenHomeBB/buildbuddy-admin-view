@@ -20,14 +20,6 @@ export const useSecureWorkerRates = (
   return useQuery({
     queryKey: ['secure-worker-rates', workerId, effectiveDate],
     queryFn: async (): Promise<SecureWorkerRate[]> => {
-      // Log access attempt for audit trail
-      await supabase.rpc('audit_sensitive_operation', {
-        operation_type: 'worker_rates_access',
-        table_name: 'worker_rates',
-        record_id: null,
-        sensitive_data_accessed: ['hourly_rate', 'monthly_salary']
-      });
-
       const { data, error } = await supabase.rpc('get_worker_rates_secure', {
         p_worker_id: workerId || null,
         p_effective_date: effectiveDate || null
@@ -35,12 +27,6 @@ export const useSecureWorkerRates = (
 
       if (error) {
         console.error('Error fetching secure worker rates:', error);
-        // Log security event for failed access
-        await supabase.rpc('log_critical_security_event', {
-          event_type: 'WORKER_RATES_ACCESS_FAILED',
-          threat_level: 'high',
-          details: { error: error.message, workerId, effectiveDate }
-        });
         throw error;
       }
 
