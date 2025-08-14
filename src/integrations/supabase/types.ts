@@ -2710,6 +2710,23 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_employee_profile_hr_secure: {
+        Args: {
+          p_business_purpose?: string
+          p_employee_id: string
+          p_justification: string
+        }
+        Returns: {
+          avatar_url: string
+          bio: string
+          company_id: string
+          created_at: string
+          default_org_id: string
+          full_name: string
+          id: string
+          work_role: Json
+        }[]
+      }
       get_my_current_rate_secure: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2770,6 +2787,22 @@ export type Database = {
           project_id: string
           total_committed: number
           variance: number
+        }[]
+      }
+      get_project_worker_basic_info: {
+        Args: { p_worker_id: string }
+        Returns: {
+          full_name: string
+          id: string
+          work_role: Json
+        }[]
+      }
+      get_public_profile_info: {
+        Args: { p_user_id: string }
+        Returns: {
+          display_name: string
+          id: string
+          work_role: Json
         }[]
       }
       get_quotation_public_secure: {
@@ -2850,6 +2883,10 @@ export type Database = {
           p_role: string
         }
         Returns: Json
+      }
+      is_authorized_for_personal_data: {
+        Args: { access_reason?: string }
+        Returns: boolean
       }
       is_hr_administrator: {
         Args: Record<PropertyKey, never>
@@ -2942,6 +2979,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      validate_user_profile_exists: {
+        Args: { p_user_id: string }
         Returns: boolean
       }
     }
