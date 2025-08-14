@@ -2594,6 +2594,10 @@ export type Database = {
         }
         Returns: Json
       }
+      can_access_project_financial_data: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
       can_access_security_monitor: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -2663,6 +2667,10 @@ export type Database = {
       expire_old_daily_tasks: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      financial_data_security_notice: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       fn_is_member: {
         Args: { p_org: string }
@@ -2756,6 +2764,20 @@ export type Database = {
           total_spent: number
         }[]
       }
+      get_financial_summary_secure_enhanced: {
+        Args: { p_project_id?: string; p_summary_level?: string }
+        Returns: {
+          budget_utilization_percent: number
+          last_updated: string
+          phases_count: number
+          project_id: string
+          project_name: string
+          total_budget: number
+          total_committed: number
+          total_spent: number
+          total_variance: number
+        }[]
+      }
       get_my_current_rate_secure: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2816,6 +2838,27 @@ export type Database = {
       }
       get_phase_costs_secure: {
         Args: { p_project_id?: string }
+        Returns: {
+          budget: number
+          expense_cost: number
+          forecast: number
+          labor_cost_actual: number
+          labor_cost_planned: number
+          last_updated: string
+          material_cost: number
+          phase_id: string
+          phase_name: string
+          project_id: string
+          total_committed: number
+          variance: number
+        }[]
+      }
+      get_phase_costs_secure_enhanced: {
+        Args: {
+          p_include_detailed_breakdown?: boolean
+          p_phase_id?: string
+          p_project_id?: string
+        }
         Returns: {
           budget: number
           expense_cost: number
@@ -3047,6 +3090,10 @@ export type Database = {
           total_amount: number
           updated_at: string
         }[]
+      }
+      secure_refresh_phase_costs_view: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       setup_demo_data: {
         Args: { manager_id: string; worker_id: string }
