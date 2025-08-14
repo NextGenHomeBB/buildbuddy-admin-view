@@ -1942,13 +1942,6 @@ export type Database = {
             foreignKeyName: "tasks_phase_id_fkey"
             columns: ["phase_id"]
             isOneToOne: false
-            referencedRelation: "phase_costs_vw"
-            referencedColumns: ["phase_id"]
-          },
-          {
-            foreignKeyName: "tasks_phase_id_fkey"
-            columns: ["phase_id"]
-            isOneToOne: false
             referencedRelation: "project_phases"
             referencedColumns: ["id"]
           },
@@ -2520,38 +2513,6 @@ export type Database = {
       }
     }
     Views: {
-      phase_costs_vw: {
-        Row: {
-          budget: number | null
-          expense_cost: number | null
-          forecast: number | null
-          labor_cost_actual: number | null
-          labor_cost_planned: number | null
-          last_updated: string | null
-          material_cost: number | null
-          phase_id: string | null
-          phase_name: string | null
-          project_id: string | null
-          total_committed: number | null
-          variance: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_phases_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_costs_vw"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "project_phases_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       project_costs_vw: {
         Row: {
           budget: number | null
@@ -2915,6 +2876,36 @@ export type Database = {
           project_id: string
           total_committed: number
           variance: number
+        }[]
+      }
+      get_phase_costs_summary: {
+        Args: { p_project_id?: string }
+        Returns: {
+          budget: number
+          expense_cost: number
+          forecast: number
+          labor_cost_actual: number
+          labor_cost_planned: number
+          last_updated: string
+          material_cost: number
+          phase_id: string
+          phase_name: string
+          project_id: string
+          total_committed: number
+          variance: number
+        }[]
+      }
+      get_profile_secure: {
+        Args: { p_user_id?: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          company_id: string
+          created_at: string
+          default_org_id: string
+          full_name: string
+          id: string
+          work_role: Json
         }[]
       }
       get_project_costs_secure: {

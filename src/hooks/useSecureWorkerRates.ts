@@ -14,15 +14,13 @@ interface SecureWorkerRate {
 }
 
 export const useSecureWorkerRates = (
-  workerId?: string,
-  effectiveDate?: string
+  workerId?: string
 ) => {
   return useQuery({
-    queryKey: ['secure-worker-rates', workerId, effectiveDate],
+    queryKey: ['secure-worker-rates-masked', workerId],
     queryFn: async (): Promise<SecureWorkerRate[]> => {
-      const { data, error } = await supabase.rpc('get_worker_rates_secure', {
-        p_worker_id: workerId || null,
-        p_effective_date: effectiveDate || null
+      const { data, error } = await supabase.rpc('get_worker_rates_masked', {
+        p_worker_id: workerId || null
       });
 
       if (error) {
