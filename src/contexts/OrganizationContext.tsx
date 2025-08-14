@@ -79,22 +79,57 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         }
 
         if (!membership) {
-          logger.warn('OrganizationContext: No active memberships found');
-          setError('No organization found. Please contact support.');
-          return;
-        }
+          logger.warn('OrganizationContext: No active memberships found - attempting auto-assignment');
+          
+          // Try to auto-assign user to default organization as fallback
+          try {
+            const { data: defaultOrg } = await supabase
+              .from('organizations')
+              .select('id')
+              .eq('name', 'NextGenHome')
+              .single();
 
-        orgId = membership.org_id;
-        logger.debug('OrganizationContext: Found org via membership', { orgId });
+            if (defaultOrg) {
+              // Create membership
+              await supabase
+                .from('organization_members')
+                .insert({
+                  org_id: defaultOrg.id,
+                  user_id: user.id,
+                  role: 'worker',
+                  status: 'active'
+                });
 
-        // Update profile with this default org
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ default_org_id: orgId })
-          .eq('id', user.id);
+              // Update profile
+              await supabase
+                .from('profiles')
+                .update({ default_org_id: defaultOrg.id })
+                .eq('id', user.id);
 
-        if (updateError) {
-          logger.error('OrganizationContext: Failed to update profile', updateError);
+              orgId = defaultOrg.id;
+              logger.info('OrganizationContext: Auto-assigned user to default organization');
+            }
+          } catch (autoAssignError) {
+            logger.error('OrganizationContext: Failed to auto-assign user', autoAssignError);
+          }
+
+          if (!orgId) {
+            setError('No organization found. Please contact support or try clearing cache.');
+            return;
+          }
+        } else {
+          orgId = membership.org_id;
+          logger.debug('OrganizationContext: Found org via membership', { orgId });
+
+          // Update profile with this default org
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ default_org_id: orgId })
+            .eq('id', user.id);
+
+          if (updateError) {
+            logger.error('OrganizationContext: Failed to update profile', updateError);
+          }
         }
       }
 
