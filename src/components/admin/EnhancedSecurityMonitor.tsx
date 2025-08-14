@@ -104,12 +104,8 @@ const EnhancedSecurityMonitor = () => {
             size="sm"
             onClick={() => setShowDetails(!showDetails)}
           >
-            {showDetails ? (
-              <EyeOff className="h-4 w-4 mr-2" />
-            ) : (
-              <Eye className="h-4 w-4 mr-2" />
-            )}
-            {showDetails ? 'Hide' : 'Show'} Details
+            <Eye className="h-4 w-4 mr-2" />
+            Show Details
           </Button>
           
           {!isMonitoring ? (
