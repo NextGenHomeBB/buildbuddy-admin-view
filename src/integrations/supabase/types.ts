@@ -2754,6 +2754,17 @@ export type Database = {
         Args: { p_org: string }
         Returns: string
       }
+      get_apple_credentials_secure: {
+        Args: { p_user_id?: string }
+        Returns: {
+          access_count: number
+          caldav_url: string
+          created_at: string
+          id: string
+          last_accessed: string
+          username: string
+        }[]
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -2940,6 +2951,14 @@ export type Database = {
       }
       setup_demo_data: {
         Args: { manager_id: string; worker_id: string }
+        Returns: Json
+      }
+      store_apple_credentials_secure: {
+        Args: {
+          p_app_password: string
+          p_caldav_url?: string
+          p_username: string
+        }
         Returns: Json
       }
       update_phase_progress: {

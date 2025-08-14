@@ -7,7 +7,7 @@ import { toast } from '@/hooks/use-toast';
 export const useSecureCalendar = () => {
   const { validateCredentialAccess, logSecurityEvent } = useSecurityValidation();
 
-  // Secure Apple Calendar credential access
+  // Secure Apple Calendar credential access using new secure function
   const getAppleCredentials = useCallback(async (userId: string) => {
     try {
       // Validate access before retrieving credentials
@@ -17,10 +17,7 @@ export const useSecureCalendar = () => {
       }
 
       const { data, error } = await supabase
-        .from('apple_calendar_credentials')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
+        .rpc('get_apple_credentials_secure', { p_user_id: userId });
 
       if (error) {
         await logSecurityEvent('CREDENTIAL_ACCESS_ERROR', 'medium', {
@@ -106,7 +103,7 @@ export const useSecureCalendar = () => {
     }
   }, [validateCredentialAccess, logSecurityEvent]);
 
-  // Secure credential storage with encryption tracking
+  // Secure credential storage using new secure function
   const storeAppleCredentials = useCallback(async (credentials: {
     username: string;
     app_password: string;
@@ -118,18 +115,12 @@ export const useSecureCalendar = () => {
         throw new Error('Cannot store Apple Calendar credentials');
       }
 
-      // For now, store the password as-is but track encryption intent
       const { data, error } = await supabase
-        .from('apple_calendar_credentials')
-        .upsert({
-          username: credentials.username,
-          app_password: credentials.app_password,
-          caldav_url: credentials.caldav_url || 'https://caldav.icloud.com/',
-          encryption_key_id: 'pending_encryption', // Mark for future encryption
-          user_id: (await supabase.auth.getUser()).data.user?.id
-        })
-        .select()
-        .single();
+        .rpc('store_apple_credentials_secure', {
+          p_username: credentials.username,
+          p_app_password: credentials.app_password,
+          p_caldav_url: credentials.caldav_url || 'https://caldav.icloud.com/'
+        });
 
       if (error) {
         await logSecurityEvent('CREDENTIAL_STORE_ERROR', 'high', {
