@@ -21,10 +21,9 @@ export function useProjectCosts(projectId: string) {
   const query = useQuery({
     queryKey: ['project-costs', projectId],
     queryFn: async (): Promise<ProjectCosts | null> => {
-      // Use new enhanced secure RPC function for better financial data protection
-      const { data, error } = await supabase.rpc('get_financial_summary_secure_enhanced', {
-        p_project_id: projectId,
-        p_summary_level: 'basic'
+      // Use secure RPC function to get phase costs for this project
+      const { data, error } = await supabase.rpc('get_phase_costs_secure', {
+        p_project_id: projectId
       });
 
       if (error) {
@@ -36,21 +35,28 @@ export function useProjectCosts(projectId: string) {
         return null;
       }
 
-      // Transform the secure data to match ProjectCosts interface
-      const projectData = data[0];
+      // Aggregate phase costs to project level
+      const totalBudget = data.reduce((sum, phase) => sum + (phase.budget || 0), 0);
+      const totalMaterialCost = data.reduce((sum, phase) => sum + (phase.material_cost || 0), 0);
+      const totalLaborCost = data.reduce((sum, phase) => sum + (phase.labor_cost_actual || phase.labor_cost_planned || 0), 0);
+      const totalExpenseCost = data.reduce((sum, phase) => sum + (phase.expense_cost || 0), 0);
+      const totalCommitted = data.reduce((sum, phase) => sum + (phase.total_committed || 0), 0);
+      const totalVariance = data.reduce((sum, phase) => sum + (phase.variance || 0), 0);
+      const totalForecast = data.reduce((sum, phase) => sum + (phase.forecast || 0), 0);
+
       return {
-        project_id: projectData.project_id,
-        project_name: projectData.project_name,
-        budget: projectData.total_budget,
-        project_status: 'active', // Default status
-        labor_cost: 0, // Will be calculated separately if needed
-        total_hours: 0, // Will be calculated separately if needed
-        material_cost: 0, // Will be calculated separately if needed
-        expense_cost: 0, // Will be calculated separately if needed
-        total_committed: projectData.total_committed || 0,
-        variance: projectData.total_variance,
-        forecast: 0, // Will be calculated separately if needed
-        last_updated: projectData.last_updated || new Date().toISOString()
+        project_id: projectId,
+        project_name: `Project ${projectId}`, // Could be enhanced with actual project name
+        budget: totalBudget,
+        project_status: 'active',
+        labor_cost: totalLaborCost,
+        total_hours: 0, // Would need to be calculated from time_sheets
+        material_cost: totalMaterialCost,
+        expense_cost: totalExpenseCost,
+        total_committed: totalCommitted,
+        variance: totalVariance,
+        forecast: totalForecast,
+        last_updated: new Date().toISOString()
       };
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
