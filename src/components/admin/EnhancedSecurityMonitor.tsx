@@ -9,13 +9,12 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const EnhancedSecurityMonitor = () => {
-  const [isMonitoring, setIsMonitoring] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const { toast } = useToast();
   
   const {
     alerts,
-    isMonitoring: hookIsMonitoring,
+    isMonitoring,
     startMonitoring,
     getRecentEvents,
     clearAlerts
@@ -23,14 +22,9 @@ const EnhancedSecurityMonitor = () => {
   
   const { data: dashboardMetrics, refetch: refetchDashboard } = useSecurityDashboard();
 
-  useEffect(() => {
-    setIsMonitoring(hookIsMonitoring);
-  }, [hookIsMonitoring]);
-
   const handleStartMonitoring = async () => {
     try {
       await startMonitoring();
-      await getRecentEvents();
       toast({
         title: "Security Monitoring Started",
         description: "Real-time security monitoring is now active.",

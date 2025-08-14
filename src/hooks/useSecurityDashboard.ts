@@ -29,8 +29,8 @@ export const useSecurityDashboard = () => {
       return data || [];
     },
     enabled: isAdmin,
-    refetchInterval: 30000, // Refresh every 30 seconds
-    staleTime: 1000 * 30, // 30 seconds
+    refetchInterval: 300000, // Refresh every 5 minutes
+    staleTime: 1000 * 60 * 2, // 2 minutes
   });
 };
 

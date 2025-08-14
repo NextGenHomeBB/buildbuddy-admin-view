@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
 import { toast } from '@/hooks/use-toast';
@@ -15,22 +15,30 @@ interface SecurityAlert {
 export const useSecurityMonitoring = () => {
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [isMonitoring, setIsMonitoring] = useState(false);
+  const subscriptionRef = useRef<any>(null);
+  const isInitialized = useRef(false);
 
   // Monitor for security events in real-time
-  const startMonitoring = useCallback(() => {
-    if (isMonitoring) return;
+  const startMonitoring = useCallback(async () => {
+    if (isMonitoring || isInitialized.current) return;
 
-    setIsMonitoring(true);
-    
-    // Subscribe to security audit log changes
-    const subscription = supabase
-      .channel('security-monitoring')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'security_audit_log',
-        filter: `user_id=eq.${supabase.auth.getUser().then(u => u.data.user?.id)}`
-      }, (payload) => {
+    try {
+      // Get current user first
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      setIsMonitoring(true);
+      isInitialized.current = true;
+      
+      // Subscribe to security audit log changes
+      const subscription = supabase
+        .channel('security-monitoring')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'security_audit_log',
+          filter: `user_id=eq.${user.id}`
+        }, (payload) => {
         const event = payload.new;
         
         // Parse security event
@@ -62,11 +70,13 @@ export const useSecurityMonitoring = () => {
       })
       .subscribe();
 
-    return () => {
-      subscription.unsubscribe();
+      subscriptionRef.current = subscription;
+    } catch (error) {
+      logger.error('Failed to start security monitoring', error);
       setIsMonitoring(false);
-    };
-  }, [isMonitoring]);
+      isInitialized.current = false;
+    }
+  }, []);
 
   // Generate human-readable alert messages
   const generateAlertMessage = (event: any): string => {
@@ -87,16 +97,19 @@ export const useSecurityMonitoring = () => {
   // Get recent security events
   const getRecentEvents = useCallback(async (limit = 20) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
       const { data, error } = await supabase
         .from('security_audit_log')
         .select('*')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('user_id', user.id)
         .order('timestamp', { ascending: false })
         .limit(limit);
 
       if (error) throw error;
 
-      const formattedAlerts = data.map(event => {
+      const formattedAlerts = data?.map(event => {
         const newValues = typeof event.new_values === 'object' && event.new_values && !Array.isArray(event.new_values) 
           ? event.new_values as Record<string, any> 
           : {};
@@ -109,7 +122,7 @@ export const useSecurityMonitoring = () => {
           timestamp: event.timestamp,
           details: event.new_values
         };
-      });
+      }) || [];
 
       setAlerts(formattedAlerts);
       return formattedAlerts;
@@ -126,13 +139,20 @@ export const useSecurityMonitoring = () => {
 
   // Auto-start monitoring when component mounts
   useEffect(() => {
-    startMonitoring();
-    getRecentEvents();
+    if (!isInitialized.current) {
+      startMonitoring();
+      getRecentEvents();
+    }
     
     return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+        subscriptionRef.current = null;
+      }
       setIsMonitoring(false);
+      isInitialized.current = false;
     };
-  }, [startMonitoring, getRecentEvents]);
+  }, []);
 
   return {
     alerts,
