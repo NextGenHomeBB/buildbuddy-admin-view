@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { CacheClearButton } from './CacheClearButton';
 
 export function AdminHeader() {
   const { user, signOut } = useAuthContext();
@@ -98,6 +99,10 @@ export function AdminHeader() {
               <DropdownMenuItem>
                 Billing
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1">
+                <CacheClearButton />
+              </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive" onClick={signOut}>
                 Sign out

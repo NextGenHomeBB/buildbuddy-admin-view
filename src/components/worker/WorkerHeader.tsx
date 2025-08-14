@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
+import { WorkerCacheClearButton } from './CacheClearButton';
 
 export function WorkerHeader() {
   const { user, signOut } = useAuth();
@@ -49,6 +50,10 @@ export function WorkerHeader() {
                   </p>
                 </div>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1">
+                <WorkerCacheClearButton />
+              </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={signOut}>
                 Sign out
