@@ -21,9 +21,10 @@ export function useProjectCosts(projectId: string) {
   const query = useQuery({
     queryKey: ['project-costs', projectId],
     queryFn: async (): Promise<ProjectCosts | null> => {
-      // Use secure RPC function instead of direct view access
-      const { data, error } = await supabase.rpc('get_financial_summary_secure', {
-        p_project_id: projectId
+      // Use new enhanced secure RPC function for better financial data protection
+      const { data, error } = await supabase.rpc('get_financial_summary_secure_enhanced', {
+        p_project_id: projectId,
+        p_summary_level: 'basic'
       });
 
       if (error) {
@@ -46,10 +47,10 @@ export function useProjectCosts(projectId: string) {
         total_hours: 0, // Will be calculated separately if needed
         material_cost: 0, // Will be calculated separately if needed
         expense_cost: 0, // Will be calculated separately if needed
-        total_committed: projectData.total_spent || 0,
-        variance: projectData.budget_variance,
+        total_committed: projectData.total_committed || 0,
+        variance: projectData.total_variance,
         forecast: 0, // Will be calculated separately if needed
-        last_updated: new Date().toISOString()
+        last_updated: projectData.last_updated || new Date().toISOString()
       };
     },
     staleTime: 1000 * 60 * 5, // 5 minutes

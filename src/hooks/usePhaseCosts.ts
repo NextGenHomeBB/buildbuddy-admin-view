@@ -60,9 +60,11 @@ export function usePhaseCosts(phaseId: string) {
   return useQuery({
     queryKey: ['phase-costs', phaseId],
     queryFn: async (): Promise<PhaseCostData | null> => {
-      // Use secure RPC function instead of direct view access
-      const { data, error } = await supabase.rpc('get_phase_costs_secure', {
-        p_project_id: null // Will be filtered by phase_id below
+      // Use enhanced secure RPC function for better financial data protection
+      const { data, error } = await supabase.rpc('get_phase_costs_secure_enhanced', {
+        p_project_id: null, // Will be filtered by phase_id below
+        p_phase_id: phaseId,
+        p_include_detailed_breakdown: true
       });
 
       if (error) {
@@ -70,8 +72,8 @@ export function usePhaseCosts(phaseId: string) {
         return null;
       }
 
-      // Filter for the specific phase
-      const phaseData = data?.find((item: any) => item.phase_id === phaseId);
+      // Return the first (and should be only) result for the specific phase
+      const phaseData = data?.[0];
       return phaseData || null;
     },
     staleTime: 1000 * 60 * 2, // 2 minutes
