@@ -2770,6 +2770,33 @@ export type Database = {
           valid_until: string
         }[]
       }
+      get_document_secure: {
+        Args: { p_document_id: string; p_include_payment_data?: boolean }
+        Returns: {
+          acceptance_token: string
+          accepted_by_email: string
+          accepted_by_name: string
+          amount_paid: number
+          client_address: string
+          client_email: string
+          client_name: string
+          client_phone: string
+          created_at: string
+          document_number: string
+          document_type: string
+          id: string
+          payment_status: string
+          payment_url: string
+          project_id: string
+          status: string
+          stripe_payment_intent_id: string
+          stripe_session_id: string
+          subtotal: number
+          tax_amount: number
+          total_amount: number
+          updated_at: string
+        }[]
+      }
       get_my_tasks: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2807,6 +2834,20 @@ export type Database = {
           project_id: string
           total_committed: number
           variance: number
+        }[]
+      }
+      get_quotation_public_secure: {
+        Args: { p_token: string }
+        Returns: {
+          client_email: string
+          client_name: string
+          client_phone: string
+          document_number: string
+          document_type: string
+          notes: string
+          status: string
+          total_amount: number
+          valid_until: string
         }[]
       }
       get_secure_customer_data: {
