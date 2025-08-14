@@ -2701,6 +2701,15 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_my_current_rate_secure: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          effective_date: string
+          hourly_rate: number
+          monthly_salary: number
+          payment_type: string
+        }[]
+      }
       get_my_tasks: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2797,6 +2806,30 @@ export type Database = {
           table_name: string
           user_id: string
           user_name: string
+        }[]
+      }
+      get_worker_rate_secure: {
+        Args: { p_worker_id?: string }
+        Returns: {
+          effective_date: string
+          end_date: string
+          id: string
+          is_current: boolean
+          payment_type: string
+        }[]
+      }
+      get_worker_salary_admin_secure: {
+        Args: { p_worker_id: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          effective_date: string
+          end_date: string
+          hourly_rate: number
+          id: string
+          monthly_salary: number
+          payment_type: string
+          worker_id: string
         }[]
       }
       invite_user: {
