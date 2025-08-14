@@ -2906,6 +2906,15 @@ export type Database = {
         Args: { check_org: string }
         Returns: boolean
       }
+      log_critical_security_event: {
+        Args: {
+          auto_response?: string
+          details?: Json
+          event_type: string
+          threat_level?: string
+        }
+        Returns: undefined
+      }
       log_high_risk_activity: {
         Args: { details?: Json; event_type: string; risk_level?: string }
         Returns: undefined
