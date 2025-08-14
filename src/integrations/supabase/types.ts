@@ -2696,6 +2696,31 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_customer_data_secure: {
+        Args: {
+          p_document_type?: string
+          p_include_payment_data?: boolean
+          p_project_id?: string
+        }
+        Returns: {
+          amount_paid: number
+          client_address: string
+          client_email: string
+          client_name: string
+          client_phone: string
+          created_at: string
+          document_number: string
+          document_type: string
+          id: string
+          payment_status: string
+          project_id: string
+          status: string
+          subtotal: number
+          tax_amount: number
+          total_amount: number
+          updated_at: string
+        }[]
+      }
       get_document_public: {
         Args: { p_token: string }
         Returns: {
@@ -2921,6 +2946,18 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_security_alerts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          alert_id: string
+          details: Json
+          event_timestamp: string
+          event_type: string
+          ip_address: string
+          severity: string
+          user_id: string
+        }[]
+      }
       get_security_dashboard: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2956,16 +2993,18 @@ export type Database = {
         }[]
       }
       get_worker_rates_secure: {
-        Args: { p_include_salary_details?: boolean; p_worker_id?: string }
+        Args:
+          | { p_effective_date?: string; p_worker_id?: string }
+          | { p_include_salary_details?: boolean; p_worker_id?: string }
         Returns: {
           created_at: string
-          created_by: string
           effective_date: string
           end_date: string
           hourly_rate: number
           id: string
           monthly_salary: number
           payment_type: string
+          updated_at: string
           worker_id: string
         }[]
       }

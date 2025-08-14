@@ -68,29 +68,25 @@ export interface WorkerExpense {
   };
 }
 
-// Hook for worker rates
-export function useWorkerRates() {
+// Hook for worker rates (secure version)
+export function useWorkerRates(workerId?: string) {
   return useQuery({
-    queryKey: ['worker-rates'],
+    queryKey: ['worker-rates-secure', workerId],
     queryFn: async (): Promise<WorkerRate[]> => {
-      const { data, error } = await supabase
-        .from('worker_rates')
-        .select(`
-          *,
-          profiles!worker_id (
-            full_name,
-            avatar_url
-          )
-        `)
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.rpc('get_worker_rates_secure', {
+        p_worker_id: workerId || null,
+        p_effective_date: null
+      });
 
       if (error) {
-        console.error('Error fetching worker rates:', error);
+        console.error('Error fetching secure worker rates:', error);
         throw error;
       }
       
       return (data || []) as unknown as WorkerRate[];
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: true
   });
 }
 

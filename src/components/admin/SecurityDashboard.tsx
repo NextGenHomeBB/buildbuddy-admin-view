@@ -1,17 +1,82 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle, Shield, Lock } from "lucide-react";
+import { AlertTriangle, CheckCircle, Shield, Lock, Activity, TrendingUp } from "lucide-react";
+import { useSecurityAlerts, useSecurityMetrics } from "@/hooks/useSecurityAlerts";
 
 const SecurityDashboard = () => {
+  const { data: alerts, isLoading: alertsLoading } = useSecurityAlerts();
+  const { data: metrics, isLoading: metricsLoading } = useSecurityMetrics();
+
+  const getThreatLevelColor = (level: string) => {
+    switch (level) {
+      case 'high': return 'destructive';
+      case 'medium': return 'default';
+      case 'low': return 'secondary';
+      default: return 'outline';
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Shield className="h-5 w-5" />
         <h2 className="text-2xl font-bold">Security Overview</h2>
-        <Badge variant="secondary" className="ml-auto">
-          Enhanced Protection Active
+        <Badge 
+          variant={metrics ? getThreatLevelColor(metrics.threat_level) : 'secondary'} 
+          className="ml-auto"
+        >
+          {metrics ? `Threat Level: ${metrics.threat_level.toUpperCase()}` : 'Enhanced Protection Active'}
         </Badge>
       </div>
+
+      {/* Real-time Security Metrics */}
+      {!metricsLoading && metrics && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Alerts</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.total_alerts}</div>
+              <p className="text-xs text-muted-foreground">All time</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Last 24h</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.alerts_24h}</div>
+              <p className="text-xs text-muted-foreground">Recent activity</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Critical Alerts</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-destructive">{metrics.critical_alerts}</div>
+              <p className="text-xs text-muted-foreground">High priority</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Rate Limits</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.rate_limit_violations}</div>
+              <p className="text-xs text-muted-foreground">Blocked attempts</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
@@ -92,6 +157,52 @@ const SecurityDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Recent Security Alerts */}
+      {!alertsLoading && alerts && alerts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Recent Security Alerts
+            </CardTitle>
+            <CardDescription>
+              Latest security events and potential threats (last 7 days)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {alerts.slice(0, 10).map((alert) => (
+                <div 
+                  key={alert.alert_id}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge 
+                        variant={
+                          alert.severity === 'critical' || alert.severity === 'high' 
+                            ? 'destructive' 
+                            : alert.severity === 'medium' 
+                            ? 'default' 
+                            : 'secondary'
+                        }
+                      >
+                        {alert.severity.toUpperCase()}
+                      </Badge>
+                      <span className="text-sm font-medium">{alert.event_type}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(alert.event_timestamp).toLocaleString()}
+                      {alert.ip_address && ` • IP: ${alert.ip_address}`}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
