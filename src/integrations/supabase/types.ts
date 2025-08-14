@@ -2862,6 +2862,15 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_security_dashboard: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          metric_description: string
+          metric_name: string
+          metric_value: number
+          threat_level: string
+        }[]
+      }
       get_security_monitor_data: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2951,6 +2960,10 @@ export type Database = {
         Args: { p_document_id: string }
         Returns: undefined
       }
+      rotate_security_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       secure_credential_operation: {
         Args: {
           credential_data?: Json
@@ -3005,6 +3018,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      validate_apple_credential_security: {
+        Args: { p_user_id: string }
         Returns: boolean
       }
       validate_user_profile_exists: {
