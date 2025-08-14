@@ -3016,7 +3016,14 @@ export type Database = {
       }
       get_security_dashboard_data: {
         Args: Record<PropertyKey, never>
-        Returns: Json
+        Returns: {
+          access_violations: number
+          critical_alerts: number
+          failed_attempts: number
+          rate_violations: number
+          recent_logins: number
+          total_events: number
+        }[]
       }
       get_security_dashboard_metrics: {
         Args: Record<PropertyKey, never>
