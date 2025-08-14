@@ -452,13 +452,6 @@ export type Database = {
             referencedRelation: "documents"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "document_lines_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "secure_customer_data"
-            referencedColumns: ["id"]
-          },
         ]
       }
       document_payments: {
@@ -504,13 +497,6 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "document_payments_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "secure_customer_data"
             referencedColumns: ["id"]
           },
         ]
@@ -663,13 +649,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "documents_converted_to_invoice_id_fkey"
-            columns: ["converted_to_invoice_id"]
-            isOneToOne: false
-            referencedRelation: "secure_customer_data"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "documents_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -695,13 +674,6 @@ export type Database = {
             columns: ["source_document_id"]
             isOneToOne: false
             referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_source_document_id_fkey"
-            columns: ["source_document_id"]
-            isOneToOne: false
-            referencedRelation: "secure_customer_data"
             referencedColumns: ["id"]
           },
         ]
@@ -2647,66 +2619,6 @@ export type Database = {
         }
         Relationships: []
       }
-      secure_customer_data: {
-        Row: {
-          amount_paid: number | null
-          client_email: string | null
-          client_name: string | null
-          client_phone: string | null
-          created_at: string | null
-          document_number: string | null
-          document_type: string | null
-          id: string | null
-          project_id: string | null
-          status: string | null
-          total_amount: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          amount_paid?: never
-          client_email?: never
-          client_name?: never
-          client_phone?: never
-          created_at?: string | null
-          document_number?: string | null
-          document_type?: string | null
-          id?: string | null
-          project_id?: string | null
-          status?: string | null
-          total_amount?: never
-          updated_at?: string | null
-        }
-        Update: {
-          amount_paid?: never
-          client_email?: never
-          client_name?: never
-          client_phone?: never
-          created_at?: string | null
-          document_number?: string | null
-          document_type?: string | null
-          id?: string | null
-          project_id?: string | null
-          status?: string | null
-          total_amount?: never
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_costs_vw"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "documents_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       security_monitor_vw: {
         Row: {
           action: string | null
@@ -2782,6 +2694,10 @@ export type Database = {
         Returns: Json
       }
       can_access_security_monitor: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      check_customer_data_rate_limit: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
@@ -2893,6 +2809,23 @@ export type Database = {
           variance: number
         }[]
       }
+      get_secure_customer_data: {
+        Args: { p_document_type?: string; p_project_id?: string }
+        Returns: {
+          amount_paid: number
+          client_email: string
+          client_name: string
+          client_phone: string
+          created_at: string
+          document_number: string
+          document_type: string
+          id: string
+          project_id: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }[]
+      }
       invite_user: {
         Args: {
           p_email: string
@@ -2942,6 +2875,27 @@ export type Database = {
           operation_type: string
         }
         Returns: Json
+      }
+      secure_customer_data_with_audit: {
+        Args: {
+          p_access_reason?: string
+          p_document_type?: string
+          p_project_id?: string
+        }
+        Returns: {
+          amount_paid: number
+          client_email: string
+          client_name: string
+          client_phone: string
+          created_at: string
+          document_number: string
+          document_type: string
+          id: string
+          project_id: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }[]
       }
       setup_demo_data: {
         Args: { manager_id: string; worker_id: string }
