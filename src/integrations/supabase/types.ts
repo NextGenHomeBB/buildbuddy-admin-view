@@ -2627,6 +2627,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_worker_compensation_status: {
+        Args: { p_worker_id: string }
+        Returns: {
+          effective_from: string
+          has_compensation: boolean
+          is_current: boolean
+          payment_type: string
+        }[]
+      }
       complete_daily_task: {
         Args: { assignment_id: string }
         Returns: Json
@@ -2808,18 +2817,19 @@ export type Database = {
           user_name: string
         }[]
       }
-      get_worker_rate_secure: {
+      get_worker_rate_metadata: {
         Args: { p_worker_id?: string }
         Returns: {
           effective_date: string
           end_date: string
+          has_active_rate: boolean
           id: string
           is_current: boolean
           payment_type: string
         }[]
       }
-      get_worker_salary_admin_secure: {
-        Args: { p_worker_id: string }
+      get_worker_salary_hr_secure: {
+        Args: { p_justification?: string; p_worker_id: string }
         Returns: {
           created_at: string
           created_by: string
@@ -2840,6 +2850,10 @@ export type Database = {
           p_role: string
         }
         Returns: Json
+      }
+      is_hr_administrator: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       is_org_member: {
         Args: { check_org: string }
