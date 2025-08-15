@@ -48,13 +48,16 @@ export function useAssignWorkerToProject() {
       userId: string; 
       role?: string;
     }) => {
+      // Use upsert to handle existing assignments
       const { data, error } = await supabase
         .from('user_project_role')
-        .insert([{ 
+        .upsert({ 
           project_id: projectId, 
           user_id: userId, 
           role 
-        }])
+        }, {
+          onConflict: 'user_id,project_id'
+        })
         .select(`
           *,
           profiles:user_id (
@@ -79,11 +82,16 @@ export function useAssignWorkerToProject() {
         description: "Worker has been assigned to the project successfully.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Assignment error:', error);
+      const isAlreadyAssigned = error?.message?.includes('duplicate key') || error?.code === '23505';
+      
       toast({
-        title: "Error",
-        description: "Failed to assign worker. Please try again.",
-        variant: "destructive",
+        title: isAlreadyAssigned ? "Worker already assigned" : "Assignment failed",
+        description: isAlreadyAssigned 
+          ? "This worker is already assigned to the project." 
+          : "Failed to assign worker. Please try again.",
+        variant: isAlreadyAssigned ? "default" : "destructive",
       });
     },
   });
