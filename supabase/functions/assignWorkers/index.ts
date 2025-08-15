@@ -42,28 +42,16 @@ Deno.serve(async (req) => {
 
     console.log('[ASSIGN] Supabase client created with service role');
 
-    // Prepare assignment data
-    const assignments = workerIds.map(workerId => ({
-      user_id: workerId,
-      project_id: projectId,
-      role: 'worker',
-      assigned_by: adminId,
-      assigned_at: new Date().toISOString()
-    }));
-
-    console.log(`[ASSIGN] Prepared ${assignments.length} assignments for upsert`);
-
-    // Perform bulk upsert with conflict resolution - using minimal select to avoid recursion
-    const { data, error } = await supabase
-      .from('user_project_role')
-      .upsert(assignments, {
-        onConflict: 'user_id,project_id',
-        ignoreDuplicates: false
-      })
-      .select('id, user_id, project_id, role');
+    // Use the secure database function to assign workers
+    // This bypasses RLS policies and prevents recursion issues
+    const { data, error } = await supabase.rpc('assign_workers_to_project', {
+      p_project_id: projectId,
+      p_worker_ids: workerIds,
+      p_admin_id: adminId
+    });
 
     if (error) {
-      console.error('[ASSIGN] Database upsert error:', error);
+      console.error('[ASSIGN] Database function error:', error);
       return new Response(
         JSON.stringify({ error: 'Failed to assign workers', details: error.message }),
         {
