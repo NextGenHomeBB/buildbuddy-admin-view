@@ -3318,6 +3318,13 @@ export type Database = {
         }
         Returns: Json
       }
+      missing_project_access: {
+        Args: { p_project: string }
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
       next_document_number: {
         Args: { doc_type: string }
         Returns: string
