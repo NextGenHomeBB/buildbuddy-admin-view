@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useWorkers } from '@/hooks/useWorkers';
-import { supabase } from '@/integrations/supabase/client';
+import { useAddWorkers } from '@/hooks/useAddWorkers';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -32,7 +33,8 @@ export function WorkerAssignmentDialog({
 }: WorkerAssignmentDialogProps) {
   const { data: workers, isLoading } = useWorkers();
   const [selectedWorkers, setSelectedWorkers] = useState<string[]>([]);
-  const [isAssigning, setIsAssigning] = useState(false);
+  const { user, session } = useAuth();
+  const addWorkersMutation = useAddWorkers();
   const { toast } = useToast();
 
   // Pre-select the worker if provided
@@ -51,42 +53,55 @@ export function WorkerAssignmentDialog({
   };
 
   const handleAssignWorkers = async () => {
-    if (!projectId || selectedWorkers.length === 0) return;
+    if (!projectId || selectedWorkers.length === 0) {
+      console.warn('Cannot assign workers: missing projectId or no workers selected');
+      return;
+    }
 
-    setIsAssigning(true);
-    try {
-      // Assign workers to project via user_project_role table
-      const assignments = selectedWorkers.map(workerId => ({
-        user_id: workerId,
-        project_id: projectId,
-        role: 'worker'
-      }));
+    // Debug authentication state
+    console.log('Assignment attempt:', {
+      projectId,
+      selectedWorkers,
+      user: user?.id,
+      session: session?.access_token ? 'present' : 'missing',
+      userRole: user?.role
+    });
 
-      const { error: updateError } = await supabase
-        .from('user_project_role')
-        .upsert(assignments, {
-          onConflict: 'user_id,project_id'
-        });
-
-      if (updateError) throw updateError;
-
+    if (!user) {
       toast({
-        title: "Workers Assigned",
-        description: `Successfully assigned ${selectedWorkers.length} worker(s) to the project.`,
+        title: "Authentication Required",
+        description: "Please log in to assign workers.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!session?.access_token) {
+      toast({
+        title: "Session Expired",
+        description: "Your session has expired. Please log in again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await addWorkersMutation.mutateAsync({
+        projectId,
+        workerIds: selectedWorkers
       });
 
       setSelectedWorkers([]);
       onWorkersAssigned?.();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error assigning workers:', error);
-      toast({
-        title: "Assignment Failed",
-        description: "Failed to assign workers to the project.",
-        variant: "destructive",
+      console.error('Worker assignment failed:', {
+        error,
+        projectId,
+        selectedWorkers,
+        user: user?.id
       });
-    } finally {
-      setIsAssigning(false);
+      // Error is already handled by the mutation hook
     }
   };
 
@@ -147,15 +162,15 @@ export function WorkerAssignmentDialog({
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)}
-            disabled={isAssigning}
+            disabled={addWorkersMutation.isPending}
           >
             Cancel
           </Button>
           <Button 
             onClick={handleAssignWorkers}
-            disabled={selectedWorkers.length === 0 || isAssigning}
+            disabled={selectedWorkers.length === 0 || addWorkersMutation.isPending}
           >
-            {isAssigning ? 'Assigning...' : `Assign ${selectedWorkers.length} Worker(s)`}
+            {addWorkersMutation.isPending ? 'Assigning...' : `Assign ${selectedWorkers.length} Worker(s)`}
           </Button>
         </DialogFooter>
       </DialogContent>
