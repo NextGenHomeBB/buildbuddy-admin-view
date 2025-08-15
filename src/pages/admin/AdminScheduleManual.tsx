@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Users, BarChart3, Settings, Clock, MapPin } from 'lucide-react';
+import { Calendar, Users, BarChart3, Settings, Clock, MapPin, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScheduleCalendarView } from '@/components/admin/schedule/ScheduleCalendarView';
 import { ScheduleBoard } from '@/components/admin/schedule/ScheduleBoard';
 import { WorkforceOverview } from '@/components/admin/schedule/WorkforceOverview';
@@ -11,6 +12,7 @@ import { ScheduleAnalytics } from '@/components/admin/schedule/ScheduleAnalytics
 import { useShifts } from '@/hooks/useShiftOptimization';
 import { useOptimizedTasks } from '@/hooks/useOptimizedTasks';
 import { useWorkersWithProjectAccess } from '@/hooks/useWorkersWithProjectAccess';
+import { useProjectDataConsistency, useRepairProjectAssignments } from '@/hooks/useProjectDataConsistency';
 import { useCreateTask } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/use-toast';
 import { format, addDays, startOfWeek } from 'date-fns';
@@ -26,7 +28,9 @@ export default function AdminScheduleManual() {
 
   const { data: shifts } = useShifts();
   const { data: tasks } = useOptimizedTasks();
-  const { data: workersWithAccess = [] } = useWorkersWithProjectAccess();
+  const { data: workersWithAccess = [], isLoading: isLoadingWorkers, error: workersError } = useWorkersWithProjectAccess();
+  const { data: consistencyData } = useProjectDataConsistency();
+  const repairMutation = useRepairProjectAssignments();
   const createTaskMutation = useCreateTask();
 
   // Convert workers with access to simple worker format for compatibility
@@ -84,6 +88,13 @@ export default function AdminScheduleManual() {
     }
   };
 
+  // Check for data inconsistencies
+  const hasInconsistencies = consistencyData?.some(check => !check.is_consistent) || false;
+  
+  const handleRepairData = () => {
+    repairMutation.mutate();
+  };
+
   const totalShifts = shifts?.length || 0;
   const confirmedShifts = shifts?.filter(s => s.status === 'confirmed').length || 0;
   const totalWorkers = workers?.length || 0;
@@ -106,6 +117,38 @@ export default function AdminScheduleManual() {
           </Button>
         </div>
       </div>
+
+      {/* Data Consistency Alert */}
+      {hasInconsistencies && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Data Inconsistency Detected</AlertTitle>
+          <AlertDescription className="flex items-center justify-between">
+            <span>
+              Worker assignments are out of sync. This may cause assignment issues.
+            </span>
+            <Button 
+              onClick={handleRepairData} 
+              disabled={repairMutation.isPending}
+              size="sm"
+              variant="outline"
+            >
+              {repairMutation.isPending ? 'Repairing...' : 'Repair Now'}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Workers Error Alert */}
+      {workersError && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Worker Data Error</AlertTitle>
+          <AlertDescription>
+            Unable to load worker data: {workersError.message}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Overview Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
@@ -139,6 +182,9 @@ export default function AdminScheduleManual() {
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Workers</p>
                 <p className="text-xl sm:text-2xl font-bold">{totalWorkers}</p>
+                {workersError && (
+                  <p className="text-xs text-destructive mt-1">Data unavailable</p>
+                )}
               </div>
               <Users className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground shrink-0" />
             </div>

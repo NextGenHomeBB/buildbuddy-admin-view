@@ -2699,6 +2699,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      check_project_worker_consistency: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          assigned_workers_count: number
+          is_consistent: boolean
+          project_id: string
+          project_name: string
+          user_project_role_count: number
+        }[]
+      }
       check_rate_limit: {
         Args: {
           max_attempts?: number
@@ -2748,6 +2758,16 @@ export type Database = {
           has_compensation: boolean
           is_current: boolean
           payment_type: string
+        }[]
+      }
+      check_worker_data_consistency: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          assigned_workers_count: number
+          project_id: string
+          project_name: string
+          status: string
+          user_project_role_count: number
         }[]
       }
       cleanup_old_security_logs: {
@@ -3297,6 +3317,17 @@ export type Database = {
       refresh_document_payment_status: {
         Args: { p_document_id: string }
         Returns: undefined
+      }
+      repair_assigned_workers: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      repair_project_worker_assignments: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          repaired_projects: number
+          total_projects: number
+        }[]
       }
       rotate_security_tokens: {
         Args: Record<PropertyKey, never>
