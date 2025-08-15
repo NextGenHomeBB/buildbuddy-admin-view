@@ -3048,6 +3048,10 @@ export type Database = {
           user_name: string
         }[]
       }
+      get_user_org_role: {
+        Args: { p_org_id: string }
+        Returns: string
+      }
       get_worker_rate_metadata: {
         Args: { p_worker_id?: string }
         Returns: {
