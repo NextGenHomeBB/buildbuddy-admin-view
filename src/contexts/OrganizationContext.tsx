@@ -18,6 +18,7 @@ interface OrganizationContextType {
   refreshOrganization: () => Promise<void>;
   clearCacheAndRetry: () => Promise<void>;
   retryCount: number;
+  needsOrganizationSelection: boolean;
 }
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
@@ -59,7 +60,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       let orgId = profile?.default_org_id;
       logger.debug('OrganizationContext: Found default_org_id', { orgId });
 
-      // If no default org, try to get user's first membership
+      // If no default org, check for existing memberships
       if (!orgId) {
         logger.debug('OrganizationContext: No default org, checking memberships...');
         const { data: membership, error: membershipError } = await supabase
@@ -79,44 +80,9 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         }
 
         if (!membership) {
-          logger.warn('OrganizationContext: No active memberships found - attempting auto-assignment');
-          
-          // Try to auto-assign user to default organization as fallback
-          try {
-            const { data: defaultOrg } = await supabase
-              .from('organizations')
-              .select('id')
-              .eq('name', 'NextGenHome')
-              .single();
-
-            if (defaultOrg) {
-              // Create membership
-              await supabase
-                .from('organization_members')
-                .insert({
-                  org_id: defaultOrg.id,
-                  user_id: user.id,
-                  role: 'worker',
-                  status: 'active'
-                });
-
-              // Update profile
-              await supabase
-                .from('profiles')
-                .update({ default_org_id: defaultOrg.id })
-                .eq('id', user.id);
-
-              orgId = defaultOrg.id;
-              logger.info('OrganizationContext: Auto-assigned user to default organization');
-            }
-          } catch (autoAssignError) {
-            logger.error('OrganizationContext: Failed to auto-assign user', autoAssignError);
-          }
-
-          if (!orgId) {
-            setError('No organization found. Please contact support or try clearing cache.');
-            return;
-          }
+          logger.info('OrganizationContext: No active memberships found - user needs to select organization');
+          setError('no_organization_selected');
+          return;
         } else {
           orgId = membership.org_id;
           logger.debug('OrganizationContext: Found org via membership', { orgId });
@@ -201,6 +167,8 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const needsOrganizationSelection = error === 'no_organization_selected';
+
   return (
     <OrganizationContext.Provider value={{
       currentOrg,
@@ -208,7 +176,8 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       error,
       refreshOrganization,
       clearCacheAndRetry,
-      retryCount
+      retryCount,
+      needsOrganizationSelection
     }}>
       {children}
     </OrganizationContext.Provider>
