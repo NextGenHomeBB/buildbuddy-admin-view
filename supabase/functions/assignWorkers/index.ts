@@ -20,13 +20,27 @@ Deno.serve(async (req) => {
   try {
     const { projectId, workerIds, adminId }: AssignWorkersRequest = await req.json();
 
+    console.log(`[ASSIGN] Starting assignment of ${workerIds.length} workers to project ${projectId} by admin ${adminId}`);
+
+    // Validate input
+    if (!projectId || !workerIds || !Array.isArray(workerIds) || workerIds.length === 0) {
+      console.error('[ASSIGN] Invalid input parameters');
+      return new Response(
+        JSON.stringify({ error: 'Invalid parameters', details: 'projectId and workerIds are required' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     // Create Supabase client with service role key for elevated permissions
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log(`Assigning ${workerIds.length} workers to project ${projectId} by admin ${adminId}`);
+    console.log('[ASSIGN] Supabase client created with service role');
 
     // Prepare assignment data
     const assignments = workerIds.map(workerId => ({
@@ -37,23 +51,19 @@ Deno.serve(async (req) => {
       assigned_at: new Date().toISOString()
     }));
 
-    // Perform bulk upsert with conflict resolution
+    console.log(`[ASSIGN] Prepared ${assignments.length} assignments for upsert`);
+
+    // Perform bulk upsert with conflict resolution - using minimal select to avoid recursion
     const { data, error } = await supabase
       .from('user_project_role')
       .upsert(assignments, {
         onConflict: 'user_id,project_id',
         ignoreDuplicates: false
       })
-      .select(`
-        *,
-        profiles:user_id (
-          full_name,
-          avatar_url
-        )
-      `);
+      .select('id, user_id, project_id, role');
 
     if (error) {
-      console.error('Database error:', error);
+      console.error('[ASSIGN] Database upsert error:', error);
       return new Response(
         JSON.stringify({ error: 'Failed to assign workers', details: error.message }),
         {
@@ -63,26 +73,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Update the projects table's assigned_workers field to include the new workers
-    const { error: updateError } = await supabase
-      .from('projects')
-      .update({
-        assigned_workers: workerIds
-      })
-      .eq('id', projectId);
-
-    if (updateError) {
-      console.error('Error updating project assigned_workers:', updateError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to update project workers', details: updateError.message }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    console.log(`Successfully assigned ${data?.length || 0} workers and updated project`);
+    console.log(`[ASSIGN] Successfully assigned ${data?.length || 0} workers to project ${projectId}`);
 
     return new Response(
       JSON.stringify({ 
