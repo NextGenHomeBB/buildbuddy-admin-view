@@ -47,19 +47,15 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         .from('profiles')
         .select('default_org_id')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       logger.debug('OrganizationContext: Profile query result', { profile, profileError });
 
-      if (profileError) {
-        logger.error('OrganizationContext: Profile error', profileError);
-        throw profileError;
-      }
-
+      // Continue even if profile query fails - we can try membership lookup
       let orgId = profile?.default_org_id;
       logger.debug('OrganizationContext: Found default_org_id', { orgId });
 
-      // If no default org, try to get user's first membership
+      // If no default org or profile error, try to get user's first membership
       if (!orgId) {
         logger.debug('OrganizationContext: No default org, checking memberships...');
         const { data: membership, error: membershipError } = await supabase
@@ -75,23 +71,42 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
         if (membershipError) {
           logger.error('OrganizationContext: Membership error', membershipError);
-          throw membershipError;
+          // For workers, continue with auto-assignment attempt instead of failing
+          logger.warn('OrganizationContext: Membership query failed, attempting auto-assignment');
         }
 
-        if (!membership) {
+        if (!membership && !membershipError) {
           logger.warn('OrganizationContext: No active memberships found - attempting auto-assignment');
-          
+        }
+
+        if (membership && !membershipError) {
+          orgId = membership.org_id;
+          logger.debug('OrganizationContext: Found org via membership', { orgId });
+
+          // Update profile with this default org (but don't fail if this fails)
+          try {
+            await supabase
+              .from('profiles')
+              .update({ default_org_id: orgId })
+              .eq('id', user.id);
+          } catch (updateError) {
+            logger.error('OrganizationContext: Failed to update profile (non-fatal)', updateError);
+          }
+        } else {
           // Try to auto-assign user to default organization as fallback
           try {
-            const { data: defaultOrg } = await supabase
+            logger.info('OrganizationContext: Attempting auto-assignment to default organization');
+            const { data: defaultOrg, error: defaultOrgError } = await supabase
               .from('organizations')
-              .select('id')
+              .select('id, name')
               .eq('name', 'NextGenHome')
-              .single();
+              .maybeSingle();
 
-            if (defaultOrg) {
+            logger.debug('OrganizationContext: Default org lookup result', { defaultOrg, defaultOrgError });
+
+            if (defaultOrg && !defaultOrgError) {
               // Create membership
-              await supabase
+              const { error: membershipInsertError } = await supabase
                 .from('organization_members')
                 .insert({
                   org_id: defaultOrg.id,
@@ -100,36 +115,34 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
                   status: 'active'
                 });
 
-              // Update profile
-              await supabase
-                .from('profiles')
-                .update({ default_org_id: defaultOrg.id })
-                .eq('id', user.id);
+              if (membershipInsertError) {
+                logger.error('OrganizationContext: Failed to create membership', membershipInsertError);
+              } else {
+                // Update profile (but don't fail if this fails)
+                try {
+                  await supabase
+                    .from('profiles')
+                    .update({ default_org_id: defaultOrg.id })
+                    .eq('id', user.id);
+                } catch (profileUpdateError) {
+                  logger.error('OrganizationContext: Failed to update profile after auto-assignment (non-fatal)', profileUpdateError);
+                }
 
-              orgId = defaultOrg.id;
-              logger.info('OrganizationContext: Auto-assigned user to default organization');
+                orgId = defaultOrg.id;
+                logger.info('OrganizationContext: Successfully auto-assigned user to default organization');
+              }
+            } else {
+              logger.error('OrganizationContext: Could not find default organization for auto-assignment');
             }
           } catch (autoAssignError) {
             logger.error('OrganizationContext: Failed to auto-assign user', autoAssignError);
           }
+        }
 
-          if (!orgId) {
-            setError('No organization found. Please contact support or try clearing cache.');
-            return;
-          }
-        } else {
-          orgId = membership.org_id;
-          logger.debug('OrganizationContext: Found org via membership', { orgId });
-
-          // Update profile with this default org
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ default_org_id: orgId })
-            .eq('id', user.id);
-
-          if (updateError) {
-            logger.error('OrganizationContext: Failed to update profile', updateError);
-          }
+        if (!orgId) {
+          logger.error('OrganizationContext: No organization found after all attempts');
+          setError('No organization found. Please contact support or try clearing cache.');
+          return;
         }
       }
 
@@ -139,13 +152,14 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         .from('organizations')
         .select('id, name, created_at')
         .eq('id', orgId)
-        .single();
+        .maybeSingle();
 
       logger.debug('OrganizationContext: Organization query result', { org, orgError });
 
       if (orgError) {
         logger.error('OrganizationContext: Organization error', orgError);
-        throw orgError;
+        setError(`Organization access error: ${orgError.message}. Please contact support.`);
+        return;
       }
 
       if (!org) {
@@ -163,7 +177,16 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       
     } catch (error) {
       logger.error('OrganizationContext: Error fetching default organization', error);
-      setError(`Failed to load organization: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Provide more specific error messages for common issues
+      if (errorMessage.includes('row-level security')) {
+        setError('Permission error: Unable to access organization data. Please contact support.');
+      } else if (errorMessage.includes('connection')) {
+        setError('Connection error: Please check your internet connection and try again.');
+      } else {
+        setError(`Failed to load organization: ${errorMessage}`);
+      }
       
       // If this is a repeated failure, suggest cache clearing
       if (retryCount > 2) {
