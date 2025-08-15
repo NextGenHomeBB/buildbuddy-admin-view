@@ -134,9 +134,27 @@ export function UserInviteDialog({ open, onOpenChange, onUserInvited }: UserInvi
 
       if (error) {
         logger.error('Failed to send invitations:', error);
+        
+        // Better error handling based on error type
+        let errorMessage = 'An unexpected error occurred';
+        let errorTitle = 'Failed to send invitations';
+        
+        if (error.message?.includes('Rate limit exceeded')) {
+          errorTitle = 'Too many requests';
+          errorMessage = 'Please wait a moment before sending more invitations.';
+        } else if (error.message?.includes('Admin or owner access required')) {
+          errorTitle = 'Insufficient permissions';
+          errorMessage = 'You need admin or owner privileges to send invitations.';
+        } else if (error.message?.includes('Organization ID is required')) {
+          errorTitle = 'Organization error';
+          errorMessage = 'Please select an organization first.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
         toast({
-          title: 'Failed to send invitations',
-          description: error.message || 'An unexpected error occurred',
+          title: errorTitle,
+          description: errorMessage,
           variant: 'destructive',
         });
         return;

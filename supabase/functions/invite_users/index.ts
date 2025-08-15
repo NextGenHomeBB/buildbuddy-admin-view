@@ -42,33 +42,36 @@ serve(async (req) => {
       )
     }
 
-    // Enhanced security: Check rate limiting for user invitations
-    const { data: rateLimitCheck, error: rateLimitError } = await supabaseClient
-      .rpc('check_rate_limit', {
-        operation_name: 'user_invite',
-        max_attempts: 10,
-        window_minutes: 60
-      })
+    const { emails, role, org_id, send_welcome }: InviteRequest = await req.json()
 
-    if (rateLimitError || !rateLimitCheck) {
+    // Validate org_id first
+    if (!org_id) {
       return new Response(
-        JSON.stringify({ error: 'Rate limit exceeded. Too many invitations sent. Please try again later.' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
+        JSON.stringify({ error: 'Organization ID is required' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
 
-    // Get user role using the existing function
-    const { data: userRole, error: roleError } = await supabaseClient
-      .rpc('get_current_user_role')
+    // Check if user has admin/owner role in the specific organization
+    const { data: userOrgRole, error: orgRoleError } = await supabaseClient
+      .rpc('get_user_org_role', { p_org_id: org_id })
 
-    if (roleError || !userRole || !['admin', 'owner'].includes(userRole)) {
+    console.log('User org role check:', { userOrgRole, orgRoleError, userId: user.id, orgId: org_id })
+
+    if (orgRoleError) {
+      console.error('Error checking user org role:', orgRoleError)
       return new Response(
-        JSON.stringify({ error: 'Admin or owner access required' }),
+        JSON.stringify({ error: 'Failed to verify permissions' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      )
+    }
+
+    if (!userOrgRole || !['admin', 'owner'].includes(userOrgRole)) {
+      return new Response(
+        JSON.stringify({ error: 'Admin or owner access required for this organization' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
       )
     }
-
-    const { emails, role, org_id, send_welcome }: InviteRequest = await req.json()
 
     // Enhanced input validation
     if (!emails || !Array.isArray(emails) || emails.length === 0) {
@@ -103,13 +106,6 @@ serve(async (req) => {
       )
     }
 
-    // Validate org_id
-    if (!org_id) {
-      return new Response(
-        JSON.stringify({ error: 'Organization ID is required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      )
-    }
 
     const results = []
     const errors = []
