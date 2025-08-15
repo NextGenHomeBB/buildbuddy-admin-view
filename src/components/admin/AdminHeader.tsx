@@ -15,10 +15,12 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { CacheClearButton } from './CacheClearButton';
+import { useNavigate } from 'react-router-dom';
 
 export function AdminHeader() {
   const { user, signOut } = useAuthContext();
   const { currentOrg, error } = useOrganization();
+  const navigate = useNavigate();
 
   return (
     <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm">
@@ -90,13 +92,13 @@ export function AdminHeader() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/admin/profile')}>
                 Profile Settings
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
                 Team Settings
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/admin/billing')}>
                 Billing
               </DropdownMenuItem>
               <DropdownMenuSeparator />

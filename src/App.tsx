@@ -23,6 +23,8 @@ import { AdminProjects } from "./pages/admin/AdminProjects";
 import { AdminLists } from "./pages/admin/AdminLists";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { AdminSettings } from "./pages/admin/AdminSettings";
+import { AdminProfile } from "./pages/admin/AdminProfile";
+import { AdminBilling } from "./pages/admin/AdminBilling";
 import { CalendarPage } from "./pages/admin/AdminCalendar";
 import AdminCosts from "./pages/admin/AdminCosts";
 import { AdminAvailability } from "./pages/admin/AdminAvailability";
@@ -103,6 +105,8 @@ function AppContent() {
             <Route path="schedule/manual" element={<AdminScheduleManual />} />
             <Route path="system" element={<SystemOverview />} />
             <Route path="settings" element={<AdminSettings />} />
+            <Route path="profile" element={<AdminProfile />} />
+            <Route path="billing" element={<AdminBilling />} />
             <Route path="phase-templates" element={<PhaseTemplateListPage />} />
             <Route path="phase-templates/:id" element={<PhaseTemplateDetailPage />} />
             {/* Redirect old template URLs to new ones */}
