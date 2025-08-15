@@ -56,6 +56,13 @@ export type Database = {
             foreignKeyName: "active_shifts_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_shifts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -82,6 +89,21 @@ export type Database = {
           name?: string
           role_scope?: string | null
           template?: string
+        }
+        Relationships: []
+      }
+      app_settings: {
+        Row: {
+          key: string
+          value: string
+        }
+        Insert: {
+          key: string
+          value: string
+        }
+        Update: {
+          key?: string
+          value?: string
         }
         Relationships: []
       }
@@ -740,6 +762,13 @@ export type Database = {
             foreignKeyName: "invitations_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -847,6 +876,13 @@ export type Database = {
             foreignKeyName: "materials_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materials_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -914,6 +950,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "organization_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "organization_members_org_id_fkey"
             columns: ["org_id"]
@@ -994,6 +1037,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "phase_expenses_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "phase_expenses_org_id_fkey"
             columns: ["org_id"]
@@ -1216,6 +1266,13 @@ export type Database = {
             foreignKeyName: "profiles_default_org_id_fkey"
             columns: ["default_org_id"]
             isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_default_org_id_fkey"
+            columns: ["default_org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -1402,6 +1459,13 @@ export type Database = {
             columns: ["manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "my_organizations"
             referencedColumns: ["id"]
           },
           {
@@ -1689,6 +1753,13 @@ export type Database = {
             foreignKeyName: "shifts_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -1935,6 +2006,13 @@ export type Database = {
             foreignKeyName: "tasks_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -2002,6 +2080,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "time_logs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "time_logs_org_id_fkey"
             columns: ["org_id"]
@@ -2104,6 +2189,13 @@ export type Database = {
           work_date?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "time_sheets_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "time_sheets_org_id_fkey"
             columns: ["org_id"]
@@ -2248,6 +2340,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_roles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_roles_org_id_fkey"
             columns: ["org_id"]
@@ -2513,6 +2612,30 @@ export type Database = {
       }
     }
     Views: {
+      my_organizations: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string | null
+          name: string | null
+          whatsapp_phone: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string | null
+          name?: string | null
+          whatsapp_phone?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string | null
+          name?: string | null
+          whatsapp_phone?: string | null
+        }
+        Relationships: []
+      }
       project_costs_vw: {
         Row: {
           budget: number | null
@@ -2636,12 +2759,16 @@ export type Database = {
         Returns: Json
       }
       create_user_profile: {
-        Args: { user_email?: string; user_id: string }
-        Returns: Json
+        Args: { user_email: string; user_id: string }
+        Returns: undefined
       }
       delete_apple_credentials_secure: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      ensure_default_membership: {
+        Args: { p_user?: string }
+        Returns: undefined
       }
       expire_old_daily_tasks: {
         Args: Record<PropertyKey, never>
