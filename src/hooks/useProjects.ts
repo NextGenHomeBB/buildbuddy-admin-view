@@ -160,8 +160,12 @@ export function useUpdateProject() {
 
       return { previousProjects };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidate all project-related queries for immediate updates
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['project-workers', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['workers-with-project-access'] });
       toast({
         title: "Project updated",
         description: "Project has been updated successfully.",

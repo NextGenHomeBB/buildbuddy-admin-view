@@ -52,6 +52,8 @@ export function useWorkers() {
     },
     retry: 2,
     retryDelay: 1000,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1 * 60 * 1000, // Reduced to 1 minute for faster updates
+    gcTime: 5 * 60 * 1000, // 5 minutes garbage collection
+    refetchOnWindowFocus: true, // Refetch when window gains focus
   });
 }

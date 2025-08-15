@@ -32,6 +32,9 @@ export function useProjectWorkers(projectId: string) {
       return data || [];
     },
     enabled: !!projectId,
+    staleTime: 1 * 60 * 1000, // 1 minute for faster updates
+    gcTime: 5 * 60 * 1000, // 5 minutes garbage collection
+    refetchOnWindowFocus: true, // Refetch when window gains focus
   });
 }
 
@@ -65,8 +68,12 @@ export function useAssignWorkerToProject() {
       return data;
     },
     onSuccess: (data, variables) => {
+      // Invalidate all related queries for immediate updates
       queryClient.invalidateQueries({ queryKey: ['project-workers', variables.projectId] });
       queryClient.invalidateQueries({ queryKey: ['workers-with-project-access'] });
+      queryClient.invalidateQueries({ queryKey: ['workers'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project', variables.projectId] });
       toast({
         title: "Worker assigned",
         description: "Worker has been assigned to the project successfully.",
@@ -97,7 +104,12 @@ export function useUnassignWorkerFromProject() {
       if (error) throw error;
     },
     onSuccess: (data, variables) => {
+      // Invalidate all related queries for immediate updates
       queryClient.invalidateQueries({ queryKey: ['project-workers', variables.projectId] });
+      queryClient.invalidateQueries({ queryKey: ['workers-with-project-access'] });
+      queryClient.invalidateQueries({ queryKey: ['workers'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project', variables.projectId] });
       toast({
         title: "Worker unassigned",
         description: "Worker has been removed from the project.",

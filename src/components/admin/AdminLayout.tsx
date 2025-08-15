@@ -7,6 +7,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { useAdminKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useContextMenu } from '@/hooks/useContextMenu';
+import { useRealtimeWorkerAssignments } from '@/hooks/useRealtimeWorkerAssignments';
 import { MobileBottomNav } from '@/components/ui/mobile-bottom-nav';
 import { ContextMenuOverlay } from '@/components/ui/context-menu-overlay';
 import { KeyboardShortcutsHelp } from '@/components/ui/keyboard-shortcuts-help';
@@ -30,6 +31,9 @@ export function AdminLayout() {
   
   // Context menu
   const { contextMenu, showContextMenu, hideContextMenu, handleItemClick } = useContextMenu();
+  
+  // Real-time worker assignments updates
+  useRealtimeWorkerAssignments();
 
   // Global event listeners for keyboard shortcuts
   useEffect(() => {
