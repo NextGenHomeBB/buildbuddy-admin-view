@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useWorkerProjects } from '@/hooks/useWorkerProjects';
 import { useWorkerTasks } from '@/hooks/useWorkerTasks';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { ShiftTracker } from '@/components/worker/ShiftTracker';
 import { WeeklyEarnings } from '@/components/worker/WeeklyEarnings';
 import { PaymentHistory } from '@/components/worker/PaymentHistory';
@@ -15,6 +16,9 @@ import { logger } from '@/utils/logger';
 export function WorkerDashboard() {
   const { user } = useAuth();
   const { triggerHaptic } = useHapticFeedback();
+  
+  // Enable real-time sync for immediate task updates
+  useRealtimeSync();
   
   logger.info('WorkerDashboard: Current user:', { 
     id: user?.id, 

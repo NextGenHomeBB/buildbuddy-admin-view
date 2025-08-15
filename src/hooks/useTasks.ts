@@ -122,7 +122,13 @@ export function useCreateTask() {
       return { previousTasks, projectId };
     },
     onSuccess: (data, variables) => {
+      // Invalidate project-specific tasks
       queryClient.invalidateQueries({ queryKey: ['tasks', variables.projectId] });
+      // Invalidate all worker task lists to show new assignments
+      queryClient.invalidateQueries({ queryKey: ['worker-tasks'] });
+      // Invalidate optimized tasks queries
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      
       toast({
         title: "Task created",
         description: "New task has been created successfully.",
@@ -204,7 +210,12 @@ export function useUpdateTask() {
       return { previousTasks, projectId };
     },
     onSuccess: async (data) => {
+      // Invalidate project-specific tasks
       queryClient.invalidateQueries({ queryKey: ['tasks', data.project_id] });
+      // Invalidate all worker task lists to show updates
+      queryClient.invalidateQueries({ queryKey: ['worker-tasks'] });
+      // Invalidate optimized tasks queries
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       
       // Update phase and project progress
       try {
