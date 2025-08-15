@@ -53,22 +53,31 @@ serve(async (req) => {
     }
 
     // Check if user has admin/owner role in the specific organization
-    const { data: userOrgRole, error: orgRoleError } = await supabaseClient
-      .rpc('get_user_org_role', { p_org_id: org_id })
+    const { data: membership, error: membershipError } = await supabaseClient
+      .from('organization_members')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('org_id', org_id)
+      .eq('status', 'active')
+      .maybeSingle()
 
-    console.log('User org role check:', { userOrgRole, orgRoleError, userId: user.id, orgId: org_id })
+    console.log('User org membership check:', { membership, membershipError, userId: user.id, orgId: org_id })
 
-    if (orgRoleError) {
-      console.error('Error checking user org role:', orgRoleError)
+    if (membershipError) {
+      console.error('Error checking user org membership:', membershipError)
       return new Response(
-        JSON.stringify({ error: 'Failed to verify permissions' }),
+        JSON.stringify({ error: 'Failed to verify permissions', details: membershipError.message }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       )
     }
 
-    if (!userOrgRole || !['org_admin', 'owner'].includes(userOrgRole)) {
+    if (!membership || !['owner', 'admin', 'org_admin'].includes(membership.role)) {
+      console.log('Access denied. User role:', membership?.role, 'Required roles: owner, admin, org_admin')
       return new Response(
-        JSON.stringify({ error: 'Org admin or owner access required for this organization' }),
+        JSON.stringify({ 
+          error: 'Organization admin or owner access required for this organization',
+          userRole: membership?.role || 'none'
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
       )
     }
@@ -136,7 +145,8 @@ serve(async (req) => {
           })
 
         if (inviteError) {
-          errors.push({ email, error: inviteError.message })
+          console.error(`Failed to invite ${email}:`, inviteError)
+          errors.push({ email, error: inviteError.message || 'Failed to create invitation' })
           continue
         }
 
@@ -146,6 +156,8 @@ serve(async (req) => {
           // For now, we'll just log the intention
           console.log(`Would send invitation email to: ${email}`)
         }
+
+        console.log(`Successfully created invitation for ${email} with role ${role}`)
 
         results.push({
           email,
