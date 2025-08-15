@@ -18,8 +18,6 @@ interface OrganizationContextType {
   refreshOrganization: () => Promise<void>;
   clearCacheAndRetry: () => Promise<void>;
   retryCount: number;
-  canContinue: boolean;
-  continueWithoutOrg: () => void;
 }
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
@@ -30,27 +28,18 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [canContinue, setCanContinue] = useState(false);
-  const [bypassOrg, setBypassOrg] = useState(false);
 
-  const fetchDefaultOrganization = async (attempt = 1) => {
+  const fetchDefaultOrganization = async () => {
     if (!user) {
       logger.debug('OrganizationContext: No user found');
       return;
     }
 
-    if (bypassOrg) {
-      logger.debug('OrganizationContext: Bypassing organization check');
-      return;
-    }
-
     try {
       setError(null);
-      setCanContinue(false);
       logger.info('OrganizationContext: Fetching organization for user', { 
         userId: user.id, 
-        retryCount,
-        attempt 
+        retryCount 
       });
       
       // First try to get user's default organization from profiles
@@ -58,15 +47,19 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         .from('profiles')
         .select('default_org_id')
         .eq('id', user.id)
-        .maybeSingle();
+        .single();
 
       logger.debug('OrganizationContext: Profile query result', { profile, profileError });
 
-      // Continue even if profile query fails - we can try membership lookup
+      if (profileError) {
+        logger.error('OrganizationContext: Profile error', profileError);
+        throw profileError;
+      }
+
       let orgId = profile?.default_org_id;
       logger.debug('OrganizationContext: Found default_org_id', { orgId });
 
-      // If no default org or profile error, try to get user's first membership
+      // If no default org, try to get user's first membership
       if (!orgId) {
         logger.debug('OrganizationContext: No default org, checking memberships...');
         const { data: membership, error: membershipError } = await supabase
@@ -82,42 +75,23 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
         if (membershipError) {
           logger.error('OrganizationContext: Membership error', membershipError);
-          // For workers, continue with auto-assignment attempt instead of failing
-          logger.warn('OrganizationContext: Membership query failed, attempting auto-assignment');
+          throw membershipError;
         }
 
-        if (!membership && !membershipError) {
+        if (!membership) {
           logger.warn('OrganizationContext: No active memberships found - attempting auto-assignment');
-        }
-
-        if (membership && !membershipError) {
-          orgId = membership.org_id;
-          logger.debug('OrganizationContext: Found org via membership', { orgId });
-
-          // Update profile with this default org (but don't fail if this fails)
-          try {
-            await supabase
-              .from('profiles')
-              .update({ default_org_id: orgId })
-              .eq('id', user.id);
-          } catch (updateError) {
-            logger.error('OrganizationContext: Failed to update profile (non-fatal)', updateError);
-          }
-        } else {
+          
           // Try to auto-assign user to default organization as fallback
           try {
-            logger.info('OrganizationContext: Attempting auto-assignment to default organization');
-            const { data: defaultOrg, error: defaultOrgError } = await supabase
+            const { data: defaultOrg } = await supabase
               .from('organizations')
-              .select('id, name')
+              .select('id')
               .eq('name', 'NextGenHome')
-              .maybeSingle();
+              .single();
 
-            logger.debug('OrganizationContext: Default org lookup result', { defaultOrg, defaultOrgError });
-
-            if (defaultOrg && !defaultOrgError) {
+            if (defaultOrg) {
               // Create membership
-              const { error: membershipInsertError } = await supabase
+              await supabase
                 .from('organization_members')
                 .insert({
                   org_id: defaultOrg.id,
@@ -126,34 +100,36 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
                   status: 'active'
                 });
 
-              if (membershipInsertError) {
-                logger.error('OrganizationContext: Failed to create membership', membershipInsertError);
-              } else {
-                // Update profile (but don't fail if this fails)
-                try {
-                  await supabase
-                    .from('profiles')
-                    .update({ default_org_id: defaultOrg.id })
-                    .eq('id', user.id);
-                } catch (profileUpdateError) {
-                  logger.error('OrganizationContext: Failed to update profile after auto-assignment (non-fatal)', profileUpdateError);
-                }
+              // Update profile
+              await supabase
+                .from('profiles')
+                .update({ default_org_id: defaultOrg.id })
+                .eq('id', user.id);
 
-                orgId = defaultOrg.id;
-                logger.info('OrganizationContext: Successfully auto-assigned user to default organization');
-              }
-            } else {
-              logger.error('OrganizationContext: Could not find default organization for auto-assignment');
+              orgId = defaultOrg.id;
+              logger.info('OrganizationContext: Auto-assigned user to default organization');
             }
           } catch (autoAssignError) {
             logger.error('OrganizationContext: Failed to auto-assign user', autoAssignError);
           }
-        }
 
-        if (!orgId) {
-          logger.error('OrganizationContext: No organization found after all attempts');
-          setError('No organization found. Please contact support or try clearing cache.');
-          return;
+          if (!orgId) {
+            setError('No organization found. Please contact support or try clearing cache.');
+            return;
+          }
+        } else {
+          orgId = membership.org_id;
+          logger.debug('OrganizationContext: Found org via membership', { orgId });
+
+          // Update profile with this default org
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ default_org_id: orgId })
+            .eq('id', user.id);
+
+          if (updateError) {
+            logger.error('OrganizationContext: Failed to update profile', updateError);
+          }
         }
       }
 
@@ -163,30 +139,18 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         .from('organizations')
         .select('id, name, created_at')
         .eq('id', orgId)
-        .maybeSingle();
+        .single();
 
       logger.debug('OrganizationContext: Organization query result', { org, orgError });
 
       if (orgError) {
         logger.error('OrganizationContext: Organization error', orgError);
-        
-        // For certain errors, allow retry with exponential backoff
-        if (attempt < 3 && (orgError.code === '42P17' || orgError.message.includes('recursion'))) {
-          logger.warn(`OrganizationContext: Retrying after error (attempt ${attempt}/3)`, { orgError });
-          const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
-          await new Promise(resolve => setTimeout(resolve, delay));
-          return fetchDefaultOrganization(attempt + 1);
-        }
-        
-        setError(`Organization access error: ${orgError.message}`);
-        setCanContinue(true); // Allow workers to continue
-        return;
+        throw orgError;
       }
 
       if (!org) {
         logger.error('OrganizationContext: Organization not found');
-        setError('Organization not found. You can continue without organization access.');
-        setCanContinue(true); // Allow workers to continue
+        setError('Organization not found. Please contact support.');
         return;
       }
 
@@ -199,39 +163,18 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       
     } catch (error) {
       logger.error('OrganizationContext: Error fetching default organization', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
-      // For certain errors, allow retry with exponential backoff
-      if (attempt < 3 && (errorMessage.includes('recursion') || errorMessage.includes('policy'))) {
-        logger.warn(`OrganizationContext: Retrying after error (attempt ${attempt}/3)`, { error });
-        const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return fetchDefaultOrganization(attempt + 1);
-      }
-      
-      // Provide more specific error messages for common issues
-      if (errorMessage.includes('row-level security') || errorMessage.includes('policy')) {
-        setError('Permission error: Unable to access organization data. You can continue without organization access.');
-      } else if (errorMessage.includes('connection')) {
-        setError('Connection error: Please check your internet connection and try again.');
-      } else {
-        setError(`Failed to load organization: ${errorMessage}. You can continue without organization access.`);
-      }
-      
-      // Allow workers to continue even with organization errors
-      setCanContinue(true);
+      setError(`Failed to load organization: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
       // If this is a repeated failure, suggest cache clearing
       if (retryCount > 2) {
         logger.warn('Multiple organization load failures, cache issue suspected', { retryCount });
-        setError('Persistent loading issue detected. You can continue without organization access or try clearing cache.');
+        setError('Persistent loading issue detected. Try clearing cache.');
       }
     }
   };
 
   const refreshOrganization = async () => {
     setRetryCount(prev => prev + 1);
-    setBypassOrg(false);
     await fetchDefaultOrganization();
   };
 
@@ -241,36 +184,22 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       await cacheManager.clearAllCaches({ clearStorage: false });
       setRetryCount(0);
       setError(null);
-      setBypassOrg(false);
       await fetchDefaultOrganization();
     } catch (error) {
       logger.error('Failed to clear cache and retry', error);
-      setError('Failed to clear cache. You can continue without organization access or try a manual refresh.');
-      setCanContinue(true);
+      setError('Failed to clear cache. Please try a manual refresh.');
     }
   };
 
-  const continueWithoutOrg = () => {
-    logger.info('OrganizationContext: User chose to continue without organization');
-    setBypassOrg(true);
-    setError(null);
-    setLoading(false);
-  };
-
   useEffect(() => {
-    if (user && user.id) {
-      // Add small delay to ensure auth is fully established
-      const timer = setTimeout(() => {
-        fetchDefaultOrganization().finally(() => setLoading(false));
-      }, 100);
-      return () => clearTimeout(timer);
+    if (user) {
+      fetchDefaultOrganization().finally(() => setLoading(false));
     } else {
       setCurrentOrg(null);
       clearCurrentOrgId();
       setLoading(false);
-      setBypassOrg(false);
     }
-  }, [user?.id]);
+  }, [user]);
 
   return (
     <OrganizationContext.Provider value={{
@@ -279,9 +208,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       error,
       refreshOrganization,
       clearCacheAndRetry,
-      retryCount,
-      canContinue,
-      continueWithoutOrg
+      retryCount
     }}>
       {children}
     </OrganizationContext.Provider>

@@ -28,33 +28,18 @@ export function useGenerateStyle() {
   const queryClient = useQueryClient();
   const { activePlanId, setActiveStyleId } = usePlanStore();
 
-  console.log('useGenerateStyle: Hook initialized', { activePlanId });
-
   return useMutation({
     mutationFn: async (request: Omit<GenerateStyleRequest, 'plan_id'>): Promise<GenerateStyleResponse> => {
-      console.log('useGenerateStyle: Starting generation', { request, activePlanId });
-      
       if (!activePlanId) {
-        console.error('useGenerateStyle: No active plan ID');
         throw new Error('Geen actieve plattegrond geselecteerd');
       }
 
-      try {
-        const { data, error } = await supabase.functions.invoke('generate_style', {
-          body: { ...request, plan_id: activePlanId },
-        });
+      const { data, error } = await supabase.functions.invoke('generate_style', {
+        body: { ...request, plan_id: activePlanId },
+      });
 
-        console.log('useGenerateStyle: Response received', { data, error });
-
-        if (error) {
-          console.error('useGenerateStyle: Edge function error', error);
-          throw error;
-        }
-        return data;
-      } catch (err) {
-        console.error('useGenerateStyle: Network or parse error', err);
-        throw err;
-      }
+      if (error) throw error;
+      return data;
     },
     onSuccess: async (data, variables) => {
       if (!activePlanId) return;

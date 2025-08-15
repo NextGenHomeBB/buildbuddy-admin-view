@@ -7,7 +7,6 @@ import React from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { OrganizationErrorBoundary } from "@/components/OrganizationErrorBoundary";
-import { OrganizationErrorHandler } from "@/components/OrganizationErrorHandler";
 import { cacheManager } from "@/utils/cacheManager";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ProjectLayout } from "@/components/admin/ProjectLayout";
@@ -77,9 +76,8 @@ function App() {
           <AuthProvider>
             <OrganizationErrorBoundary>
               <OrganizationProvider>
-                <OrganizationErrorHandler>
-                  <Toaster />
-                  <BrowserRouter>
+              <Toaster />
+              <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
@@ -127,10 +125,9 @@ function App() {
               </Route>
               
               <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </BrowserRouter>
-                </OrganizationErrorHandler>
-              </OrganizationProvider>
+              </Routes>
+              </BrowserRouter>
+            </OrganizationProvider>
             </OrganizationErrorBoundary>
           </AuthProvider>
         </TooltipProvider>
