@@ -10,7 +10,7 @@ import { WorkforceOverview } from '@/components/admin/schedule/WorkforceOverview
 import { ScheduleAnalytics } from '@/components/admin/schedule/ScheduleAnalytics';
 import { useShifts } from '@/hooks/useShiftOptimization';
 import { useOptimizedTasks } from '@/hooks/useOptimizedTasks';
-import { useWorkers } from '@/hooks/useWorkers';
+import { useWorkersWithProjectAccess } from '@/hooks/useWorkersWithProjectAccess';
 import { useCreateTask } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/use-toast';
 import { format, addDays, startOfWeek } from 'date-fns';
@@ -26,8 +26,16 @@ export default function AdminScheduleManual() {
 
   const { data: shifts } = useShifts();
   const { data: tasks } = useOptimizedTasks();
-  const { data: workers } = useWorkers();
+  const { data: workersWithAccess = [] } = useWorkersWithProjectAccess();
   const createTaskMutation = useCreateTask();
+
+  // Convert workers with access to simple worker format for compatibility
+  const workers = workersWithAccess.map(w => ({
+    id: w.id,
+    full_name: w.full_name,
+    role: w.role,
+    avatar_url: w.avatar_url
+  }));
 
   const handleTaskCreate = async (taskData: any) => {
     try {

@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Calendar, CalendarIcon, Plus } from 'lucide-react';
+import { Calendar, CalendarIcon, Plus, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useProjects } from '@/hooks/useProjects';
+import { useWorkersWithProjectAccess } from '@/hooks/useWorkersWithProjectAccess';
+import { useAssignWorkerToProject } from '@/hooks/useProjectWorkers';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Worker {
@@ -45,6 +47,8 @@ export function AddTaskDialog({
 }: AddTaskDialogProps) {
   const { toast } = useToast();
   const { data: projects = [] } = useProjects();
+  const { data: workersWithAccess = [] } = useWorkersWithProjectAccess();
+  const assignWorkerMutation = useAssignWorkerToProject();
   
   const [formData, setFormData] = useState({
     title: '',
@@ -60,6 +64,39 @@ export function AddTaskDialog({
   // Fetch phases for selected project
   const [phases, setPhases] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
+
+  // Filter workers based on selected project
+  const availableWorkers = useMemo(() => {
+    if (formData.project_id === 'none') {
+      // If no project selected, show all workers
+      return workersWithAccess.map(w => ({
+        id: w.id,
+        full_name: w.full_name,
+        role: w.role,
+        avatar_url: w.avatar_url
+      }));
+    }
+    
+    // Filter workers who have access to the selected project
+    return workersWithAccess
+      .filter(worker => 
+        worker.project_access.some(access => access.project_id === formData.project_id)
+      )
+      .map(w => ({
+        id: w.id,
+        full_name: w.full_name,
+        role: w.role,
+        avatar_url: w.avatar_url
+      }));
+  }, [workersWithAccess, formData.project_id]);
+
+  // Check if selected assignee has project access
+  const selectedWorkerHasAccess = useMemo(() => {
+    if (formData.assignee === 'unassigned' || formData.project_id === 'none') {
+      return true;
+    }
+    return availableWorkers.some(worker => worker.id === formData.assignee);
+  }, [availableWorkers, formData.assignee, formData.project_id]);
 
   useEffect(() => {
     const fetchPhasesAndTasks = async () => {
@@ -122,6 +159,16 @@ export function AddTaskDialog({
       return;
     }
 
+    // Check if selected worker has project access
+    if (formData.assignee !== 'unassigned' && formData.project_id !== 'none' && !selectedWorkerHasAccess) {
+      toast({
+        title: "Error",
+        description: "Selected worker doesn't have access to this project. Please assign them to the project first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     onTaskCreate({
       ...formData,
       start_date: format(selectedDate, 'yyyy-MM-dd'),
@@ -161,6 +208,15 @@ export function AddTaskDialog({
         newData.template_task_id = 'none';
         newData.title = '';
         newData.description = '';
+        // Reset assignee if they don't have access to the new project
+        if (newData.assignee !== 'unassigned') {
+          const workerHasAccess = workersWithAccess
+            .find(w => w.id === newData.assignee)
+            ?.project_access.some(access => access.project_id === value);
+          if (!workerHasAccess) {
+            newData.assignee = 'unassigned';
+          }
+        }
       } else if (field === 'phase_id') {
         newData.template_task_id = 'none';
         newData.title = '';
@@ -310,12 +366,12 @@ export function AddTaskDialog({
               value={formData.assignee}
               onValueChange={(value) => handleInputChange('assignee', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className={!selectedWorkerHasAccess ? "border-destructive" : ""}>
                 <SelectValue placeholder="Select a worker" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="unassigned">Unassigned</SelectItem>
-                {workers.map((worker) => (
+                {availableWorkers.map((worker) => (
                   <SelectItem key={worker.id} value={worker.id}>
                     <div className="flex items-center gap-2">
                       <span>{worker.full_name}</span>
@@ -325,6 +381,29 @@ export function AddTaskDialog({
                 ))}
               </SelectContent>
             </Select>
+            {formData.project_id !== 'none' && availableWorkers.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No workers have access to this project yet. 
+                <Button 
+                  type="button" 
+                  variant="link" 
+                  className="h-auto p-0 ml-1"
+                  onClick={() => {
+                    toast({
+                      title: "Assign workers to project",
+                      description: "Go to the project settings to assign workers first.",
+                    });
+                  }}
+                >
+                  Assign workers to project
+                </Button>
+              </p>
+            )}
+            {!selectedWorkerHasAccess && formData.assignee !== 'unassigned' && (
+              <p className="text-sm text-destructive">
+                Selected worker doesn't have access to this project
+              </p>
+            )}
           </div>
 
           <DialogFooter>
