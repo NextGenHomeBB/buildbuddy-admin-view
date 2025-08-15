@@ -43,14 +43,7 @@ export default function AdminScheduleManual() {
 
   const handleTaskCreate = async (taskData: any) => {
     try {
-      if (!taskData.project_id) {
-        toast({
-          title: "Error",
-          description: "Please select a project to create the task",
-          variant: "destructive"
-        });
-        return;
-      }
+      console.log('handleTaskCreate called with:', taskData);
 
       // Calculate end_date from start_date + duration_days
       const endDate = taskData.start_date && taskData.duration_days 
@@ -70,8 +63,10 @@ export default function AdminScheduleManual() {
         is_scheduled: true
       };
 
+      console.log('Creating task with processed data:', createTaskData);
+
       await createTaskMutation.mutateAsync({
-        projectId: taskData.project_id,
+        projectId: taskData.project_id || '', // Allow empty project ID for unassigned tasks
         data: createTaskData
       });
 
@@ -79,10 +74,27 @@ export default function AdminScheduleManual() {
         title: "Success", 
         description: "Task created successfully"
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Task creation failed:', error);
+      
+      // Enhanced error handling
+      let errorMessage = "Failed to create task";
+      
+      if (error?.message) {
+        if (error.message.includes('row-level security')) {
+          errorMessage = "Permission denied: Check your project access permissions";
+        } else if (error.message.includes('foreign key')) {
+          errorMessage = "Invalid reference: Please check project/phase selection";
+        } else if (error.message.includes('not-null')) {
+          errorMessage = "Missing required fields";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
-        title: "Error",
-        description: "Failed to create task",
+        title: "Error creating task",
+        description: errorMessage,
         variant: "destructive"
       });
     }

@@ -91,13 +91,23 @@ export function useCreateTask() {
 
   return useMutation({
     mutationFn: async ({ projectId, data }: { projectId: string; data: CreateTaskData }): Promise<Task> => {
+      console.log('Creating task with data:', { projectId, data });
+      
+      // If no projectId provided, create task without project reference
+      const taskData = projectId ? { ...data, project_id: projectId } : data;
+      
       const { data: task, error } = await supabase
         .from('tasks')
-        .insert([{ ...data, project_id: projectId }])
+        .insert([taskData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Task creation error:', error);
+        throw error;
+      }
+      
+      console.log('Task created successfully:', task);
       return {
         ...task,
         status: task.status as Task['status'],
