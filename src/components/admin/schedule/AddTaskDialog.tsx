@@ -431,7 +431,28 @@ export function AddTaskDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="assignee">Assign to Worker (Optional)</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="assignee">Assign to Worker (Optional)</Label>
+              {formData.project_id !== 'none' && (
+                <div className="text-xs text-muted-foreground">
+                  {availableWorkers.length} of {workersWithAccess.length} workers available
+                </div>
+              )}
+            </div>
+            
+            {/* Worker statistics and helper text */}
+            {formData.project_id !== 'none' && (
+              <div className="text-sm text-muted-foreground mb-2">
+                {availableWorkers.length === 0 ? (
+                  <span className="text-orange-600">No workers have access to this project</span>
+                ) : workersWithoutAccess.length > 0 ? (
+                  <span>{workersWithoutAccess.length} additional workers could be assigned to this project</span>
+                ) : (
+                  <span>All workers have access to this project</span>
+                )}
+              </div>
+            )}
+            
             <Select
               value={formData.assignee}
               onValueChange={(value) => handleInputChange('assignee', value)}
@@ -451,6 +472,20 @@ export function AddTaskDialog({
                 ))}
               </SelectContent>
             </Select>
+            
+            {/* Always show assignment button when there are workers without access */}
+            {formData.project_id !== 'none' && workersWithoutAccess.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => setShowWorkerAssignment(true)}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Assign More Workers ({workersWithoutAccess.length})
+              </Button>
+            )}
             
             {/* Show assignment options for workers without project access */}
             {formData.project_id !== 'none' && availableWorkers.length === 0 && workersWithoutAccess.length > 0 && (
