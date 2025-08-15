@@ -66,9 +66,9 @@ serve(async (req) => {
       )
     }
 
-    if (!userOrgRole || !['admin', 'owner'].includes(userOrgRole)) {
+    if (!userOrgRole || !['org_admin', 'owner'].includes(userOrgRole)) {
       return new Response(
-        JSON.stringify({ error: 'Admin or owner access required for this organization' }),
+        JSON.stringify({ error: 'Org admin or owner access required for this organization' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
       )
     }
