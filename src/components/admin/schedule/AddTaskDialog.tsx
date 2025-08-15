@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useProjects } from '@/hooks/useProjects';
 import { useWorkersWithProjectAccess } from '@/hooks/useWorkersWithProjectAccess';
 import { useAssignWorkerToProject } from '@/hooks/useProjectWorkers';
+import { useCreateTaskWithAssignment } from '@/hooks/useCreateTaskWithAssignment';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Worker {
@@ -50,6 +51,7 @@ export function AddTaskDialog({
   const { data: projects = [] } = useProjects();
   const { data: workersWithAccess = [], refetch: refetchWorkers } = useWorkersWithProjectAccess();
   const assignWorkerMutation = useAssignWorkerToProject();
+  const createTaskWithAssignment = useCreateTaskWithAssignment();
   
   const [formData, setFormData] = useState({
     title: '',
@@ -81,18 +83,11 @@ export function AddTaskDialog({
       }));
     }
     
-    // Get project details to check assigned_workers JSONB field as well
-    const selectedProject = projects.find(p => p.id === formData.project_id);
-    const assignedWorkerIds = Array.isArray(selectedProject?.assigned_workers) ? selectedProject.assigned_workers : [];
-    
-    // Filter workers who have access to the selected project from EITHER source
+    // Filter workers who have access to the selected project
     return workersWithAccess
       .filter(worker => {
         // Check user_project_role table
-        const hasProjectRole = worker.project_access.some(access => access.project_id === formData.project_id);
-        // Check assigned_workers JSONB field
-        const isAssignedWorker = assignedWorkerIds.includes(worker.id);
-        return hasProjectRole || isAssignedWorker;
+        return worker.project_access.some(access => access.project_id === formData.project_id);
       })
       .map(w => ({
         id: w.id,
@@ -108,16 +103,11 @@ export function AddTaskDialog({
       return [];
     }
     
-    const selectedProject = projects.find(p => p.id === formData.project_id);
-    const assignedWorkerIds = Array.isArray(selectedProject?.assigned_workers) ? selectedProject.assigned_workers : [];
-    
     return workersWithAccess
       .filter(worker => {
         // Check user_project_role table
         const hasProjectRole = worker.project_access.some(access => access.project_id === formData.project_id);
-        // Check assigned_workers JSONB field
-        const isAssignedWorker = assignedWorkerIds.includes(worker.id);
-        return !hasProjectRole && !isAssignedWorker;
+        return !hasProjectRole;
       })
       .map(w => ({
         id: w.id,
@@ -196,7 +186,7 @@ export function AddTaskDialog({
     }
   }, [formData.template_task_id, tasks]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.title.trim()) {
@@ -208,43 +198,50 @@ export function AddTaskDialog({
       return;
     }
 
-    // Check if selected worker has project access
-    if (formData.assignee !== 'unassigned' && formData.project_id !== 'none' && !selectedWorkerHasAccess) {
+    if (!formData.project_id || formData.project_id === 'none') {
       toast({
-        title: "Error",
-        description: "Selected worker doesn't have access to this project. Please assign them to the project first.",
+        title: "Error", 
+        description: "Please select a project",
         variant: "destructive"
       });
       return;
     }
 
-    onTaskCreate({
-      ...formData,
-      start_date: format(selectedDate, 'yyyy-MM-dd'),
-      assignee: formData.assignee === 'unassigned' ? undefined : formData.assignee,
-      project_id: formData.project_id === 'none' ? undefined : formData.project_id,
-      phase_id: formData.phase_id === 'none' ? undefined : formData.phase_id,
-      template_task_id: formData.template_task_id === 'none' ? undefined : formData.template_task_id
-    });
+    if (!formData.assignee || formData.assignee === 'unassigned') {
+      toast({
+        title: "Error",
+        description: "Please select a worker to assign the task to",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    // Reset form
-    setFormData({
-      title: '',
-      description: '',
-      priority: 'medium',
-      assignee: 'unassigned',
-      duration_days: 1,
-      project_id: 'none',
-      phase_id: 'none',
-      template_task_id: 'none'
-    });
+    try {
+      await createTaskWithAssignment.mutateAsync({
+        title: formData.title,
+        description: formData.description,
+        assigneeId: formData.assignee,
+        projectId: formData.project_id,
+        dueDate: format(selectedDate, 'yyyy-MM-dd'),
+        priority: formData.priority
+      });
 
-    onOpenChange(false);
-    
-    toast({
-      title: "Success",
-      description: "Task created successfully"
-    });
+      // Reset form
+      setFormData({
+        title: '',
+        description: '',
+        priority: 'medium',
+        assignee: 'unassigned',
+        duration_days: 1,
+        project_id: 'none',
+        phase_id: 'none',
+        template_task_id: 'none'
+      });
+
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error creating task:', error);
+    }
   };
 
   const handleAssignWorkerToProject = async (workerId: string) => {

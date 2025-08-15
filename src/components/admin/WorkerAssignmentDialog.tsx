@@ -55,24 +55,18 @@ export function WorkerAssignmentDialog({
 
     setIsAssigning(true);
     try {
-      // Get current project data
-      const { data: project, error: projectError } = await supabase
-        .from('projects')
-        .select('assigned_workers')
-        .eq('id', projectId)
-        .single();
+      // Assign workers to project via user_project_role table
+      const assignments = selectedWorkers.map(workerId => ({
+        user_id: workerId,
+        project_id: projectId,
+        role: 'worker'
+      }));
 
-      if (projectError) throw projectError;
-
-      // Merge existing workers with new selections
-      const currentWorkers = Array.isArray(project.assigned_workers) ? project.assigned_workers : [];
-      const allWorkers = [...new Set([...currentWorkers, ...selectedWorkers])];
-
-      // Update project with new workers
       const { error: updateError } = await supabase
-        .from('projects')
-        .update({ assigned_workers: allWorkers })
-        .eq('id', projectId);
+        .from('user_project_role')
+        .upsert(assignments, {
+          onConflict: 'user_id,project_id'
+        });
 
       if (updateError) throw updateError;
 
