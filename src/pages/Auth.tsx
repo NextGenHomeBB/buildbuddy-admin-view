@@ -92,17 +92,7 @@ export const Auth = () => {
         if (error) throw error;
 
         if (data.user) {
-          // Create profile without role - roles are managed through user_roles table
-          await supabase
-            .from('profiles')
-            .insert([
-              {
-                id: data.user.id,
-                full_name: fullNameValidation!.sanitizedValue
-              }
-            ]);
-
-          logger.log('User profile created', { userId: data.user.id });
+          logger.log('User signed up successfully', { userId: data.user.id });
 
           toast({
             title: "Account created!",
