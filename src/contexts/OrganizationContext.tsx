@@ -18,6 +18,8 @@ interface OrganizationContextType {
   refreshOrganization: () => Promise<void>;
   clearCacheAndRetry: () => Promise<void>;
   retryCount: number;
+  canContinue: boolean;
+  continueWithoutOrg: () => void;
 }
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
@@ -28,18 +30,27 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [canContinue, setCanContinue] = useState(false);
+  const [bypassOrg, setBypassOrg] = useState(false);
 
-  const fetchDefaultOrganization = async () => {
+  const fetchDefaultOrganization = async (attempt = 1) => {
     if (!user) {
       logger.debug('OrganizationContext: No user found');
       return;
     }
 
+    if (bypassOrg) {
+      logger.debug('OrganizationContext: Bypassing organization check');
+      return;
+    }
+
     try {
       setError(null);
+      setCanContinue(false);
       logger.info('OrganizationContext: Fetching organization for user', { 
         userId: user.id, 
-        retryCount 
+        retryCount,
+        attempt 
       });
       
       // First try to get user's default organization from profiles
@@ -158,13 +169,24 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
       if (orgError) {
         logger.error('OrganizationContext: Organization error', orgError);
-        setError(`Organization access error: ${orgError.message}. Please contact support.`);
+        
+        // For certain errors, allow retry with exponential backoff
+        if (attempt < 3 && (orgError.code === '42P17' || orgError.message.includes('recursion'))) {
+          logger.warn(`OrganizationContext: Retrying after error (attempt ${attempt}/3)`, { orgError });
+          const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return fetchDefaultOrganization(attempt + 1);
+        }
+        
+        setError(`Organization access error: ${orgError.message}`);
+        setCanContinue(true); // Allow workers to continue
         return;
       }
 
       if (!org) {
         logger.error('OrganizationContext: Organization not found');
-        setError('Organization not found. Please contact support.');
+        setError('Organization not found. You can continue without organization access.');
+        setCanContinue(true); // Allow workers to continue
         return;
       }
 
@@ -179,25 +201,37 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       logger.error('OrganizationContext: Error fetching default organization', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
+      // For certain errors, allow retry with exponential backoff
+      if (attempt < 3 && (errorMessage.includes('recursion') || errorMessage.includes('policy'))) {
+        logger.warn(`OrganizationContext: Retrying after error (attempt ${attempt}/3)`, { error });
+        const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return fetchDefaultOrganization(attempt + 1);
+      }
+      
       // Provide more specific error messages for common issues
-      if (errorMessage.includes('row-level security')) {
-        setError('Permission error: Unable to access organization data. Please contact support.');
+      if (errorMessage.includes('row-level security') || errorMessage.includes('policy')) {
+        setError('Permission error: Unable to access organization data. You can continue without organization access.');
       } else if (errorMessage.includes('connection')) {
         setError('Connection error: Please check your internet connection and try again.');
       } else {
-        setError(`Failed to load organization: ${errorMessage}`);
+        setError(`Failed to load organization: ${errorMessage}. You can continue without organization access.`);
       }
+      
+      // Allow workers to continue even with organization errors
+      setCanContinue(true);
       
       // If this is a repeated failure, suggest cache clearing
       if (retryCount > 2) {
         logger.warn('Multiple organization load failures, cache issue suspected', { retryCount });
-        setError('Persistent loading issue detected. Try clearing cache.');
+        setError('Persistent loading issue detected. You can continue without organization access or try clearing cache.');
       }
     }
   };
 
   const refreshOrganization = async () => {
     setRetryCount(prev => prev + 1);
+    setBypassOrg(false);
     await fetchDefaultOrganization();
   };
 
@@ -207,22 +241,36 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       await cacheManager.clearAllCaches({ clearStorage: false });
       setRetryCount(0);
       setError(null);
+      setBypassOrg(false);
       await fetchDefaultOrganization();
     } catch (error) {
       logger.error('Failed to clear cache and retry', error);
-      setError('Failed to clear cache. Please try a manual refresh.');
+      setError('Failed to clear cache. You can continue without organization access or try a manual refresh.');
+      setCanContinue(true);
     }
   };
 
+  const continueWithoutOrg = () => {
+    logger.info('OrganizationContext: User chose to continue without organization');
+    setBypassOrg(true);
+    setError(null);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    if (user) {
-      fetchDefaultOrganization().finally(() => setLoading(false));
+    if (user && user.id) {
+      // Add small delay to ensure auth is fully established
+      const timer = setTimeout(() => {
+        fetchDefaultOrganization().finally(() => setLoading(false));
+      }, 100);
+      return () => clearTimeout(timer);
     } else {
       setCurrentOrg(null);
       clearCurrentOrgId();
       setLoading(false);
+      setBypassOrg(false);
     }
-  }, [user]);
+  }, [user?.id]);
 
   return (
     <OrganizationContext.Provider value={{
@@ -231,7 +279,9 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       error,
       refreshOrganization,
       clearCacheAndRetry,
-      retryCount
+      retryCount,
+      canContinue,
+      continueWithoutOrg
     }}>
       {children}
     </OrganizationContext.Provider>
