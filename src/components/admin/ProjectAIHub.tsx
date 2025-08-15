@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Lightbulb, Palette, Calculator, Sparkles } from 'lucide-react';
 import { usePlanStore } from '@/store/planStore';
+import { ErrorBoundaryWrapper } from '@/components/ErrorBoundaryWrapper';
 
 // Import AI components
 import { CanvasArea } from '@/components/indeling/CanvasArea';
@@ -29,12 +30,17 @@ interface ProjectAIHubProps {
 }
 
 export function ProjectAIHub({ projectId, projectName }: ProjectAIHubProps) {
+  console.log('ProjectAIHub: Component rendering', { projectId, projectName });
+  
   const navigate = useNavigate();
   const location = useLocation();
   const { activePlanId, activeStyleId, setActiveProjectId } = usePlanStore();
 
+  console.log('ProjectAIHub: Store state', { activePlanId, activeStyleId });
+
   // Set the active project when the component mounts
   useEffect(() => {
+    console.log('ProjectAIHub: Setting active project', projectId);
     setActiveProjectId(projectId);
   }, [projectId, setActiveProjectId]);
   
@@ -42,10 +48,25 @@ export function ProjectAIHub({ projectId, projectName }: ProjectAIHubProps) {
   const { mutate: generateStyle, isPending: isGeneratingStyle, data: styleData } = useGenerateStyle();
   const { mutate: computeMaterials, isPending: isComputingMaterials, data: estimateData } = useComputeMaterials();
 
+  console.log('ProjectAIHub: Hooks loaded', { 
+    isGeneratingLayout, 
+    isGeneratingStyle, 
+    isComputingMaterials,
+    hasStyleData: !!styleData,
+    hasEstimateData: !!estimateData
+  });
+
   // Get current AI tool from URL
   const pathParts = location.pathname.split('/');
   const currentTool = pathParts[pathParts.length - 1];
   const activeTab = ['indeling', 'styling', 'materials'].includes(currentTool) ? currentTool : 'indeling';
+
+  console.log('ProjectAIHub: Navigation state', { 
+    pathname: location.pathname, 
+    pathParts, 
+    currentTool, 
+    activeTab 
+  });
 
   // Navigate to indeling by default when on /ai route
   useEffect(() => {
@@ -80,16 +101,19 @@ export function ProjectAIHub({ projectId, projectName }: ProjectAIHubProps) {
     computeMaterials();
   };
 
+  console.log('ProjectAIHub: About to render', { activeTab, activePlanId });
+
   return (
-    <div className="space-y-6">
-      {/* AI Tools Header */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">AI Tools</h1>
+    <ErrorBoundaryWrapper componentName="ProjectAIHub">
+      <div className="space-y-6">
+        {/* AI Tools Header */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground">AI Tools</h1>
+          </div>
+          <span className="text-muted-foreground">voor {projectName}</span>
         </div>
-        <span className="text-muted-foreground">voor {projectName}</span>
-      </div>
 
       {/* AI Tools Navigation */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -161,75 +185,85 @@ export function ProjectAIHub({ projectId, projectName }: ProjectAIHubProps) {
 
         {/* AI Styling Tab */}
         <TabsContent value="styling" className="space-y-6">
-          {!activePlanId ? (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center space-y-4">
-                  <Palette className="h-12 w-12 text-muted-foreground mx-auto" />
-                  <div>
-                    <h3 className="text-lg font-semibold">Geen plattegrond geselecteerd</h3>
-                    <p className="text-muted-foreground">
-                      Genereer eerst een plattegrond in de Indeling tab om te beginnen met styling.
-                    </p>
+          <ErrorBoundaryWrapper componentName="AI Styling Tab">
+            {!activePlanId ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center space-y-4">
+                    <Palette className="h-12 w-12 text-muted-foreground mx-auto" />
+                    <div>
+                      <h3 className="text-lg font-semibold">Geen plattegrond geselecteerd</h3>
+                      <p className="text-muted-foreground">
+                        Genereer eerst een plattegrond in de Indeling tab om te beginnen met styling.
+                      </p>
+                    </div>
+                    <Button onClick={() => handleTabChange('indeling')}>
+                      Ga naar Indeling
+                    </Button>
                   </div>
-                  <Button onClick={() => handleTabChange('indeling')}>
-                    Ga naar Indeling
-                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Main content */}
+                <div className="lg:col-span-2 space-y-4">
+                  <ErrorBoundaryWrapper componentName="Palette Preview">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Kleurpalet</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <PalettePreview palette={styleData?.palette} />
+                      </CardContent>
+                    </Card>
+                  </ErrorBoundaryWrapper>
+
+                  <ErrorBoundaryWrapper componentName="Mood Board">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Mood Board</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <MoodBoard 
+                          images={styleData?.moodImages} 
+                          textures={styleData?.textures}
+                        />
+                      </CardContent>
+                    </Card>
+                  </ErrorBoundaryWrapper>
+
+                  <ErrorBoundaryWrapper componentName="Styling Generator">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>AI Styling Generator</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <PromptBar
+                          onSubmit={handleGenerateStyle}
+                          loading={isGeneratingStyle}
+                          placeholder="Bijv. Scandinavisch, lichte houttinten, witte muren, natuurlijke materialen"
+                        />
+                      </CardContent>
+                    </Card>
+                  </ErrorBoundaryWrapper>
                 </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid lg:grid-cols-3 gap-6">
-              {/* Main content */}
-              <div className="lg:col-span-2 space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Kleurpalet</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <PalettePreview palette={styleData?.palette} />
-                  </CardContent>
-                </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Mood Board</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <MoodBoard 
-                      images={styleData?.moodImages} 
-                      textures={styleData?.textures}
-                    />
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>AI Styling Generator</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <PromptBar
-                      onSubmit={handleGenerateStyle}
-                      loading={isGeneratingStyle}
-                      placeholder="Bijv. Scandinavisch, lichte houttinten, witte muren, natuurlijke materialen"
-                    />
-                  </CardContent>
-                </Card>
+                {/* Sidebar */}
+                <div className="space-y-4">
+                  <ErrorBoundaryWrapper componentName="Style History">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Stijl Geschiedenis</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <StyleHistory />
+                      </CardContent>
+                    </Card>
+                  </ErrorBoundaryWrapper>
+                </div>
               </div>
-
-              {/* Sidebar */}
-              <div className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Stijl Geschiedenis</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <StyleHistory />
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
+            )}
+          </ErrorBoundaryWrapper>
         </TabsContent>
 
         {/* AI Materials Tab */}
@@ -293,6 +327,7 @@ export function ProjectAIHub({ projectId, projectName }: ProjectAIHubProps) {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </ErrorBoundaryWrapper>
   );
 }
