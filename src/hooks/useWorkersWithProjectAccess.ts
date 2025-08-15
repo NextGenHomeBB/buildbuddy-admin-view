@@ -53,38 +53,88 @@ export function useWorkersWithProjectAccess() {
           return [];
         }
 
-        const { data: projectRoles, error: projectError } = await supabase
-          .from('user_project_role')
-          .select('user_id, project_id, role')
-          .in('user_id', userIds);
+        // Get both user_project_role entries and assigned_workers from projects
+        const [projectRolesResult, projectsResult] = await Promise.all([
+          supabase
+            .from('user_project_role')
+            .select('user_id, project_id, role')
+            .in('user_id', userIds),
+          supabase
+            .from('projects')
+            .select('id, assigned_workers')
+            .not('assigned_workers', 'is', null)
+        ]);
+
+        const { data: projectRoles, error: projectError } = projectRolesResult;
+        const { data: projects, error: projectsError } = projectsResult;
 
         if (projectError) {
           console.error('Error fetching project roles:', projectError);
-          // Don't throw here, return users without project access data
-          return users.map((user: any) => ({
+        }
+        
+        if (projectsError) {
+          console.error('Error fetching projects with assigned workers:', projectsError);
+        }
+
+        // Build a comprehensive project access map
+        const projectAccessMap = new Map<string, Set<{ project_id: string; role: string }>>();
+
+        // Initialize map for all users
+        userIds.forEach(userId => {
+          projectAccessMap.set(userId, new Set());
+        });
+
+        // Add project roles from user_project_role table
+        if (projectRoles) {
+          projectRoles.forEach(pr => {
+            if (pr.user_id && pr.project_id) {
+              const userAccess = projectAccessMap.get(pr.user_id);
+              if (userAccess) {
+                userAccess.add({
+                  project_id: pr.project_id,
+                  role: pr.role || 'worker'
+                });
+              }
+            }
+          });
+        }
+
+        // Add project access from assigned_workers JSONB field
+        if (projects) {
+          projects.forEach(project => {
+            if (project.assigned_workers && Array.isArray(project.assigned_workers)) {
+              project.assigned_workers.forEach((workerId: string) => {
+                if (userIds.includes(workerId)) {
+                  const userAccess = projectAccessMap.get(workerId);
+                  if (userAccess) {
+                    // Check if this project access already exists to avoid duplicates
+                    const hasAccess = Array.from(userAccess).some(access => access.project_id === project.id);
+                    if (!hasAccess) {
+                      userAccess.add({
+                        project_id: project.id,
+                        role: 'worker' // Default role for assigned_workers
+                      });
+                    }
+                  }
+                }
+              });
+            }
+          });
+        }
+
+        console.log('Project access map built:', projectAccessMap.size, 'users with access data');
+
+        // Map users with their project access
+        const result = users.map((user: any) => {
+          const userAccess = projectAccessMap.get(user.id) || new Set();
+          return {
             id: user.id,
             full_name: user.full_name || 'Unknown User',
             role: user.role || 'worker',
             avatar_url: user.avatar_url,
-            project_access: []
-          }));
-        }
-
-        console.log('Fetched project roles:', projectRoles?.length || 0);
-
-        // Map users with their project access
-        const result = users.map((user: any) => ({
-          id: user.id,
-          full_name: user.full_name || 'Unknown User',
-          role: user.role || 'worker',
-          avatar_url: user.avatar_url,
-          project_access: (projectRoles || [])
-            .filter(pr => pr.user_id === user.id && pr.project_id)
-            .map(pr => ({
-              project_id: pr.project_id,
-              role: pr.role
-            }))
-        }));
+            project_access: Array.from(userAccess)
+          };
+        });
 
         console.log('Final workers with access:', result.length);
         return result;
