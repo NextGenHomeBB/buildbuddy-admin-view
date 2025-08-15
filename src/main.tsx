@@ -11,13 +11,23 @@ import { initBuildOptimizations } from './utils/buildOptimization';
 import { logDeploymentReadiness } from './utils/deploymentCheck';
 
 // Initialize performance monitoring
-initPerformanceMonitoring();
+try {
+  initPerformanceMonitoring();
+  console.log('[INIT] Performance monitoring initialized');
+} catch (error) {
+  console.error('[INIT] Performance monitoring failed:', error);
+}
 
 // Initialize production optimizations
 if (import.meta.env.PROD) {
-  initProductionMonitoring();
-  initBuildOptimizations();
-  logDeploymentReadiness();
+  try {
+    initProductionMonitoring();
+    initBuildOptimizations();
+    logDeploymentReadiness();
+    console.log('[INIT] Production optimizations initialized');
+  } catch (error) {
+    console.error('[INIT] Production optimization failed:', error);
+  }
 }
 
 // Register service worker for PWA functionality
