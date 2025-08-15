@@ -2678,6 +2678,18 @@ export type Database = {
         }
         Returns: Json
       }
+      audit_guard_blocked: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      audit_guard_off: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      audit_guard_on: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       audit_sensitive_operation: {
         Args: {
           operation_type: string
