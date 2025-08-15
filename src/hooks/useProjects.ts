@@ -15,6 +15,7 @@ export interface Project {
   updated_at?: string;
   manager_id?: string;
   company_id?: string;
+  assigned_workers?: any; // This is JSONB, can be array of strings
   project_phases?: Array<{ id: string }>;
 }
 

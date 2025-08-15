@@ -69,7 +69,7 @@ export function AddTaskDialog({
   const [phases, setPhases] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
 
-  // Filter workers based on selected project
+  // Filter workers based on selected project - use both sources for completeness
   const availableWorkers = useMemo(() => {
     if (formData.project_id === 'none') {
       // If no project selected, show all workers
@@ -81,18 +81,26 @@ export function AddTaskDialog({
       }));
     }
     
-    // Filter workers who have access to the selected project
+    // Get project details to check assigned_workers JSONB field as well
+    const selectedProject = projects.find(p => p.id === formData.project_id);
+    const assignedWorkerIds = Array.isArray(selectedProject?.assigned_workers) ? selectedProject.assigned_workers : [];
+    
+    // Filter workers who have access to the selected project from EITHER source
     return workersWithAccess
-      .filter(worker => 
-        worker.project_access.some(access => access.project_id === formData.project_id)
-      )
+      .filter(worker => {
+        // Check user_project_role table
+        const hasProjectRole = worker.project_access.some(access => access.project_id === formData.project_id);
+        // Check assigned_workers JSONB field
+        const isAssignedWorker = assignedWorkerIds.includes(worker.id);
+        return hasProjectRole || isAssignedWorker;
+      })
       .map(w => ({
         id: w.id,
         full_name: w.full_name,
         role: w.role,
         avatar_url: w.avatar_url
       }));
-  }, [workersWithAccess, formData.project_id]);
+  }, [workersWithAccess, formData.project_id, projects]);
 
   // Get workers without project access for assignment option
   const workersWithoutAccess = useMemo(() => {
@@ -100,17 +108,24 @@ export function AddTaskDialog({
       return [];
     }
     
+    const selectedProject = projects.find(p => p.id === formData.project_id);
+    const assignedWorkerIds = Array.isArray(selectedProject?.assigned_workers) ? selectedProject.assigned_workers : [];
+    
     return workersWithAccess
-      .filter(worker => 
-        !worker.project_access.some(access => access.project_id === formData.project_id)
-      )
+      .filter(worker => {
+        // Check user_project_role table
+        const hasProjectRole = worker.project_access.some(access => access.project_id === formData.project_id);
+        // Check assigned_workers JSONB field
+        const isAssignedWorker = assignedWorkerIds.includes(worker.id);
+        return !hasProjectRole && !isAssignedWorker;
+      })
       .map(w => ({
         id: w.id,
         full_name: w.full_name,
         role: w.role,
         avatar_url: w.avatar_url
       }));
-  }, [workersWithAccess, formData.project_id]);
+  }, [workersWithAccess, formData.project_id, projects]);
 
   // Check if selected assignee has project access
   const selectedWorkerHasAccess = useMemo(() => {
