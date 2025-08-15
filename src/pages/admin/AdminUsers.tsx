@@ -25,6 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { UserInviteDialog } from '@/components/admin/UserInviteDialog';
 import { ChangeUserRoleDialog } from '@/components/admin/ChangeUserRoleDialog';
 import { EditUserDialog } from '@/components/admin/EditUserDialog';
+import { ProjectSelectionDialog } from '@/components/admin/ProjectSelectionDialog';
 
 // Define user interface to match database schema
 interface User {
@@ -59,6 +60,7 @@ export function AdminUsers() {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const fetchUsers = async (isRefresh = false) => {
@@ -154,6 +156,16 @@ export function AdminUsers() {
                 Change Role
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="gap-2"
+                onClick={() => {
+                  setSelectedUser(user);
+                  setShowAssignDialog(true);
+                }}
+              >
+                <Users className="h-4 w-4" />
+                Assign to Project
+              </DropdownMenuItem>
               <DropdownMenuItem className="gap-2">
                 <Mail className="h-4 w-4" />
                 Send Message
@@ -252,6 +264,16 @@ export function AdminUsers() {
                 Change Role
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="gap-2"
+                onClick={() => {
+                  setSelectedUser(user);
+                  setShowAssignDialog(true);
+                }}
+              >
+                <Users className="h-4 w-4" />
+                Assign to Project
+              </DropdownMenuItem>
               <DropdownMenuItem className="gap-2">
                 <Mail className="h-4 w-4" />
                 Send Message
@@ -366,6 +388,12 @@ export function AdminUsers() {
           setShowEditDialog(false);
           setSelectedUser(null);
         }}
+      />
+
+      <ProjectSelectionDialog
+        open={showAssignDialog}
+        onOpenChange={setShowAssignDialog}
+        selectedUser={selectedUser}
       />
 
       {/* Organization-specific invitation management */}
