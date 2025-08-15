@@ -5,7 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Calendar, CalendarIcon, Plus, UserPlus } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Calendar, CalendarIcon, Plus, UserPlus, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useProjects } from '@/hooks/useProjects';
@@ -47,7 +48,7 @@ export function AddTaskDialog({
 }: AddTaskDialogProps) {
   const { toast } = useToast();
   const { data: projects = [] } = useProjects();
-  const { data: workersWithAccess = [] } = useWorkersWithProjectAccess();
+  const { data: workersWithAccess = [], refetch: refetchWorkers } = useWorkersWithProjectAccess();
   const assignWorkerMutation = useAssignWorkerToProject();
   
   const [formData, setFormData] = useState({
@@ -60,6 +61,9 @@ export function AddTaskDialog({
     phase_id: 'none',
     template_task_id: 'none'
   });
+
+  const [isAssigningWorker, setIsAssigningWorker] = useState(false);
+  const [showWorkerAssignment, setShowWorkerAssignment] = useState(false);
 
   // Fetch phases for selected project
   const [phases, setPhases] = useState<any[]>([]);
@@ -90,6 +94,24 @@ export function AddTaskDialog({
       }));
   }, [workersWithAccess, formData.project_id]);
 
+  // Get workers without project access for assignment option
+  const workersWithoutAccess = useMemo(() => {
+    if (formData.project_id === 'none') {
+      return [];
+    }
+    
+    return workersWithAccess
+      .filter(worker => 
+        !worker.project_access.some(access => access.project_id === formData.project_id)
+      )
+      .map(w => ({
+        id: w.id,
+        full_name: w.full_name,
+        role: w.role,
+        avatar_url: w.avatar_url
+      }));
+  }, [workersWithAccess, formData.project_id]);
+
   // Check if selected assignee has project access
   const selectedWorkerHasAccess = useMemo(() => {
     if (formData.assignee === 'unassigned' || formData.project_id === 'none') {
@@ -97,6 +119,18 @@ export function AddTaskDialog({
     }
     return availableWorkers.some(worker => worker.id === formData.assignee);
   }, [availableWorkers, formData.assignee, formData.project_id]);
+
+  // Get selected worker details
+  const selectedWorker = useMemo(() => {
+    if (formData.assignee === 'unassigned') return null;
+    return workersWithAccess.find(w => w.id === formData.assignee);
+  }, [workersWithAccess, formData.assignee]);
+
+  // Get selected project details
+  const selectedProject = useMemo(() => {
+    if (formData.project_id === 'none') return null;
+    return projects.find(p => p.id === formData.project_id);
+  }, [projects, formData.project_id]);
 
   useEffect(() => {
     const fetchPhasesAndTasks = async () => {
@@ -198,6 +232,41 @@ export function AddTaskDialog({
     });
   };
 
+  const handleAssignWorkerToProject = async (workerId: string) => {
+    if (!selectedProject) return;
+    
+    setIsAssigningWorker(true);
+    
+    try {
+      await assignWorkerMutation.mutateAsync({
+        projectId: selectedProject.id,
+        userId: workerId,
+        role: 'worker'
+      });
+      
+      // Refresh workers data
+      await refetchWorkers();
+      
+      // Set the worker as assignee
+      setFormData(prev => ({ ...prev, assignee: workerId }));
+      setShowWorkerAssignment(false);
+      
+      toast({
+        title: "Worker assigned",
+        description: `Worker has been assigned to ${selectedProject.name} and can now be assigned to tasks.`,
+      });
+    } catch (error) {
+      console.error('Failed to assign worker:', error);
+      toast({
+        title: "Error",
+        description: "Failed to assign worker to project. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAssigningWorker(false);
+    }
+  };
+
   const handleInputChange = (field: string, value: string | number) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
@@ -208,6 +277,7 @@ export function AddTaskDialog({
         newData.template_task_id = 'none';
         newData.title = '';
         newData.description = '';
+        setShowWorkerAssignment(false);
         // Reset assignee if they don't have access to the new project
         if (newData.assignee !== 'unassigned') {
           const workerHasAccess = workersWithAccess
@@ -381,27 +451,99 @@ export function AddTaskDialog({
                 ))}
               </SelectContent>
             </Select>
-            {formData.project_id !== 'none' && availableWorkers.length === 0 && (
+            
+            {/* Show assignment options for workers without project access */}
+            {formData.project_id !== 'none' && availableWorkers.length === 0 && workersWithoutAccess.length > 0 && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  No workers have access to this project yet.{' '}
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0"
+                    onClick={() => setShowWorkerAssignment(true)}
+                  >
+                    Assign workers to project
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Show worker assignment section if enabled */}
+            {showWorkerAssignment && formData.project_id !== 'none' && workersWithoutAccess.length > 0 && (
+              <div className="border rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Assign Workers to Project</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowWorkerAssignment(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Assign workers to {selectedProject?.name} to make them available for task assignment.
+                </p>
+                <div className="space-y-2">
+                  {workersWithoutAccess.map((worker) => (
+                    <div key={worker.id} className="flex items-center justify-between py-1">
+                      <span className="text-sm">{worker.full_name}</span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={isAssigningWorker}
+                        onClick={() => handleAssignWorkerToProject(worker.id)}
+                      >
+                        <UserPlus className="h-3 w-3 mr-1" />
+                        {isAssigningWorker ? 'Assigning...' : 'Assign'}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Show warning for selected worker without access */}
+            {!selectedWorkerHasAccess && formData.assignee !== 'unassigned' && selectedWorker && selectedProject && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span>{selectedWorker.full_name} doesn't have access to {selectedProject.name}</span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={isAssigningWorker}
+                    onClick={() => handleAssignWorkerToProject(selectedWorker.id)}
+                  >
+                    <UserPlus className="h-3 w-3 mr-1" />
+                    {isAssigningWorker ? 'Assigning...' : 'Assign to Project'}
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Show link to project settings if no workers available */}
+            {formData.project_id !== 'none' && availableWorkers.length === 0 && workersWithoutAccess.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                No workers have access to this project yet. 
+                No workers available for this project.{' '}
                 <Button 
                   type="button" 
                   variant="link" 
-                  className="h-auto p-0 ml-1"
+                  className="h-auto p-0"
                   onClick={() => {
                     toast({
-                      title: "Assign workers to project",
-                      description: "Go to the project settings to assign workers first.",
+                      title: "Go to project settings",
+                      description: "Manage worker assignments in the project settings.",
                     });
                   }}
                 >
-                  Assign workers to project
+                  Manage project workers
                 </Button>
-              </p>
-            )}
-            {!selectedWorkerHasAccess && formData.assignee !== 'unassigned' && (
-              <p className="text-sm text-destructive">
-                Selected worker doesn't have access to this project
               </p>
             )}
           </div>

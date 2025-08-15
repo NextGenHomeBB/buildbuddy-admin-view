@@ -66,6 +66,7 @@ export function useAssignWorkerToProject() {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['project-workers', variables.projectId] });
+      queryClient.invalidateQueries({ queryKey: ['workers-with-project-access'] });
       toast({
         title: "Worker assigned",
         description: "Worker has been assigned to the project successfully.",
