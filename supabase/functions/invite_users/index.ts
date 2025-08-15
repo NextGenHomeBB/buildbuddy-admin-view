@@ -9,7 +9,7 @@ const corsHeaders = {
 interface InviteRequest {
   emails: string[];
   role: 'admin' | 'manager' | 'worker';
-  message?: string;
+  org_id: string;
   send_welcome: boolean;
 }
 
@@ -57,21 +57,18 @@ serve(async (req) => {
       )
     }
 
-    // Check if user is admin (only admins can invite users)
-    const { data: currentUserRole } = await supabaseClient
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
+    // Get user role using the existing function
+    const { data: userRole, error: roleError } = await supabaseClient
+      .rpc('get_current_user_role')
 
-    if (currentUserRole?.role !== 'admin') {
+    if (roleError || !userRole || !['admin', 'owner'].includes(userRole)) {
       return new Response(
-        JSON.stringify({ error: 'Admin access required' }),
+        JSON.stringify({ error: 'Admin or owner access required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
       )
     }
 
-    const { emails, role, message, send_welcome }: InviteRequest = await req.json()
+    const { emails, role, org_id, send_welcome }: InviteRequest = await req.json()
 
     // Enhanced input validation
     if (!emails || !Array.isArray(emails) || emails.length === 0) {
@@ -106,10 +103,10 @@ serve(async (req) => {
       )
     }
 
-    // Validate message length if provided
-    if (message && message.length > 500) {
+    // Validate org_id
+    if (!org_id) {
       return new Response(
-        JSON.stringify({ error: 'Message must be under 500 characters' }),
+        JSON.stringify({ error: 'Organization ID is required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
@@ -120,31 +117,27 @@ serve(async (req) => {
     // Process each email invitation
     for (const email of emails) {
       try {
-        // Check if user already exists
-        const { data: existingUser } = await supabaseClient
-          .from('profiles')
-          .select('id')
-          .eq('id', email) // This would need to be updated based on how you track emails
+        // Check if invitation already exists for this org/email
+        const { data: existingInvite } = await supabaseClient
+          .from('invitations')
+          .select('id, status')
+          .eq('org_id', org_id)
+          .eq('email', email)
           .single()
 
-        if (existingUser) {
-          errors.push({ email, error: 'User already exists' })
+        if (existingInvite && existingInvite.status === 'pending') {
+          errors.push({ email, error: 'Invitation already pending for this organization' })
           continue
         }
 
-        // Create invitation record
+        // Use the invite_user RPC function
         const { data: invitation, error: inviteError } = await supabaseClient
-          .from('user_invitations')
-          .insert({
-            email,
-            role,
-            invited_by: user.id,
-            message,
-            status: 'pending',
-            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+          .rpc('invite_user', {
+            p_org_id: org_id,
+            p_email: email,
+            p_role: role,
+            p_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
           })
-          .select()
-          .single()
 
         if (inviteError) {
           errors.push({ email, error: inviteError.message })
@@ -160,7 +153,7 @@ serve(async (req) => {
 
         results.push({
           email,
-          invitation_id: invitation.id,
+          invitation_data: invitation,
           status: 'sent'
         })
 

@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Mail, Users, Shield, Send, Check } from 'lucide-react';
 import { logger } from '@/utils/logger';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import {
   Dialog,
   DialogContent,
@@ -46,6 +47,7 @@ export function UserInviteDialog({ open, onOpenChange, onUserInvited }: UserInvi
   const [invitedEmails, setInvitedEmails] = useState<string[]>([]);
   const [step, setStep] = useState<'form' | 'success'>('form');
   const { toast } = useToast();
+  const { currentOrg } = useOrganization();
 
   const form = useForm<InviteFormData>({
     resolver: zodResolver(inviteSchema),
@@ -108,12 +110,21 @@ export function UserInviteDialog({ open, onOpenChange, onUserInvited }: UserInvi
         return;
       }
 
+      if (!currentOrg?.id) {
+        toast({
+          title: 'No organization selected',
+          description: 'Please select an organization first.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       // Send invitations through edge function
       const { data: result, error } = await supabase.functions.invoke('invite_users', {
         body: {
           emails: valid,
           role: data.role,
-          message: data.message,
+          org_id: currentOrg.id,
           send_welcome: data.send_welcome,
         },
         headers: {
