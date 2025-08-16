@@ -2701,7 +2701,7 @@ export type Database = {
         Returns: undefined
       }
       can_access_project: {
-        Args: { project_uuid: string; user_uuid: string }
+        Args: { p_project_id: string; p_user_id: string }
         Returns: boolean
       }
       can_access_project_financial_data: {
@@ -2710,6 +2710,10 @@ export type Database = {
       }
       can_access_security_monitor: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      can_assign_to_project: {
+        Args: { p_assigner_id: string; p_project_id: string }
         Returns: boolean
       }
       check_customer_data_rate_limit: {

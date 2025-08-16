@@ -126,8 +126,25 @@ export function useAssignMultipleWorkers() {
     mutationFn: async ({ projectId, workerIds }: { projectId: string; workerIds: string[] }) => {
       console.log(`[ASSIGN] Starting bulk assignment of ${workerIds.length} workers to project ${projectId}`);
       
-      // Use direct database inserts with better error handling
-      const assignments = workerIds.map(userId => ({
+      if (!projectId || !workerIds?.length) {
+        throw new Error('Project ID and at least one Worker ID are required');
+      }
+
+      // Check which workers are already assigned
+      const { data: existingAssignments } = await supabase
+        .from('user_project_role')
+        .select('user_id')
+        .eq('project_id', projectId)
+        .in('user_id', workerIds);
+
+      const alreadyAssignedIds = new Set(existingAssignments?.map(a => a.user_id) || []);
+      const newWorkerIds = workerIds.filter(id => !alreadyAssignedIds.has(id));
+
+      if (newWorkerIds.length === 0) {
+        return { assigned: 0, alreadyAssigned: workerIds.length, data: [] };
+      }
+
+      const assignments = newWorkerIds.map(userId => ({
         project_id: projectId,
         user_id: userId,
         role: 'worker'
@@ -135,9 +152,7 @@ export function useAssignMultipleWorkers() {
 
       const { data, error } = await supabase
         .from('user_project_role')
-        .upsert(assignments, {
-          onConflict: 'user_id,project_id'
-        })
+        .insert(assignments)
         .select();
 
       if (error) {
@@ -148,7 +163,7 @@ export function useAssignMultipleWorkers() {
           details: error.details,
           hint: error.hint,
           projectId,
-          workerIds,
+          workerIds: newWorkerIds,
           assignments
         });
         
@@ -164,24 +179,49 @@ export function useAssignMultipleWorkers() {
         throw error;
       }
       
-      console.log(`[ASSIGN] Successfully assigned ${workerIds.length} workers to project ${projectId}`, data);
-      return { assigned: workerIds.length, data };
+      console.log(`[ASSIGN] Successfully assigned ${newWorkerIds.length} workers to project ${projectId}`, data);
+      return { 
+        assigned: newWorkerIds.length, 
+        alreadyAssigned: alreadyAssignedIds.size,
+        data 
+      };
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['project-workers', variables.projectId] });
       queryClient.invalidateQueries({ queryKey: ['available-workers', variables.projectId] });
       queryClient.invalidateQueries({ queryKey: ['workers'] });
       
+      let message = '';
+      if (data.assigned > 0 && data.alreadyAssigned > 0) {
+        message = `Assigned ${data.assigned} new worker(s). ${data.alreadyAssigned} worker(s) were already assigned.`;
+      } else if (data.assigned > 0) {
+        message = `Successfully assigned ${data.assigned} worker(s) to the project.`;
+      } else if (data.alreadyAssigned > 0) {
+        message = `All ${data.alreadyAssigned} worker(s) were already assigned to this project.`;
+      }
+      
       toast({
-        title: "Workers Assigned",
-        description: `Successfully assigned ${data.assigned} worker(s) to the project.`,
+        title: "Assignment Complete",
+        description: message,
+        variant: data.assigned > 0 ? "default" : "default",
       });
     },
     onError: (error: any) => {
       console.error('[ASSIGN] Batch assignment error:', error);
+      
+      let errorMessage = "Failed to assign workers. Please try again.";
+      
+      if (error.message?.includes('permission denied') || error.message?.includes('insufficient permissions')) {
+        errorMessage = "You don't have permission to assign workers to this project.";
+      } else if (error.message?.includes('violates row-level security')) {
+        errorMessage = "Access denied. Please check your permissions.";
+      } else if (error.message?.includes('Project ID and at least one Worker ID are required')) {
+        errorMessage = "Invalid project or worker selection.";
+      }
+      
       toast({
         title: "Assignment Failed",
-        description: error.message || "Failed to assign workers. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -212,15 +252,26 @@ export function useAssignSingleWorkerToProject() {
 
       console.log('Assigning worker:', { projectId, userId, role });
 
-      // Use upsert to handle existing assignments
+      // Check if assignment already exists first
+      const { data: existingAssignment } = await supabase
+        .from('user_project_role')
+        .select('id')
+        .eq('user_id', userId.trim())
+        .eq('project_id', projectId.trim())
+        .maybeSingle();
+
+      if (existingAssignment) {
+        console.log('👤 Worker already assigned to project');
+        return { already_assigned: true, data: existingAssignment };
+      }
+
+      // Insert new assignment
       const { data, error } = await supabase
         .from('user_project_role')
-        .upsert({ 
+        .insert({ 
           project_id: projectId.trim(), 
           user_id: userId.trim(), 
           role: role.trim()
-        }, {
-          onConflict: 'user_id,project_id'
         })
         .select(`
           *,
@@ -235,30 +286,49 @@ export function useAssignSingleWorkerToProject() {
         console.error('Database assignment error:', error);
         throw error;
       }
-      return data;
+      
+      return { already_assigned: false, data };
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (result, variables) => {
       // Invalidate all related queries for immediate updates
       queryClient.invalidateQueries({ queryKey: ['project-workers', variables.projectId] });
       queryClient.invalidateQueries({ queryKey: ['workers-with-project-access'] });
       queryClient.invalidateQueries({ queryKey: ['workers'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['project', variables.projectId] });
-      toast({
-        title: "Worker assigned",
-        description: "Worker has been assigned to the project successfully.",
-      });
+      
+      if (result.already_assigned) {
+        toast({
+          title: "Worker Already Assigned",
+          description: "This worker is already assigned to the project.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Worker Assigned",
+          description: "Worker has been assigned to the project successfully.",
+        });
+      }
     },
     onError: (error: any) => {
       console.error('Assignment error:', error);
-      const isAlreadyAssigned = error?.message?.includes('duplicate key') || error?.code === '23505';
+      
+      let errorMessage = "Failed to assign worker. Please try again.";
+      
+      if (error.message?.includes('permission denied') || error.message?.includes('insufficient permissions')) {
+        errorMessage = "You don't have permission to assign workers to this project.";
+      } else if (error.message?.includes('violates row-level security')) {
+        errorMessage = "Access denied. Please check your permissions.";
+      } else if (error.message?.includes('Project ID is required')) {
+        errorMessage = "Invalid project or worker selection.";
+      } else if (error.message?.includes('duplicate key')) {
+        errorMessage = "Worker is already assigned to this project.";
+      }
       
       toast({
-        title: isAlreadyAssigned ? "Worker already assigned" : "Assignment failed",
-        description: isAlreadyAssigned 
-          ? "This worker is already assigned to the project." 
-          : "Failed to assign worker. Please try again.",
-        variant: isAlreadyAssigned ? "default" : "destructive",
+        title: "Assignment Failed",
+        description: errorMessage,
+        variant: "destructive",
       });
     },
   });
