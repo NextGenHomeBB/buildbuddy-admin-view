@@ -94,51 +94,30 @@ export function useAssignMultipleWorkers() {
 
   return useMutation({
     mutationFn: async ({ projectId, workerIds }: { projectId: string; workerIds: string[] }) => {
-      console.log(`[ASSIGN] Starting batch assignment of ${workerIds.length} workers to project ${projectId}`);
+      console.log(`[ASSIGN] Starting bulk assignment of ${workerIds.length} workers to project ${projectId}`);
       
-      // Use Promise.all with individual upserts for reliability
-      const assignments = await Promise.all(
-        workerIds.map(async (userId) => {
-          console.log(`[ASSIGN] Assigning worker ${userId} to project ${projectId}`);
-          
-          const { data, error } = await supabase
-            .from('user_project_role')
-            .upsert({ 
-              project_id: projectId, 
-              user_id: userId, 
-              role: 'worker'
-            }, {
-              onConflict: 'user_id,project_id'
-            })
-            .select(`
-              *,
-              profiles:user_id (
-                full_name,
-                avatar_url
-              )
-            `)
-            .single();
+      // Use the new security definer function for bulk assignment
+      const { error } = await supabase.rpc('assign_project_workers', {
+        p_project: projectId,
+        p_user_ids: workerIds
+      });
 
-          if (error) {
-            console.error(`[ASSIGN] Failed to assign worker ${userId}:`, {
-              error,
-              code: error.code,
-              message: error.message,
-              details: error.details,
-              hint: error.hint,
-              projectId,
-              userId
-            });
-            throw error;
-          }
-          
-          console.log(`[ASSIGN] Successfully assigned worker ${userId}:`, data);
-          return data;
-        })
-      );
-
-      console.log(`[ASSIGN] Successfully assigned ${assignments.length} workers`);
-      return { assigned: assignments.length, data: assignments };
+      if (error) {
+        console.error(`[ASSIGN] Failed to assign workers:`, {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          projectId,
+          workerIds
+        });
+        
+        throw error;
+      }
+      
+      console.log(`[ASSIGN] Successfully assigned ${workerIds.length} workers to project ${projectId}`);
+      return { assigned: workerIds.length };
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['project-workers', variables.projectId] });
