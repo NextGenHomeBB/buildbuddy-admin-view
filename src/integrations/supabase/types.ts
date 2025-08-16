@@ -2704,10 +2704,6 @@ export type Database = {
         Args: { project_id: string; user_id: string }
         Returns: boolean
       }
-      can_access_project_assignments: {
-        Args: { p_project_id: string }
-        Returns: boolean
-      }
       can_access_project_financial_data: {
         Args: { p_project_id: string }
         Returns: boolean
@@ -3426,11 +3422,23 @@ export type Database = {
         Args: { proj: string }
         Returns: undefined
       }
+      user_can_manage_project_assignments: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
+      user_has_project_role: {
+        Args: { p_project_id: string; p_user_id?: string }
+        Returns: boolean
+      }
       user_has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      user_is_global_admin: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
       validate_apple_credential_security: {
