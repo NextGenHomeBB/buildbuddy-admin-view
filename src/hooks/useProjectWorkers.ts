@@ -29,6 +29,8 @@ export function useProjectWorkers(projectId: string) {
   return useQuery({
     queryKey: ['project-workers', projectId],
     queryFn: async (): Promise<ProjectWorker[]> => {
+      console.log(`[PROJECT_WORKERS] Fetching workers for project: ${projectId}`);
+      
       try {
         const { data, error } = await supabase
           .from('user_project_role')
@@ -42,26 +44,32 @@ export function useProjectWorkers(projectId: string) {
           .eq('project_id', projectId);
 
         if (error) {
-          console.error('Project workers query error:', error);
+          console.error('[PROJECT_WORKERS] Query error:', {
+            error,
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            projectId
+          });
           
-          // Handle specific error cases
-          if (error.message?.includes('infinite recursion')) {
-            console.warn('RLS policy recursion detected, retrying with fallback...');
-            // Return empty array as fallback
+          // Handle specific error cases with our new RLS
+          if (error.code === '42501') {
+            console.warn('[PROJECT_WORKERS] Permission denied - user may not have access to this project');
             return [];
           }
           
-          if (error.code === '42501') {
-            console.warn('Permission denied for project workers query');
+          if (error.message?.includes('infinite recursion')) {
+            console.warn('[PROJECT_WORKERS] RLS policy recursion detected - this should be fixed now');
             return [];
           }
           
           throw error;
         }
         
+        console.log(`[PROJECT_WORKERS] Successfully fetched ${data?.length || 0} workers for project ${projectId}`);
         return data || [];
       } catch (error) {
-        console.error('Project workers fetch failed:', error);
+        console.error('[PROJECT_WORKERS] Fetch failed:', error);
         // Return empty array as graceful degradation
         return [];
       }
@@ -85,31 +93,50 @@ export function useAvailableWorkersForProject(projectId: string) {
   return useQuery({
     queryKey: ['available-workers', projectId],
     queryFn: async (): Promise<AvailableWorker[]> => {
-      // Get all workers from profiles
-      const { data: allWorkers, error: workersError } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .not('id', 'is', null);
+      console.log(`[AVAILABLE_WORKERS] Fetching available workers for project: ${projectId}`);
+      
+      try {
+        // Get all workers from profiles
+        const { data: allWorkers, error: workersError } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .not('id', 'is', null);
 
-      if (workersError) throw workersError;
+        if (workersError) {
+          console.error('[AVAILABLE_WORKERS] Error fetching all workers:', workersError);
+          throw workersError;
+        }
 
-      // Get assigned workers for this project
-      const { data: assignedWorkers, error: assignedError } = await supabase
-        .from('user_project_role')
-        .select('user_id')
-        .eq('project_id', projectId);
+        console.log(`[AVAILABLE_WORKERS] Found ${allWorkers?.length || 0} total workers`);
 
-      if (assignedError) throw assignedError;
+        // Get assigned workers for this project
+        const { data: assignedWorkers, error: assignedError } = await supabase
+          .from('user_project_role')
+          .select('user_id')
+          .eq('project_id', projectId);
 
-      const assignedIds = new Set(assignedWorkers?.map(w => w.user_id) || []);
+        if (assignedError) {
+          console.error('[AVAILABLE_WORKERS] Error fetching assigned workers:', assignedError);
+          // Don't throw here, just proceed without assignment info
+        }
 
-      return (allWorkers || []).map(worker => ({
-        id: worker.id,
-        full_name: worker.full_name || 'Unknown User',
-        role: 'worker',
-        avatar_url: worker.avatar_url,
-        is_assigned: assignedIds.has(worker.id)
-      }));
+        const assignedIds = new Set(assignedWorkers?.map(w => w.user_id) || []);
+        console.log(`[AVAILABLE_WORKERS] Found ${assignedIds.size} assigned workers`);
+
+        const result = (allWorkers || []).map(worker => ({
+          id: worker.id,
+          full_name: worker.full_name || 'Unknown User',
+          role: 'worker',
+          avatar_url: worker.avatar_url,
+          is_assigned: assignedIds.has(worker.id)
+        }));
+
+        console.log(`[AVAILABLE_WORKERS] Returning ${result.length} workers with assignment status`);
+        return result;
+      } catch (error) {
+        console.error('[AVAILABLE_WORKERS] Failed to fetch available workers:', error);
+        return [];
+      }
     },
     enabled: !!projectId,
     staleTime: 30 * 1000,
@@ -211,12 +238,14 @@ export function useAssignMultipleWorkers() {
       
       let errorMessage = "Failed to assign workers. Please try again.";
       
-      if (error.message?.includes('permission denied') || error.message?.includes('insufficient permissions')) {
-        errorMessage = "You don't have permission to assign workers to this project.";
+        if (error.message?.includes('permission denied') || error.message?.includes('insufficient permissions') || error.code === '42501') {
+        errorMessage = "You don't have permission to assign workers to this project. Admin or project manager role required.";
       } else if (error.message?.includes('violates row-level security')) {
-        errorMessage = "Access denied. Please check your permissions.";
+        errorMessage = "Access denied. Your role doesn't allow worker assignment for this project.";
       } else if (error.message?.includes('Project ID and at least one Worker ID are required')) {
         errorMessage = "Invalid project or worker selection.";
+      } else if (error.message?.includes('can_assign_to_project')) {
+        errorMessage = "You don't have the required permissions to assign workers to this project.";
       }
       
       toast({
@@ -315,14 +344,16 @@ export function useAssignSingleWorkerToProject() {
       
       let errorMessage = "Failed to assign worker. Please try again.";
       
-      if (error.message?.includes('permission denied') || error.message?.includes('insufficient permissions')) {
-        errorMessage = "You don't have permission to assign workers to this project.";
+      if (error.message?.includes('permission denied') || error.message?.includes('insufficient permissions') || error.code === '42501') {
+        errorMessage = "You don't have permission to assign workers to this project. Admin or project manager role required.";
       } else if (error.message?.includes('violates row-level security')) {
-        errorMessage = "Access denied. Please check your permissions.";
+        errorMessage = "Access denied. Your role doesn't allow worker assignment for this project.";
       } else if (error.message?.includes('Project ID is required')) {
         errorMessage = "Invalid project or worker selection.";
       } else if (error.message?.includes('duplicate key')) {
         errorMessage = "Worker is already assigned to this project.";
+      } else if (error.message?.includes('can_assign_to_project')) {
+        errorMessage = "You don't have the required permissions to assign workers to this project.";
       }
       
       toast({
