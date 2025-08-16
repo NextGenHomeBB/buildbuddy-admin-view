@@ -22,8 +22,26 @@ export const useEnhancedAuth = () => {
     try {
       console.log('Enhanced Auth - Validating session for operation:', operation);
       
+      // Get current session to ensure we have a valid token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Enhanced Auth - Session retrieval error:', sessionError);
+        throw sessionError;
+      }
+
+      if (!session?.access_token) {
+        console.warn('Enhanced Auth - No valid session token found');
+        throw new Error('No valid session token');
+      }
+
+      console.log('Enhanced Auth - Using session token:', session.access_token.substring(0, 20) + '...');
+      
       const { data, error } = await supabase.functions.invoke('session-validate', {
-        body: { operation: operation || 'general_access' }
+        body: { operation: operation || 'general_access' },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        }
       });
 
       if (error) {
@@ -77,7 +95,14 @@ export const useEnhancedAuth = () => {
     try {
       console.log('Enhanced Auth - Running auth debug...');
       
-      const { data, error } = await supabase.functions.invoke('auth-debug');
+      // Get current session for debug
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('auth-debug', {
+        headers: session?.access_token ? {
+          Authorization: `Bearer ${session.access_token}`,
+        } : undefined
+      });
 
       if (error) {
         console.error('Enhanced Auth - Debug error:', error);
@@ -128,9 +153,50 @@ export const useEnhancedAuth = () => {
     }
   };
 
+  const initializeAuth = async () => {
+    try {
+      console.log('Enhanced Auth - Initializing authentication...');
+      
+      // Get current session first
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Enhanced Auth - Session initialization error:', error);
+        setAuthState({
+          isValid: false,
+          role: 'worker',
+          userId: null,
+          isLoading: false
+        });
+        return;
+      }
+
+      if (session?.access_token) {
+        console.log('Enhanced Auth - Found existing session, validating...');
+        await validateSession();
+      } else {
+        console.log('Enhanced Auth - No existing session found');
+        setAuthState({
+          isValid: false,
+          role: 'worker',
+          userId: null,
+          isLoading: false
+        });
+      }
+    } catch (error) {
+      console.error('Enhanced Auth - Initialization failed:', error);
+      setAuthState({
+        isValid: false,
+        role: 'worker',
+        userId: null,
+        isLoading: false
+      });
+    }
+  };
+
   useEffect(() => {
-    // Initial validation
-    validateSession();
+    // Initialize authentication
+    initializeAuth();
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -138,10 +204,10 @@ export const useEnhancedAuth = () => {
         console.log('Enhanced Auth - Auth state changed:', event, !!session);
         
         if (event === 'SIGNED_IN' && session) {
-          // Validate the new session
+          // Validate the new session with a small delay
           setTimeout(() => {
             validateSession();
-          }, 100);
+          }, 500);
         } else if (event === 'SIGNED_OUT') {
           setAuthState({
             isValid: false,
@@ -149,6 +215,11 @@ export const useEnhancedAuth = () => {
             userId: null,
             isLoading: false
           });
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          console.log('Enhanced Auth - Token refreshed, revalidating...');
+          setTimeout(() => {
+            validateSession();
+          }, 100);
         }
       }
     );
