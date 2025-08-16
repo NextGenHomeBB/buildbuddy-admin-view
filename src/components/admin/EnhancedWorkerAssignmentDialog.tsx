@@ -53,17 +53,25 @@ export function EnhancedWorkerAssignmentDialog({
   const handleAssignWorkers = async () => {
     if (selectedWorkers.length === 0) return;
 
+    console.log('[UI] Attempting to assign workers:', {
+      projectId,
+      selectedWorkers,
+      count: selectedWorkers.length
+    });
+
     try {
       await assignWorkersMutation.mutateAsync({
         projectId,
         workerIds: selectedWorkers
       });
 
+      console.log('[UI] Assignment successful, cleaning up');
       setSelectedWorkers([]);
       onWorkersAssigned?.();
       onOpenChange(false);
     } catch (error) {
-      console.error('Worker assignment failed:', error);
+      console.error('[UI] Worker assignment failed:', error);
+      // Error handling is done by the mutation hook, no need to duplicate here
     }
   };
 

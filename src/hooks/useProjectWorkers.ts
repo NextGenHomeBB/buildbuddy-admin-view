@@ -96,11 +96,19 @@ export function useAssignMultipleWorkers() {
     mutationFn: async ({ projectId, workerIds }: { projectId: string; workerIds: string[] }) => {
       console.log(`[ASSIGN] Starting bulk assignment of ${workerIds.length} workers to project ${projectId}`);
       
-      // Use the new security definer function for bulk assignment
-      const { error } = await supabase.rpc('assign_project_workers', {
-        p_project: projectId,
-        p_user_ids: workerIds
-      });
+      // Use direct database inserts with better error handling
+      const assignments = workerIds.map(userId => ({
+        project_id: projectId,
+        user_id: userId,
+        role: 'worker'
+      }));
+
+      const { data, error } = await supabase
+        .from('user_project_role')
+        .upsert(assignments, {
+          onConflict: 'user_id,project_id'
+        })
+        .select();
 
       if (error) {
         console.error(`[ASSIGN] Failed to assign workers:`, {
@@ -110,14 +118,24 @@ export function useAssignMultipleWorkers() {
           details: error.details,
           hint: error.hint,
           projectId,
-          workerIds
+          workerIds,
+          assignments
         });
+        
+        // Provide more user-friendly error messages
+        if (error.code === '23503') {
+          throw new Error('Invalid project or user ID. Please refresh and try again.');
+        } else if (error.code === '42501') {
+          throw new Error('You don\'t have permission to assign workers to this project.');
+        } else if (error.message?.includes('infinite recursion')) {
+          throw new Error('Database configuration issue. Please contact support.');
+        }
         
         throw error;
       }
       
-      console.log(`[ASSIGN] Successfully assigned ${workerIds.length} workers to project ${projectId}`);
-      return { assigned: workerIds.length };
+      console.log(`[ASSIGN] Successfully assigned ${workerIds.length} workers to project ${projectId}`, data);
+      return { assigned: workerIds.length, data };
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['project-workers', variables.projectId] });
