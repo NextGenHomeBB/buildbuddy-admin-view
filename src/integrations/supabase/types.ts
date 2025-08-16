@@ -1827,6 +1827,45 @@ export type Database = {
         }
         Relationships: []
       }
+      sensitive_operation_audit: {
+        Row: {
+          id: string
+          ip_address: string | null
+          operation_data: Json | null
+          operation_type: string
+          record_id: string | null
+          risk_score: number | null
+          table_name: string
+          timestamp: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          ip_address?: string | null
+          operation_data?: Json | null
+          operation_type: string
+          record_id?: string | null
+          risk_score?: number | null
+          table_name: string
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          ip_address?: string | null
+          operation_data?: Json | null
+          operation_type?: string
+          record_id?: string | null
+          risk_score?: number | null
+          table_name?: string
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       shifts: {
         Row: {
           confidence_score: number | null
@@ -2857,7 +2896,7 @@ export type Database = {
         Returns: undefined
       }
       can_access_project: {
-        Args: { p_project_id: string; p_user_id: string }
+        Args: { project_uuid: string; user_uuid: string }
         Returns: boolean
       }
       can_access_project_financial_data: {
@@ -3492,6 +3531,16 @@ export type Database = {
         Args: { details?: Json; event_type: string; severity?: string }
         Returns: undefined
       }
+      log_sensitive_operation: {
+        Args: {
+          p_operation_data?: Json
+          p_operation_type: string
+          p_record_id?: string
+          p_risk_score?: number
+          p_table_name: string
+        }
+        Returns: undefined
+      }
       manage_worker_rates_secure: {
         Args: {
           p_effective_date?: string
@@ -3630,6 +3679,15 @@ export type Database = {
       validate_user_profile_exists: {
         Args: { p_user_id: string }
         Returns: boolean
+      }
+      verify_data_integrity: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          check_name: string
+          details: Json
+          issue_count: number
+          status: string
+        }[]
       }
     }
     Enums: {

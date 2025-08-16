@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { SecurityDashboard } from '@/components/admin/SecurityDashboard';
 import { SecureAuditTrail } from '@/components/admin/SecureAuditTrail';
+import { SecurityAuditPanel } from '@/components/admin/SecurityAuditPanel';
 import { useSecureDashboard } from '@/hooks/useSecureDashboard';
 import { Shield, AlertTriangle, TrendingUp, Lock } from 'lucide-react';
 
@@ -85,6 +86,9 @@ export default function AdminSecurityAudit() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Enhanced Security Audit Panel */}
+      <SecurityAuditPanel />
 
       {/* Security Dashboard */}
       <SecurityDashboard />
