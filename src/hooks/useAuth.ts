@@ -30,15 +30,22 @@ export const useAuth = () => {
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        // Only synchronous state updates here to prevent deadlocks
         setSession(session);
         
         if (session?.user) {
           // Defer Supabase calls to prevent deadlock
           setTimeout(async () => {
-            const userWithRole = await fetchUserProfile(session.user);
-            setUser(userWithRole);
-            setLoading(false);
+            try {
+              const userWithRole = await fetchUserProfile(session.user);
+              setUser(userWithRole);
+              setLoading(false);
+            } catch (error) {
+              console.error('Error fetching user profile:', error);
+              setUser({ ...session.user, role: 'worker' });
+              setLoading(false);
+            }
           }, 0);
         } else {
           setUser(null);
@@ -78,7 +85,29 @@ export const useAuth = () => {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      // Import cleanup utility
+      const { cleanupAuthState, clearCachedUserState } = await import('@/utils/authCleanup');
+      
+      // Clean up auth state first
+      cleanupAuthState();
+      clearCachedUserState();
+      
+      // Attempt global sign out (fallback if it fails)
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+        console.warn('Global signout failed, continuing with cleanup');
+      }
+      
+      // Force page reload for a clean state
+      window.location.href = '/auth';
+    } catch (error) {
+      console.error('Sign out error:', error);
+      // Fallback: still redirect to auth page
+      window.location.href = '/auth';
+    }
   };
 
   return {

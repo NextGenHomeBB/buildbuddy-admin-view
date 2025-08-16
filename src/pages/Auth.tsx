@@ -39,6 +39,17 @@ export const Auth = () => {
     setLoading(true);
 
     try {
+      // Clean up existing auth state before signing in to prevent limbo states
+      const { cleanupAuthState, clearCachedUserState } = await import('@/utils/authCleanup');
+      cleanupAuthState();
+      clearCachedUserState();
+      
+      // Attempt global sign out to ensure clean state
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+      }
       // Check rate limiting for auth attempts
       const operation = isSignUp ? 'signup' : 'signin';
       const rateLimitAllowed = await checkRateLimit(operation, {
@@ -114,7 +125,9 @@ export const Auth = () => {
           title: "Welcome back!",
           description: "You have been signed in successfully.",
         });
-        navigate('/');
+        
+        // Force page reload to ensure clean authentication state
+        window.location.href = '/';
       }
     } catch (error: any) {
       logger.error('Authentication error', error);
