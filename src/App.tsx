@@ -83,6 +83,7 @@ function AppContent() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/invite/:token" element={<AcceptInvite />} />
           <Route path="/quotation/:token" element={<QuotationAcceptance />} />
+          <Route path="/system-overview" element={<RequireAdmin><SystemOverview /></RequireAdmin>} />
           
           {/* Admin routes */}
           <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
