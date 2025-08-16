@@ -2704,6 +2704,10 @@ export type Database = {
         Args: { project_id: string; user_id: string }
         Returns: boolean
       }
+      can_access_project_assignments: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
       can_access_project_financial_data: {
         Args: { p_project_id: string }
         Returns: boolean
