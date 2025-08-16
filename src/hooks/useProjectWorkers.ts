@@ -151,13 +151,26 @@ export function useAssignSingleWorkerToProject() {
       userId: string; 
       role?: string;
     }) => {
+      // Validate inputs to prevent "invalid input syntax" errors
+      if (!projectId || projectId.trim() === '') {
+        throw new Error('Project ID is required and cannot be empty');
+      }
+      if (!userId || userId.trim() === '') {
+        throw new Error('User ID is required and cannot be empty');
+      }
+      if (!role || role.trim() === '') {
+        role = 'worker'; // Default fallback
+      }
+
+      console.log('Assigning worker:', { projectId, userId, role });
+
       // Use upsert to handle existing assignments
       const { data, error } = await supabase
         .from('user_project_role')
         .upsert({ 
-          project_id: projectId, 
-          user_id: userId, 
-          role 
+          project_id: projectId.trim(), 
+          user_id: userId.trim(), 
+          role: role.trim()
         }, {
           onConflict: 'user_id,project_id'
         })
@@ -170,7 +183,10 @@ export function useAssignSingleWorkerToProject() {
         `)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database assignment error:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: (data, variables) => {
