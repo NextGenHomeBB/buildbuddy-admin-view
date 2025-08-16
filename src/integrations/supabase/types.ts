@@ -113,10 +113,16 @@ export type Database = {
           app_password: string
           caldav_url: string
           created_at: string
+          credential_expires_at: string | null
+          encrypted_app_password: string | null
           encrypted_password: string | null
           encryption_key_id: string | null
+          encryption_version: number | null
           id: string
+          key_derivation_salt: string | null
           last_accessed: string | null
+          last_rotation_at: string | null
+          rotation_required: boolean | null
           updated_at: string
           user_id: string
           username: string
@@ -126,10 +132,16 @@ export type Database = {
           app_password: string
           caldav_url?: string
           created_at?: string
+          credential_expires_at?: string | null
+          encrypted_app_password?: string | null
           encrypted_password?: string | null
           encryption_key_id?: string | null
+          encryption_version?: number | null
           id?: string
+          key_derivation_salt?: string | null
           last_accessed?: string | null
+          last_rotation_at?: string | null
+          rotation_required?: boolean | null
           updated_at?: string
           user_id: string
           username: string
@@ -139,10 +151,16 @@ export type Database = {
           app_password?: string
           caldav_url?: string
           created_at?: string
+          credential_expires_at?: string | null
+          encrypted_app_password?: string | null
           encrypted_password?: string | null
           encryption_key_id?: string | null
+          encryption_version?: number | null
           id?: string
+          key_derivation_salt?: string | null
           last_accessed?: string | null
+          last_rotation_at?: string | null
+          rotation_required?: boolean | null
           updated_at?: string
           user_id?: string
           username?: string
@@ -208,49 +226,64 @@ export type Database = {
       }
       calendar_oauth_tokens: {
         Row: {
+          access_level: string | null
           access_token: string | null
           created_at: string
           created_ip: string | null
           expires_at: string | null
           id: string
           last_ip: string | null
+          last_rotation_at: string | null
           last_used: string | null
           provider: string
           refresh_token: string | null
+          rotation_required: boolean | null
           scope: string | null
           suspicious_activity: boolean | null
+          token_expires_at: string | null
+          token_hash: string | null
           updated_at: string
           usage_count: number | null
           user_id: string
         }
         Insert: {
+          access_level?: string | null
           access_token?: string | null
           created_at?: string
           created_ip?: string | null
           expires_at?: string | null
           id?: string
           last_ip?: string | null
+          last_rotation_at?: string | null
           last_used?: string | null
           provider: string
           refresh_token?: string | null
+          rotation_required?: boolean | null
           scope?: string | null
           suspicious_activity?: boolean | null
+          token_expires_at?: string | null
+          token_hash?: string | null
           updated_at?: string
           usage_count?: number | null
           user_id: string
         }
         Update: {
+          access_level?: string | null
           access_token?: string | null
           created_at?: string
           created_ip?: string | null
           expires_at?: string | null
           id?: string
           last_ip?: string | null
+          last_rotation_at?: string | null
           last_used?: string | null
           provider?: string
           refresh_token?: string | null
+          rotation_required?: boolean | null
           scope?: string | null
           suspicious_activity?: boolean | null
+          token_expires_at?: string | null
+          token_hash?: string | null
           updated_at?: string
           usage_count?: number | null
           user_id?: string
@@ -358,6 +391,99 @@ export type Database = {
           created_at?: string | null
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      credential_access_log: {
+        Row: {
+          access_granted: boolean | null
+          access_reason: string | null
+          access_type: string
+          additional_context: Json | null
+          credential_id: string
+          credential_type: string
+          failure_reason: string | null
+          id: string
+          ip_address: string | null
+          risk_score: number | null
+          session_id: string | null
+          timestamp: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          access_granted?: boolean | null
+          access_reason?: string | null
+          access_type: string
+          additional_context?: Json | null
+          credential_id: string
+          credential_type: string
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          risk_score?: number | null
+          session_id?: string | null
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          access_granted?: boolean | null
+          access_reason?: string | null
+          access_type?: string
+          additional_context?: Json | null
+          credential_id?: string
+          credential_type?: string
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          risk_score?: number | null
+          session_id?: string | null
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      credential_rotation_policies: {
+        Row: {
+          auto_rotation_enabled: boolean | null
+          created_at: string | null
+          created_by: string | null
+          credential_type: string
+          id: string
+          mandatory_rotation: boolean | null
+          max_age_days: number
+          max_failed_attempts: number | null
+          risk_based_rotation: boolean | null
+          updated_at: string | null
+          warning_days_before_expiry: number | null
+        }
+        Insert: {
+          auto_rotation_enabled?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          credential_type: string
+          id?: string
+          mandatory_rotation?: boolean | null
+          max_age_days?: number
+          max_failed_attempts?: number | null
+          risk_based_rotation?: boolean | null
+          updated_at?: string | null
+          warning_days_before_expiry?: number | null
+        }
+        Update: {
+          auto_rotation_enabled?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          credential_type?: string
+          id?: string
+          mandatory_rotation?: boolean | null
+          max_age_days?: number
+          max_failed_attempts?: number | null
+          risk_based_rotation?: boolean | null
+          updated_at?: string | null
+          warning_days_before_expiry?: number | null
         }
         Relationships: []
       }
@@ -2746,6 +2872,10 @@ export type Database = {
         Args: { p_assigner_id: string; p_project_id: string }
         Returns: boolean
       }
+      check_credential_rotation_required: {
+        Args: { p_credential_id: string; p_credential_type: string }
+        Returns: Json
+      }
       check_customer_data_rate_limit: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -3332,6 +3462,16 @@ export type Database = {
       is_org_member: {
         Args: { org_uuid: string }
         Returns: boolean
+      }
+      log_credential_access: {
+        Args: {
+          p_access_reason?: string
+          p_access_type: string
+          p_additional_context?: Json
+          p_credential_id: string
+          p_credential_type: string
+        }
+        Returns: string
       }
       log_critical_security_event: {
         Args:
