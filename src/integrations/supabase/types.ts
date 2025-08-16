@@ -2799,6 +2799,10 @@ export type Database = {
         Args: { user_email: string; user_id: string }
         Returns: undefined
       }
+      debug_auth_state: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       delete_apple_credentials_secure: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -2863,6 +2867,10 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_current_user_role_enhanced: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_customer_data_secure: {
         Args: {

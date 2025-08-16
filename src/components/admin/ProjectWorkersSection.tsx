@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Users, Plus, X } from 'lucide-react';
+import { Users, Plus, X, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/popover';
 import { useProjectWorkers, useAssignSingleWorkerToProject, useUnassignWorkerFromProject } from '@/hooks/useProjectWorkers';
 import { useWorkers } from '@/hooks/useWorkers';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { toast } from '@/hooks/use-toast';
 
 interface ProjectWorkersSectionProps {
   projectId: string;
@@ -31,6 +33,7 @@ export function ProjectWorkersSection({ projectId }: ProjectWorkersSectionProps)
   const { data: allWorkers = [], isLoading: loadingAllWorkers } = useWorkers();
   const assignWorker = useAssignSingleWorkerToProject();
   const unassignWorker = useUnassignWorkerFromProject();
+  const enhancedAuth = useEnhancedAuth();
 
   // Filter out workers already assigned to the project
   const availableWorkers = allWorkers.filter(
@@ -40,13 +43,47 @@ export function ProjectWorkersSection({ projectId }: ProjectWorkersSectionProps)
   const handleAssignWorker = async () => {
     if (!selectedWorkerId) return;
     
-    await assignWorker.mutateAsync({
-      projectId,
-      userId: selectedWorkerId,
-    });
+    // Validate session before attempting assignment
+    const validation = await enhancedAuth.validateSession('assign_workers');
+    if (!validation) {
+      toast({
+        title: "Authentication Error",
+        description: "Session validation failed. Please try logging in again.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    setSelectedWorkerId('');
-    setIsAddingWorker(false);
+    if (!validation.operation_allowed) {
+      toast({
+        title: "Permission Denied",
+        description: `Your role (${validation.role}) doesn't have permission to assign workers.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      await assignWorker.mutateAsync({
+        projectId,
+        userId: selectedWorkerId,
+      });
+      
+      setSelectedWorkerId('');
+      setIsAddingWorker(false);
+      
+      toast({
+        title: "Success",
+        description: "Worker assigned to project successfully.",
+      });
+    } catch (error) {
+      console.error('Worker assignment error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to assign worker to project. Check your permissions and try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleUnassignWorker = async (userId: string) => {
@@ -80,13 +117,39 @@ export function ProjectWorkersSection({ projectId }: ProjectWorkersSectionProps)
           </div>
         </div>
         
+        <div className="flex items-center gap-2">
+          {!enhancedAuth.isValid && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={enhancedAuth.debugAuthState}
+              className="gap-2 text-amber-600 border-amber-600 hover:bg-amber-50"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              Debug Auth
+            </Button>
+          )}
+          {!enhancedAuth.hasPermission('assign_workers') && enhancedAuth.isValid && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={enhancedAuth.forceReauthentication}
+              className="gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Reauth
+            </Button>
+          )}
+        </div>
+        
         <Popover open={isAddingWorker} onOpenChange={setIsAddingWorker}>
           <PopoverTrigger asChild>
             <Button 
               variant="outline" 
               size="sm" 
               className="gap-2 bg-white/80 backdrop-blur-sm"
-              disabled={availableWorkers.length === 0}
+              disabled={availableWorkers.length === 0 || !enhancedAuth.hasPermission('assign_workers')}
+              title={!enhancedAuth.hasPermission('assign_workers') ? 'Admin permission required to assign workers' : ''}
             >
               <Plus className="h-4 w-4" />
               Add Member
