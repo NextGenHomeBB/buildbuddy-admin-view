@@ -7,10 +7,20 @@ export interface ProjectWorker {
   user_id: string;
   project_id: string;
   role: string;
+  assigned_by?: string;
+  assigned_at?: string;
   profiles: {
     full_name: string;
     avatar_url?: string;
   };
+}
+
+export interface AvailableWorker {
+  id: string;
+  full_name: string;
+  role: string;
+  avatar_url?: string;
+  is_assigned: boolean;
 }
 
 export function useProjectWorkers(projectId: string) {
@@ -38,7 +48,83 @@ export function useProjectWorkers(projectId: string) {
   });
 }
 
+// Get all workers with their assignment status for a project
+export function useAvailableWorkersForProject(projectId: string) {
+  return useQuery({
+    queryKey: ['available-workers', projectId],
+    queryFn: async (): Promise<AvailableWorker[]> => {
+      // Get all workers from profiles
+      const { data: allWorkers, error: workersError } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .not('id', 'is', null);
+
+      if (workersError) throw workersError;
+
+      // Get assigned workers for this project
+      const { data: assignedWorkers, error: assignedError } = await supabase
+        .from('user_project_role')
+        .select('user_id')
+        .eq('project_id', projectId);
+
+      if (assignedError) throw assignedError;
+
+      const assignedIds = new Set(assignedWorkers?.map(w => w.user_id) || []);
+
+      return (allWorkers || []).map(worker => ({
+        id: worker.id,
+        full_name: worker.full_name || 'Unknown User',
+        role: 'worker',
+        avatar_url: worker.avatar_url,
+        is_assigned: assignedIds.has(worker.id)
+      }));
+    },
+    enabled: !!projectId,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+}
+
 export function useAssignWorkerToProject() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ projectId, workerIds }: { projectId: string; workerIds: string[] }) => {
+      const { data, error } = await supabase.functions.invoke('assignWorkers', {
+        body: {
+          projectId,
+          workerIds,
+          adminId: (await supabase.auth.getUser()).data.user?.id
+        }
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['project-workers', variables.projectId] });
+      queryClient.invalidateQueries({ queryKey: ['available-workers', variables.projectId] });
+      queryClient.invalidateQueries({ queryKey: ['workers'] });
+      
+      toast({
+        title: "Success",
+        description: `Successfully assigned ${variables.workerIds.length} worker(s) to the project.`,
+      });
+    },
+    onError: (error: any) => {
+      console.error('Worker assignment error:', error);
+      toast({
+        title: "Assignment Failed",
+        description: error.message || "Failed to assign workers. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+// Legacy single worker assignment (kept for backward compatibility)
+export function useAssignSingleWorkerToProject() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 

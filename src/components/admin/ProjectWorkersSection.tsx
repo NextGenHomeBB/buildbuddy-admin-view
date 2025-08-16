@@ -42,7 +42,7 @@ export function ProjectWorkersSection({ projectId }: ProjectWorkersSectionProps)
     
     await assignWorker.mutateAsync({
       projectId,
-      userId: selectedWorkerId,
+      workerIds: [selectedWorkerId],
     });
     
     setSelectedWorkerId('');

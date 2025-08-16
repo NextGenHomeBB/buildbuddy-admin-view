@@ -252,8 +252,7 @@ export function AddTaskDialog({
     try {
       await assignWorkerMutation.mutateAsync({
         projectId: selectedProject.id,
-        userId: workerId,
-        role: 'worker'
+        workerIds: [workerId]
       });
       
       // Refresh workers data

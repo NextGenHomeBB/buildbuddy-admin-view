@@ -2267,25 +2267,25 @@ export type Database = {
           assigned_at: string | null
           assigned_by: string | null
           id: string
-          project_id: string | null
+          project_id: string
           role: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           assigned_at?: string | null
           assigned_by?: string | null
           id?: string
-          project_id?: string | null
+          project_id: string
           role?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           assigned_at?: string | null
           assigned_by?: string | null
           id?: string
-          project_id?: string | null
+          project_id?: string
           role?: string | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -2684,7 +2684,7 @@ export type Database = {
         Returns: {
           assigned_at: string
           assigned_by: string
-          id: string
+          assignment_id: string
           project_id: string
           role: string
           user_id: string
