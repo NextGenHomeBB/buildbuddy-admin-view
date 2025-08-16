@@ -99,6 +99,8 @@ export function useAssignMultipleWorkers() {
       // Use Promise.all with individual upserts for reliability
       const assignments = await Promise.all(
         workerIds.map(async (userId) => {
+          console.log(`[ASSIGN] Assigning worker ${userId} to project ${projectId}`);
+          
           const { data, error } = await supabase
             .from('user_project_role')
             .upsert({ 
@@ -118,9 +120,19 @@ export function useAssignMultipleWorkers() {
             .single();
 
           if (error) {
-            console.error(`[ASSIGN] Failed to assign worker ${userId}:`, error);
+            console.error(`[ASSIGN] Failed to assign worker ${userId}:`, {
+              error,
+              code: error.code,
+              message: error.message,
+              details: error.details,
+              hint: error.hint,
+              projectId,
+              userId
+            });
             throw error;
           }
+          
+          console.log(`[ASSIGN] Successfully assigned worker ${userId}:`, data);
           return data;
         })
       );
