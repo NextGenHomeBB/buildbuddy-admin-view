@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useWorkers } from '@/hooks/useWorkers';
-import { useAddWorkers } from '@/hooks/useAddWorkers';
+import { useAssignMultipleWorkers } from '@/hooks/useProjectWorkers';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -34,7 +34,7 @@ export function WorkerAssignmentDialog({
   const { data: workers, isLoading } = useWorkers();
   const [selectedWorkers, setSelectedWorkers] = useState<string[]>([]);
   const { user, session } = useAuth();
-  const addWorkersMutation = useAddWorkers();
+  const addWorkersMutation = useAssignMultipleWorkers();
   const { toast } = useToast();
 
   // Pre-select the worker if provided

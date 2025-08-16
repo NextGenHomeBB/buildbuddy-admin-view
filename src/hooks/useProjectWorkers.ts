@@ -85,22 +85,46 @@ export function useAvailableWorkersForProject(projectId: string) {
   });
 }
 
-export function useAssignWorkerToProject() {
+// Robust multi-worker assignment using Promise.all with single assignments
+export function useAssignMultipleWorkers() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
     mutationFn: async ({ projectId, workerIds }: { projectId: string; workerIds: string[] }) => {
-      const { data, error } = await supabase.functions.invoke('assignWorkers', {
-        body: {
-          projectId,
-          workerIds,
-          adminId: (await supabase.auth.getUser()).data.user?.id
-        }
-      });
+      console.log(`[ASSIGN] Starting batch assignment of ${workerIds.length} workers to project ${projectId}`);
+      
+      // Use Promise.all with individual upserts for reliability
+      const assignments = await Promise.all(
+        workerIds.map(async (userId) => {
+          const { data, error } = await supabase
+            .from('user_project_role')
+            .upsert({ 
+              project_id: projectId, 
+              user_id: userId, 
+              role: 'worker'
+            }, {
+              onConflict: 'user_id,project_id'
+            })
+            .select(`
+              *,
+              profiles:user_id (
+                full_name,
+                avatar_url
+              )
+            `)
+            .single();
 
-      if (error) throw error;
-      return data;
+          if (error) {
+            console.error(`[ASSIGN] Failed to assign worker ${userId}:`, error);
+            throw error;
+          }
+          return data;
+        })
+      );
+
+      console.log(`[ASSIGN] Successfully assigned ${assignments.length} workers`);
+      return { assigned: assignments.length, data: assignments };
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['project-workers', variables.projectId] });
@@ -108,12 +132,12 @@ export function useAssignWorkerToProject() {
       queryClient.invalidateQueries({ queryKey: ['workers'] });
       
       toast({
-        title: "Success",
-        description: `Successfully assigned ${variables.workerIds.length} worker(s) to the project.`,
+        title: "Workers Assigned",
+        description: `Successfully assigned ${data.assigned} worker(s) to the project.`,
       });
     },
     onError: (error: any) => {
-      console.error('Worker assignment error:', error);
+      console.error('[ASSIGN] Batch assignment error:', error);
       toast({
         title: "Assignment Failed",
         description: error.message || "Failed to assign workers. Please try again.",

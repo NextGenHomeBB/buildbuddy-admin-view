@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useProjects } from '@/hooks/useProjects';
 import { useWorkersWithProjectAccess } from '@/hooks/useWorkersWithProjectAccess';
-import { useAssignWorkerToProject } from '@/hooks/useProjectWorkers';
+import { useAssignSingleWorkerToProject } from '@/hooks/useProjectWorkers';
 import { useCreateTaskWithAssignment } from '@/hooks/useCreateTaskWithAssignment';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -50,7 +50,7 @@ export function AddTaskDialog({
   const { toast } = useToast();
   const { data: projects = [] } = useProjects();
   const { data: workersWithAccess = [], refetch: refetchWorkers } = useWorkersWithProjectAccess();
-  const assignWorkerMutation = useAssignWorkerToProject();
+  const assignWorkerMutation = useAssignSingleWorkerToProject();
   const createTaskWithAssignment = useCreateTaskWithAssignment();
   
   const [formData, setFormData] = useState({
@@ -252,7 +252,7 @@ export function AddTaskDialog({
     try {
       await assignWorkerMutation.mutateAsync({
         projectId: selectedProject.id,
-        workerIds: [workerId]
+        userId: workerId
       });
       
       // Refresh workers data

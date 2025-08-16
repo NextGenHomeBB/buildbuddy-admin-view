@@ -16,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useProjectWorkers, useAssignWorkerToProject, useUnassignWorkerFromProject } from '@/hooks/useProjectWorkers';
+import { useProjectWorkers, useAssignSingleWorkerToProject, useUnassignWorkerFromProject } from '@/hooks/useProjectWorkers';
 import { useWorkers } from '@/hooks/useWorkers';
 
 interface ProjectWorkersSectionProps {
@@ -29,7 +29,7 @@ export function ProjectWorkersSection({ projectId }: ProjectWorkersSectionProps)
   
   const { data: projectWorkers = [], isLoading: loadingProjectWorkers } = useProjectWorkers(projectId);
   const { data: allWorkers = [], isLoading: loadingAllWorkers } = useWorkers();
-  const assignWorker = useAssignWorkerToProject();
+  const assignWorker = useAssignSingleWorkerToProject();
   const unassignWorker = useUnassignWorkerFromProject();
 
   // Filter out workers already assigned to the project
@@ -42,7 +42,7 @@ export function ProjectWorkersSection({ projectId }: ProjectWorkersSectionProps)
     
     await assignWorker.mutateAsync({
       projectId,
-      workerIds: [selectedWorkerId],
+      userId: selectedWorkerId,
     });
     
     setSelectedWorkerId('');

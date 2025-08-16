@@ -2675,21 +2675,6 @@ export type Database = {
         }
         Returns: Json
       }
-      assign_workers_to_project: {
-        Args: {
-          p_admin_id: string
-          p_project_id: string
-          p_worker_ids: string[]
-        }
-        Returns: {
-          assigned_at: string
-          assigned_by: string
-          assignment_id: string
-          project_id: string
-          role: string
-          user_id: string
-        }[]
-      }
       audit_guard_blocked: {
         Args: Record<PropertyKey, never>
         Returns: boolean

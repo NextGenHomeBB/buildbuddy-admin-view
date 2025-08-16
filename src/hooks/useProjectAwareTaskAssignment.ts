@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAssignWorkerToProject } from './useProjectWorkers';
+import { useAssignSingleWorkerToProject } from './useProjectWorkers';
 
 interface TaskAssignmentRequest {
   title: string;
@@ -16,7 +16,7 @@ interface TaskAssignmentRequest {
 export function useProjectAwareTaskAssignment() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const assignWorkerMutation = useAssignWorkerToProject();
+  const assignWorkerMutation = useAssignSingleWorkerToProject();
 
   return useMutation({
     mutationFn: async (data: TaskAssignmentRequest) => {
@@ -37,7 +37,7 @@ export function useProjectAwareTaskAssignment() {
         try {
           await assignWorkerMutation.mutateAsync({
             projectId: data.projectId,
-            workerIds: [data.assigneeId]
+            userId: data.assigneeId
           });
         } catch (error) {
           console.error('Failed to assign worker to project:', error);

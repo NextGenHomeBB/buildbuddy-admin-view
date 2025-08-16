@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useAvailableWorkersForProject, useAssignWorkerToProject } from '@/hooks/useProjectWorkers';
+import { useAvailableWorkersForProject, useAssignMultipleWorkers } from '@/hooks/useProjectWorkers';
 
 interface EnhancedWorkerAssignmentDialogProps {
   open: boolean;
@@ -30,7 +30,7 @@ export function EnhancedWorkerAssignmentDialog({
 }: EnhancedWorkerAssignmentDialogProps) {
   const { data: workers = [], isLoading } = useAvailableWorkersForProject(projectId);
   const [selectedWorkers, setSelectedWorkers] = useState<string[]>([]);
-  const assignWorkersMutation = useAssignWorkerToProject();
+  const assignWorkersMutation = useAssignMultipleWorkers();
 
   // Reset selection when dialog opens/closes
   useEffect(() => {
