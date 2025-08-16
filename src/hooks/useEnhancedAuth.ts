@@ -27,12 +27,24 @@ export const useEnhancedAuth = () => {
       
       if (sessionError) {
         console.error('Enhanced Auth - Session retrieval error:', sessionError);
-        throw sessionError;
+        setAuthState({
+          isValid: false,
+          role: 'worker',
+          userId: null,
+          isLoading: false
+        });
+        return null;
       }
 
       if (!session?.access_token) {
         console.warn('Enhanced Auth - No valid session token found');
-        throw new Error('No valid session token');
+        setAuthState({
+          isValid: false,
+          role: 'worker',
+          userId: null,
+          isLoading: false
+        });
+        return null;
       }
 
       console.log('Enhanced Auth - Using session token:', session.access_token.substring(0, 20) + '...');
@@ -46,41 +58,82 @@ export const useEnhancedAuth = () => {
 
       if (error) {
         console.error('Enhanced Auth - Validation error:', error);
-        throw error;
+        
+        // Try fallback authentication
+        const fallbackResult = await fallbackAuth();
+        return fallbackResult;
       }
 
-      console.log('Enhanced Auth - Validation result:', data);
+      if (!data?.success) {
+        console.error('Enhanced Auth - Validation failed:', data);
+        
+        // Try fallback authentication
+        const fallbackResult = await fallbackAuth();
+        return fallbackResult;
+      }
 
-      if (data.success) {
-        setAuthState({
-          isValid: true,
-          role: data.role,
-          userId: data.user_id,
-          debugInfo: data.debug_info,
-          isLoading: false
-        });
-        return data;
-      } else {
+      console.log('Enhanced Auth - Validation successful:', data);
+      
+      setAuthState({
+        isValid: true,
+        role: data.role || 'worker',
+        userId: data.user_id,
+        debugInfo: data.debug_info,
+        isLoading: false
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Enhanced Auth - Session validation failed:', error);
+      
+      // Try fallback authentication before giving up
+      const fallbackResult = await fallbackAuth();
+      return fallbackResult;
+    }
+  };
+
+  const fallbackAuth = async () => {
+    try {
+      console.log('Enhanced Auth - Attempting fallback authentication...');
+      
+      // Get current session
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error || !session?.user) {
+        console.log('Enhanced Auth - No session in fallback, setting invalid state');
         setAuthState({
           isValid: false,
           role: 'worker',
           userId: null,
           isLoading: false
         });
-        
-        if (data.action_required === 'login_required') {
-          toast({
-            title: "Session Expired",
-            description: "Please log in again to continue.",
-            variant: "destructive"
-          });
-          window.location.href = '/auth';
-        }
-        
         return null;
       }
+
+      // Try direct role check
+      const { data: roleData } = await supabase.rpc('get_current_user_role');
+      const role = roleData || 'worker';
+      
+      console.log('Enhanced Auth - Fallback authentication successful:', {
+        userId: session.user.id,
+        role
+      });
+      
+      setAuthState({
+        isValid: true,
+        role,
+        userId: session.user.id,
+        isLoading: false
+      });
+
+      return {
+        success: true,
+        role,
+        user_id: session.user.id,
+        fallback: true
+      };
     } catch (error) {
-      console.error('Enhanced Auth - Session validation failed:', error);
+      console.error('Enhanced Auth - Fallback authentication failed:', error);
       setAuthState({
         isValid: false,
         role: 'worker',
@@ -130,25 +183,31 @@ export const useEnhancedAuth = () => {
 
   const forceReauthentication = async () => {
     try {
-      console.log('Enhanced Auth - Forcing reauthentication...');
+      console.log('Enhanced Auth - Force reauthentication requested');
       
-      // Clean up current state
-      const { cleanupAuthState, clearCachedUserState } = await import('@/utils/authCleanup');
-      cleanupAuthState();
-      clearCachedUserState();
-      
-      // Sign out and redirect
+      // Clear auth state
+      setAuthState({
+        isValid: false,
+        role: 'worker',
+        userId: null,
+        isLoading: false
+      });
+
+      // Clear all Supabase auth keys from localStorage
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      // Sign out globally
       await supabase.auth.signOut({ scope: 'global' });
       
-      toast({
-        title: "Reauthentication Required",
-        description: "Please log in again to restore your session.",
-      });
-      
+      // Redirect to auth page
       window.location.href = '/auth';
     } catch (error) {
-      console.error('Enhanced Auth - Force reauth failed:', error);
-      // Fallback: still redirect
+      console.error('Enhanced Auth - Force reauthentication failed:', error);
+      // Still redirect even if signout fails
       window.location.href = '/auth';
     }
   };

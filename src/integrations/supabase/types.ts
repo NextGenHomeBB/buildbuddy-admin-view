@@ -2701,7 +2701,7 @@ export type Database = {
         Returns: undefined
       }
       can_access_project: {
-        Args: { project_id: string; user_id: string }
+        Args: { project_uuid: string; user_uuid: string }
         Returns: boolean
       }
       can_access_project_financial_data: {

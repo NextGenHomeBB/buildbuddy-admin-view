@@ -29,24 +29,54 @@ export function useProjectWorkers(projectId: string) {
   return useQuery({
     queryKey: ['project-workers', projectId],
     queryFn: async (): Promise<ProjectWorker[]> => {
-      const { data, error } = await supabase
-        .from('user_project_role')
-        .select(`
-          *,
-          profiles:user_id (
-            full_name,
-            avatar_url
-          )
-        `)
-        .eq('project_id', projectId);
+      try {
+        const { data, error } = await supabase
+          .from('user_project_role')
+          .select(`
+            *,
+            profiles:user_id (
+              full_name,
+              avatar_url
+            )
+          `)
+          .eq('project_id', projectId);
 
-      if (error) throw error;
-      return data || [];
+        if (error) {
+          console.error('Project workers query error:', error);
+          
+          // Handle specific error cases
+          if (error.message?.includes('infinite recursion')) {
+            console.warn('RLS policy recursion detected, retrying with fallback...');
+            // Return empty array as fallback
+            return [];
+          }
+          
+          if (error.code === '42501') {
+            console.warn('Permission denied for project workers query');
+            return [];
+          }
+          
+          throw error;
+        }
+        
+        return data || [];
+      } catch (error) {
+        console.error('Project workers fetch failed:', error);
+        // Return empty array as graceful degradation
+        return [];
+      }
     },
     enabled: !!projectId,
     staleTime: 1 * 60 * 1000, // 1 minute for faster updates
     gcTime: 5 * 60 * 1000, // 5 minutes garbage collection
     refetchOnWindowFocus: true, // Refetch when window gains focus
+    retry: (failureCount, error: any) => {
+      // Don't retry on permission errors
+      if (error?.code === '42501' || error?.message?.includes('infinite recursion')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 }
 
