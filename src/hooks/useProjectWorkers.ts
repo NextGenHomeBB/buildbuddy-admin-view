@@ -307,8 +307,8 @@ export function useAssignSingleWorkerToProject() {
 
       console.log('Assigning single worker via RPC:', { projectId, userId, role });
 
-      // Use the ultra-simple RPC function that bypasses RLS conflicts
-      const { data, error } = await supabase.rpc('assign_worker_simple', {
+      // Use the new RLS-bypassing function with proper manual permission checks
+      const { data, error } = await supabase.rpc('assign_worker_bypass_rls', {
         p_project_id: projectId.trim(),
         p_user_id: userId.trim(),
         p_role: role?.trim() || 'worker'

@@ -2882,6 +2882,10 @@ export type Database = {
         Args: { p_project: string; p_user_ids: string[] }
         Returns: undefined
       }
+      assign_worker_bypass_rls: {
+        Args: { p_project_id: string; p_role?: string; p_user_id: string }
+        Returns: Json
+      }
       assign_worker_simple: {
         Args: { p_project_id: string; p_role?: string; p_user_id: string }
         Returns: Json
