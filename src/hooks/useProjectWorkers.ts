@@ -76,7 +76,24 @@ export function useProjectWorkers(projectId: string) {
         }
         
         console.log(`[PROJECT_WORKERS] Successfully fetched ${data?.length || 0} workers for project ${projectId}`);
-        return data || [];
+        console.log('[PROJECT_WORKERS] Raw data structure:', JSON.stringify(data, null, 2));
+        
+        // Transform the data to ensure correct structure
+        const transformedData = (data || []).map(item => ({
+          id: item.id,
+          user_id: item.user_id,
+          project_id: item.project_id,
+          role: item.role,
+          assigned_by: item.assigned_by,
+          assigned_at: item.assigned_at,
+          profiles: {
+            full_name: item.profiles?.full_name || 'Unknown User',
+            avatar_url: item.profiles?.avatar_url
+          }
+        }));
+        
+        console.log('[PROJECT_WORKERS] Transformed data:', JSON.stringify(transformedData, null, 2));
+        return transformedData;
       } catch (error) {
         console.error('[PROJECT_WORKERS] Fetch failed:', error);
         // Return empty array as graceful degradation
