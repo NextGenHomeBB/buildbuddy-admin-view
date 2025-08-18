@@ -60,18 +60,62 @@ export function usePhaseCosts(phaseId: string) {
   return useQuery({
     queryKey: ['phase-costs', phaseId],
     queryFn: async (): Promise<PhaseCostData | null> => {
-      const { data, error } = await supabase
-        .from('phase_costs_vw')
-        .select('*')
-        .eq('phase_id', phaseId)
-        .single();
+      try {
+        // Get phase info and budget
+        const { data: phaseData, error: phaseError } = await supabase
+          .from('project_phases')
+          .select('name, project_id, budget')
+          .eq('id', phaseId)
+          .single();
 
-      if (error) {
+        if (phaseError) throw phaseError;
+
+        // Get material costs
+        const { data: materialCosts } = await supabase
+          .from('phase_material_costs')
+          .select('total_cost')
+          .eq('phase_id', phaseId);
+
+        // Get labor costs
+        const { data: laborCosts } = await supabase
+          .from('phase_labor_costs')
+          .select('total_planned_cost, total_actual_cost')
+          .eq('phase_id', phaseId);
+
+        // Get expenses
+        const { data: expenses } = await supabase
+          .from('phase_expenses')
+          .select('amount')
+          .eq('phase_id', phaseId);
+
+        // Calculate totals
+        const materialTotal = materialCosts?.reduce((sum, item) => sum + (item.total_cost || 0), 0) || 0;
+        const laborPlanned = laborCosts?.reduce((sum, item) => sum + (item.total_planned_cost || 0), 0) || 0;
+        const laborActual = laborCosts?.reduce((sum, item) => sum + (item.total_actual_cost || 0), 0) || 0;
+        const expenseTotal = expenses?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
+        const totalCommitted = materialTotal + laborActual + expenseTotal;
+        const budget = phaseData?.budget || 0;
+        const variance = budget ? budget - totalCommitted : null;
+        const forecast = laborPlanned + materialTotal + expenseTotal;
+
+        return {
+          phase_id: phaseId,
+          phase_name: phaseData?.name || 'Unknown Phase',
+          project_id: phaseData?.project_id || '',
+          budget,
+          material_cost: materialTotal,
+          labor_cost_actual: laborActual,
+          labor_cost_planned: laborPlanned,
+          expense_cost: expenseTotal,
+          total_committed: totalCommitted,
+          variance,
+          forecast,
+          last_updated: new Date().toISOString(),
+        };
+      } catch (error) {
         console.error('Error fetching phase costs:', error);
         return null;
       }
-
-      return data;
     },
     staleTime: 1000 * 60 * 2, // 2 minutes
   });

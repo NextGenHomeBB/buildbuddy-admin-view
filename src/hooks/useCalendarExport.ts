@@ -35,24 +35,55 @@ export function useCalendarExport({ phases, projectName }: UseCalendarExportProp
       // Fetch cost data for each phase in parallel
       const costPromises = phases.map(async (phase) => {
         try {
-          const { data } = await import('@/integrations/supabase/client').then(({ supabase }) => 
+          // Get phase budget from project_phases table
+          const { data: phaseData } = await import('@/integrations/supabase/client').then(({ supabase }) => 
             supabase
-              .from('phase_costs_vw')
-              .select('*')
-              .eq('phase_id', phase.id)
+              .from('project_phases')
+              .select('budget')
+              .eq('id', phase.id)
               .single()
           );
-          
-          if (data) {
-            costMap.set(phase.id, {
-              budget: data.budget,
-              material_cost: data.material_cost || 0,
-              labor_cost_actual: data.labor_cost_actual || 0,
-              expense_cost: data.expense_cost || 0,
-              total_committed: data.total_committed || 0,
-              variance: data.variance,
-            });
-          }
+
+          // Get material costs
+          const { data: materialCosts } = await import('@/integrations/supabase/client').then(({ supabase }) => 
+            supabase
+              .from('phase_material_costs')
+              .select('total_cost')
+              .eq('phase_id', phase.id)
+          );
+
+          // Get labor costs
+          const { data: laborCosts } = await import('@/integrations/supabase/client').then(({ supabase }) => 
+            supabase
+              .from('phase_labor_costs')
+              .select('total_actual_cost')
+              .eq('phase_id', phase.id)
+          );
+
+          // Get expenses
+          const { data: expenses } = await import('@/integrations/supabase/client').then(({ supabase }) => 
+            supabase
+              .from('phase_expenses')
+              .select('amount')
+              .eq('phase_id', phase.id)
+          );
+
+          // Calculate totals
+          const materialTotal = materialCosts?.reduce((sum, item) => sum + (item.total_cost || 0), 0) || 0;
+          const laborTotal = laborCosts?.reduce((sum, item) => sum + (item.total_actual_cost || 0), 0) || 0;
+          const expenseTotal = expenses?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
+          const totalCommitted = materialTotal + laborTotal + expenseTotal;
+          const budget = phaseData?.budget || 0;
+          const variance = budget ? budget - totalCommitted : null;
+
+          costMap.set(phase.id, {
+            budget,
+            material_cost: materialTotal,
+            labor_cost_actual: laborTotal,
+            expense_cost: expenseTotal,
+            total_committed: totalCommitted,
+            variance,
+          });
         } catch (error) {
           console.warn(`Failed to fetch cost data for phase ${phase.id}:`, error);
         }
