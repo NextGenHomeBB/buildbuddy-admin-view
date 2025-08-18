@@ -19,23 +19,40 @@ export function useCreateTaskWithAssignment() {
     mutationFn: async (data: CreateTaskWithAssignmentRequest) => {
       console.log('Creating task with assignment:', data);
 
-      // First, ensure the worker is assigned to the project
-      const { error: assignmentError } = await supabase
+      // First, check if the worker is already assigned to the project
+      const { data: existingAssignment, error: checkError } = await supabase
         .from('user_project_role')
-        .upsert({
-          user_id: data.assigneeId,
-          project_id: data.projectId,
-          role: 'worker'
-        }, {
-          onConflict: 'user_id,project_id'
-        });
+        .select('user_id')
+        .eq('user_id', data.assigneeId)
+        .eq('project_id', data.projectId)
+        .single();
 
-      if (assignmentError) {
-        console.error('Error assigning worker to project:', assignmentError);
-        throw new Error(`Failed to assign worker to project: ${assignmentError.message}`);
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking existing assignment:', checkError);
+        throw new Error(`Failed to check worker assignment: ${checkError.message}`);
       }
 
-      // Then create the task
+      // Only assign worker to project if not already assigned
+      if (!existingAssignment) {
+        console.log('Worker not assigned to project, assigning now...');
+        const { error: assignmentError } = await supabase
+          .from('user_project_role')
+          .insert({
+            user_id: data.assigneeId,
+            project_id: data.projectId,
+            role: 'worker'
+          });
+
+        if (assignmentError) {
+          console.error('Error assigning worker to project:', assignmentError);
+          throw new Error(`Failed to assign worker to project: ${assignmentError.message}`);
+        }
+        console.log('Worker assigned to project successfully');
+      } else {
+        console.log('Worker already assigned to project, skipping assignment');
+      }
+
+      // Create the task
       const { data: taskData, error: taskError } = await supabase
         .from('tasks')
         .insert({
