@@ -2,6 +2,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+// Type definitions for RPC responses
+interface AssignmentResult {
+  success: boolean;
+  assigned_count?: number;
+  error_count?: number;
+  errors?: Array<{user_id: string; error: string}>;
+  message?: string;
+}
+
 // Robust worker assignment hooks - cache refresh
 
 export interface ProjectWorker {
@@ -144,73 +153,56 @@ export function useAvailableWorkersForProject(projectId: string) {
   });
 }
 
-// Robust multi-worker assignment using Promise.all with single assignments
+// Secure multi-worker assignment using RPC function
 export function useAssignMultipleWorkers() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
     mutationFn: async ({ projectId, workerIds }: { projectId: string; workerIds: string[] }) => {
-      console.log(`[ASSIGN] Starting bulk assignment of ${workerIds.length} workers to project ${projectId}`);
+      console.log(`[ASSIGN] Starting secure assignment of ${workerIds.length} workers to project ${projectId}`);
       
       if (!projectId || !workerIds?.length) {
         throw new Error('Project ID and at least one Worker ID are required');
       }
 
-      // Check which workers are already assigned
-      const { data: existingAssignments } = await supabase
-        .from('user_project_role')
-        .select('user_id')
-        .eq('project_id', projectId)
-        .in('user_id', workerIds);
-
-      const alreadyAssignedIds = new Set(existingAssignments?.map(a => a.user_id) || []);
-      const newWorkerIds = workerIds.filter(id => !alreadyAssignedIds.has(id));
-
-      if (newWorkerIds.length === 0) {
-        return { assigned: 0, alreadyAssigned: workerIds.length, data: [] };
-      }
-
-      const assignments = newWorkerIds.map(userId => ({
-        project_id: projectId,
-        user_id: userId,
-        role: 'worker'
-      }));
-
-      const { data, error } = await supabase
-        .from('user_project_role')
-        .insert(assignments)
-        .select();
+      // Use the secure RPC function for assignment
+      const { data, error } = await supabase.rpc('assign_multiple_workers_to_project', {
+        p_project_id: projectId,
+        p_user_ids: workerIds,
+        p_role: 'worker'
+      });
 
       if (error) {
-        console.error(`[ASSIGN] Failed to assign workers:`, {
+        console.error(`[ASSIGN] RPC assignment failed:`, {
           error,
           code: error.code,
           message: error.message,
-          details: error.details,
-          hint: error.hint,
           projectId,
-          workerIds: newWorkerIds,
-          assignments
+          workerIds
         });
         
-        // Provide more user-friendly error messages
-        if (error.code === '23503') {
-          throw new Error('Invalid project or user ID. Please refresh and try again.');
-        } else if (error.code === '42501') {
+        // Provide user-friendly error messages
+        if (error.code === '42501') {
           throw new Error('You don\'t have permission to assign workers to this project.');
-        } else if (error.message?.includes('infinite recursion')) {
-          throw new Error('Database configuration issue. Please contact support.');
+        } else if (error.message?.includes('Insufficient permissions')) {
+          throw new Error('Admin or organization owner permissions required to assign workers.');
+        } else if (error.message?.includes('Project not found')) {
+          throw new Error('Project not found. Please refresh and try again.');
+        } else if (error.message?.includes('User not found')) {
+          throw new Error('One or more selected workers were not found. Please refresh and try again.');
         }
         
         throw error;
       }
       
-      console.log(`[ASSIGN] Successfully assigned ${newWorkerIds.length} workers to project ${projectId}`, data);
-      return { 
-        assigned: newWorkerIds.length, 
-        alreadyAssigned: alreadyAssignedIds.size,
-        data 
+      console.log(`[ASSIGN] Successfully assigned workers via RPC:`, data);
+      const result = data as unknown as AssignmentResult;
+      return {
+        assigned: result?.assigned_count || 0,
+        alreadyAssigned: workerIds.length - (result?.assigned_count || 0),
+        errors: result?.errors || [],
+        success: result?.success || false
       };
     },
     onSuccess: (data, variables) => {
@@ -219,10 +211,11 @@ export function useAssignMultipleWorkers() {
       queryClient.invalidateQueries({ queryKey: ['workers'] });
       
       let message = '';
-      if (data.assigned > 0 && data.alreadyAssigned > 0) {
-        message = `Assigned ${data.assigned} new worker(s). ${data.alreadyAssigned} worker(s) were already assigned.`;
-      } else if (data.assigned > 0) {
+      if (data.success && data.assigned > 0) {
         message = `Successfully assigned ${data.assigned} worker(s) to the project.`;
+        if (data.alreadyAssigned > 0) {
+          message += ` ${data.alreadyAssigned} worker(s) were already assigned.`;
+        }
       } else if (data.alreadyAssigned > 0) {
         message = `All ${data.alreadyAssigned} worker(s) were already assigned to this project.`;
       }
@@ -230,7 +223,7 @@ export function useAssignMultipleWorkers() {
       toast({
         title: "Assignment Complete",
         description: message,
-        variant: data.assigned > 0 ? "default" : "default",
+        variant: data.success && data.assigned > 0 ? "default" : "default",
       });
     },
     onError: (error: any) => {
@@ -257,7 +250,7 @@ export function useAssignMultipleWorkers() {
   });
 }
 
-// Legacy single worker assignment (kept for backward compatibility)
+// Secure single worker assignment using RPC function
 export function useAssignSingleWorkerToProject() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -268,55 +261,29 @@ export function useAssignSingleWorkerToProject() {
       userId: string; 
       role?: string;
     }) => {
-      // Validate inputs to prevent "invalid input syntax" errors
       if (!projectId || projectId.trim() === '') {
         throw new Error('Project ID is required and cannot be empty');
       }
       if (!userId || userId.trim() === '') {
         throw new Error('User ID is required and cannot be empty');
       }
-      if (!role || role.trim() === '') {
-        role = 'worker'; // Default fallback
-      }
 
-      console.log('Assigning worker:', { projectId, userId, role });
+      console.log('Assigning single worker via RPC:', { projectId, userId, role });
 
-      // Check if assignment already exists first
-      const { data: existingAssignment } = await supabase
-        .from('user_project_role')
-        .select('id')
-        .eq('user_id', userId.trim())
-        .eq('project_id', projectId.trim())
-        .maybeSingle();
-
-      if (existingAssignment) {
-        console.log('👤 Worker already assigned to project');
-        return { already_assigned: true, data: existingAssignment };
-      }
-
-      // Insert new assignment
-      const { data, error } = await supabase
-        .from('user_project_role')
-        .insert({ 
-          project_id: projectId.trim(), 
-          user_id: userId.trim(), 
-          role: role.trim()
-        })
-        .select(`
-          *,
-          profiles:user_id (
-            full_name,
-            avatar_url
-          )
-        `)
-        .single();
+      // Use the secure RPC function for assignment
+      const { data, error } = await supabase.rpc('assign_worker_to_project', {
+        p_project_id: projectId.trim(),
+        p_user_id: userId.trim(),
+        p_role: role?.trim() || 'worker'
+      });
 
       if (error) {
-        console.error('Database assignment error:', error);
+        console.error('RPC assignment error:', error);
         throw error;
       }
       
-      return { already_assigned: false, data };
+      const result = data as unknown as AssignmentResult;
+      return { success: result?.success, message: result?.message, already_assigned: false };
     },
     onSuccess: (result, variables) => {
       // Invalidate all related queries for immediate updates
