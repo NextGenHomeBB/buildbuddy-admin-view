@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -56,6 +56,13 @@ export type Database = {
             foreignKeyName: "active_shifts_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_shifts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -85,30 +92,75 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          key: string
+          value: string
+        }
+        Insert: {
+          key: string
+          value: string
+        }
+        Update: {
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
       apple_calendar_credentials: {
         Row: {
+          access_count: number | null
           app_password: string
           caldav_url: string
           created_at: string
+          credential_expires_at: string | null
+          encrypted_app_password: string | null
+          encrypted_password: string | null
+          encryption_key_id: string | null
+          encryption_version: number | null
           id: string
+          key_derivation_salt: string | null
+          last_accessed: string | null
+          last_rotation_at: string | null
+          rotation_required: boolean | null
           updated_at: string
           user_id: string
           username: string
         }
         Insert: {
+          access_count?: number | null
           app_password: string
           caldav_url?: string
           created_at?: string
+          credential_expires_at?: string | null
+          encrypted_app_password?: string | null
+          encrypted_password?: string | null
+          encryption_key_id?: string | null
+          encryption_version?: number | null
           id?: string
+          key_derivation_salt?: string | null
+          last_accessed?: string | null
+          last_rotation_at?: string | null
+          rotation_required?: boolean | null
           updated_at?: string
           user_id: string
           username: string
         }
         Update: {
+          access_count?: number | null
           app_password?: string
           caldav_url?: string
           created_at?: string
+          credential_expires_at?: string | null
+          encrypted_app_password?: string | null
+          encrypted_password?: string | null
+          encryption_key_id?: string | null
+          encryption_version?: number | null
           id?: string
+          key_derivation_salt?: string | null
+          last_accessed?: string | null
+          last_rotation_at?: string | null
+          rotation_required?: boolean | null
           updated_at?: string
           user_id?: string
           username?: string
@@ -174,36 +226,66 @@ export type Database = {
       }
       calendar_oauth_tokens: {
         Row: {
+          access_level: string | null
           access_token: string | null
           created_at: string
+          created_ip: string | null
           expires_at: string | null
           id: string
+          last_ip: string | null
+          last_rotation_at: string | null
+          last_used: string | null
           provider: string
           refresh_token: string | null
+          rotation_required: boolean | null
           scope: string | null
+          suspicious_activity: boolean | null
+          token_expires_at: string | null
+          token_hash: string | null
           updated_at: string
+          usage_count: number | null
           user_id: string
         }
         Insert: {
+          access_level?: string | null
           access_token?: string | null
           created_at?: string
+          created_ip?: string | null
           expires_at?: string | null
           id?: string
+          last_ip?: string | null
+          last_rotation_at?: string | null
+          last_used?: string | null
           provider: string
           refresh_token?: string | null
+          rotation_required?: boolean | null
           scope?: string | null
+          suspicious_activity?: boolean | null
+          token_expires_at?: string | null
+          token_hash?: string | null
           updated_at?: string
+          usage_count?: number | null
           user_id: string
         }
         Update: {
+          access_level?: string | null
           access_token?: string | null
           created_at?: string
+          created_ip?: string | null
           expires_at?: string | null
           id?: string
+          last_ip?: string | null
+          last_rotation_at?: string | null
+          last_used?: string | null
           provider?: string
           refresh_token?: string | null
+          rotation_required?: boolean | null
           scope?: string | null
+          suspicious_activity?: boolean | null
+          token_expires_at?: string | null
+          token_hash?: string | null
           updated_at?: string
+          usage_count?: number | null
           user_id?: string
         }
         Relationships: []
@@ -312,6 +394,99 @@ export type Database = {
         }
         Relationships: []
       }
+      credential_access_log: {
+        Row: {
+          access_granted: boolean | null
+          access_reason: string | null
+          access_type: string
+          additional_context: Json | null
+          credential_id: string
+          credential_type: string
+          failure_reason: string | null
+          id: string
+          ip_address: string | null
+          risk_score: number | null
+          session_id: string | null
+          timestamp: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          access_granted?: boolean | null
+          access_reason?: string | null
+          access_type: string
+          additional_context?: Json | null
+          credential_id: string
+          credential_type: string
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          risk_score?: number | null
+          session_id?: string | null
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          access_granted?: boolean | null
+          access_reason?: string | null
+          access_type?: string
+          additional_context?: Json | null
+          credential_id?: string
+          credential_type?: string
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          risk_score?: number | null
+          session_id?: string | null
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      credential_rotation_policies: {
+        Row: {
+          auto_rotation_enabled: boolean | null
+          created_at: string | null
+          created_by: string | null
+          credential_type: string
+          id: string
+          mandatory_rotation: boolean | null
+          max_age_days: number
+          max_failed_attempts: number | null
+          risk_based_rotation: boolean | null
+          updated_at: string | null
+          warning_days_before_expiry: number | null
+        }
+        Insert: {
+          auto_rotation_enabled?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          credential_type: string
+          id?: string
+          mandatory_rotation?: boolean | null
+          max_age_days?: number
+          max_failed_attempts?: number | null
+          risk_based_rotation?: boolean | null
+          updated_at?: string | null
+          warning_days_before_expiry?: number | null
+        }
+        Update: {
+          auto_rotation_enabled?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          credential_type?: string
+          id?: string
+          mandatory_rotation?: boolean | null
+          max_age_days?: number
+          max_failed_attempts?: number | null
+          risk_based_rotation?: boolean | null
+          updated_at?: string | null
+          warning_days_before_expiry?: number | null
+        }
+        Relationships: []
+      }
       daily_task_assignments: {
         Row: {
           assigned_date: string
@@ -366,13 +541,6 @@ export type Database = {
             columns: ["task_template_id"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "daily_task_assignments_task_template_id_fkey"
-            columns: ["task_template_id"]
-            isOneToOne: false
-            referencedRelation: "worker.my_tasks_view"
             referencedColumns: ["id"]
           },
         ]
@@ -720,6 +888,13 @@ export type Database = {
             foreignKeyName: "invitations_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -827,6 +1002,13 @@ export type Database = {
             foreignKeyName: "materials_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materials_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -894,6 +1076,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "organization_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "organization_members_org_id_fkey"
             columns: ["org_id"]
@@ -974,6 +1163,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "phase_expenses_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "phase_expenses_org_id_fkey"
             columns: ["org_id"]
@@ -1196,6 +1392,13 @@ export type Database = {
             foreignKeyName: "profiles_default_org_id_fkey"
             columns: ["default_org_id"]
             isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_default_org_id_fkey"
+            columns: ["default_org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -1259,13 +1462,6 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_materials_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "worker.my_tasks_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1332,7 +1528,6 @@ export type Database = {
       }
       projects: {
         Row: {
-          assigned_workers: Json | null
           budget: number | null
           company_id: string | null
           created_at: string | null
@@ -1341,12 +1536,12 @@ export type Database = {
           location: string | null
           manager_id: string | null
           name: string
+          org_id: string | null
           progress: number | null
           start_date: string | null
           status: string | null
         }
         Insert: {
-          assigned_workers?: Json | null
           budget?: number | null
           company_id?: string | null
           created_at?: string | null
@@ -1355,12 +1550,12 @@ export type Database = {
           location?: string | null
           manager_id?: string | null
           name: string
+          org_id?: string | null
           progress?: number | null
           start_date?: string | null
           status?: string | null
         }
         Update: {
-          assigned_workers?: Json | null
           budget?: number | null
           company_id?: string | null
           created_at?: string | null
@@ -1369,6 +1564,7 @@ export type Database = {
           location?: string | null
           manager_id?: string | null
           name?: string
+          org_id?: string | null
           progress?: number | null
           start_date?: string | null
           status?: string | null
@@ -1386,6 +1582,20 @@ export type Database = {
             columns: ["manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1493,6 +1703,7 @@ export type Database = {
           attempt_count: number | null
           created_at: string | null
           id: string
+          ip_address: string | null
           operation: string
           user_id: string
           window_start: string | null
@@ -1501,6 +1712,7 @@ export type Database = {
           attempt_count?: number | null
           created_at?: string | null
           id?: string
+          ip_address?: string | null
           operation: string
           user_id: string
           window_start?: string | null
@@ -1509,6 +1721,7 @@ export type Database = {
           attempt_count?: number | null
           created_at?: string | null
           id?: string
+          ip_address?: string | null
           operation?: string
           user_id?: string
           window_start?: string | null
@@ -1584,6 +1797,75 @@ export type Database = {
         }
         Relationships: []
       }
+      security_settings: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      sensitive_operation_audit: {
+        Row: {
+          id: string
+          ip_address: string | null
+          operation_data: Json | null
+          operation_type: string
+          record_id: string | null
+          risk_score: number | null
+          table_name: string
+          timestamp: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          ip_address?: string | null
+          operation_data?: Json | null
+          operation_type: string
+          record_id?: string | null
+          risk_score?: number | null
+          table_name: string
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          ip_address?: string | null
+          operation_data?: Json | null
+          operation_type?: string
+          record_id?: string | null
+          risk_score?: number | null
+          table_name?: string
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       shifts: {
         Row: {
           confidence_score: number | null
@@ -1653,17 +1935,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_shifts_task_id"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "worker.my_tasks_view"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "fk_shifts_worker_id"
             columns: ["worker_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "my_organizations"
             referencedColumns: ["id"]
           },
           {
@@ -1692,13 +1974,6 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shifts_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "worker.my_tasks_view"
             referencedColumns: ["id"]
           },
           {
@@ -1826,24 +2101,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "task_relations_dest_task_fkey"
-            columns: ["dest_task"]
-            isOneToOne: false
-            referencedRelation: "worker.my_tasks_view"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "task_relations_src_task_fkey"
             columns: ["src_task"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "task_relations_src_task_fkey"
-            columns: ["src_task"]
-            isOneToOne: false
-            referencedRelation: "worker.my_tasks_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1937,15 +2198,15 @@ export type Database = {
             foreignKeyName: "tasks_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "my_organizations"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "tasks_phase_id_fkey"
-            columns: ["phase_id"]
+            foreignKeyName: "tasks_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
-            referencedRelation: "phase_costs_vw"
-            referencedColumns: ["phase_id"]
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_phase_id_fkey"
@@ -2015,6 +2276,13 @@ export type Database = {
             foreignKeyName: "time_logs_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_logs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -2044,13 +2312,6 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "time_logs_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "worker.my_tasks_view"
             referencedColumns: ["id"]
           },
         ]
@@ -2120,6 +2381,13 @@ export type Database = {
           work_date?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "time_sheets_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "time_sheets_org_id_fkey"
             columns: ["org_id"]
@@ -2194,25 +2462,25 @@ export type Database = {
           assigned_at: string | null
           assigned_by: string | null
           id: string
-          project_id: string | null
+          project_id: string
           role: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           assigned_at?: string | null
           assigned_by?: string | null
           id?: string
-          project_id?: string | null
+          project_id: string
           role?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           assigned_at?: string | null
           assigned_by?: string | null
           id?: string
-          project_id?: string | null
+          project_id?: string
           role?: string | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -2243,6 +2511,7 @@ export type Database = {
           assigned_at: string | null
           assigned_by: string | null
           id: string
+          org_id: string | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -2250,6 +2519,7 @@ export type Database = {
           assigned_at?: string | null
           assigned_by?: string | null
           id?: string
+          org_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -2257,10 +2527,26 @@ export type Database = {
           assigned_at?: string | null
           assigned_by?: string | null
           id?: string
+          org_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "my_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       worker_availability: {
         Row: {
@@ -2518,37 +2804,29 @@ export type Database = {
       }
     }
     Views: {
-      phase_costs_vw: {
+      my_organizations: {
         Row: {
-          budget: number | null
-          expense_cost: number | null
-          forecast: number | null
-          labor_cost_actual: number | null
-          labor_cost_planned: number | null
-          last_updated: string | null
-          material_cost: number | null
-          phase_id: string | null
-          phase_name: string | null
-          project_id: string | null
-          total_committed: number | null
-          variance: number | null
+          created_at: string | null
+          created_by: string | null
+          id: string | null
+          name: string | null
+          whatsapp_phone: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "project_phases_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_costs_vw"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "project_phases_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string | null
+          name?: string | null
+          whatsapp_phone?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string | null
+          name?: string | null
+          whatsapp_phone?: string | null
+        }
+        Relationships: []
       }
       project_costs_vw: {
         Row: {
@@ -2568,49 +2846,13 @@ export type Database = {
         }
         Relationships: []
       }
-      "worker.my_tasks_view": {
+      security_metrics_summary: {
         Row: {
-          assigned_worker_id: string | null
-          created_at: string | null
-          description: string | null
-          due_date: string | null
-          id: string | null
-          priority: string | null
-          status: string | null
-          title: string | null
-          updated_at: string | null
+          metric_name: string | null
+          metric_value: number | null
+          threat_level: string | null
         }
-        Insert: {
-          assigned_worker_id?: string | null
-          created_at?: string | null
-          description?: string | null
-          due_date?: never
-          id?: string | null
-          priority?: string | null
-          status?: never
-          title?: string | null
-          updated_at?: never
-        }
-        Update: {
-          assigned_worker_id?: string | null
-          created_at?: string | null
-          description?: string | null
-          due_date?: never
-          id?: string | null
-          priority?: string | null
-          status?: never
-          title?: string | null
-          updated_at?: never
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_assignee_fkey"
-            columns: ["assigned_worker_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
@@ -2620,50 +2862,193 @@ export type Database = {
       }
       accept_quotation_by_token: {
         Args: {
-          p_token: string
-          p_name: string
           p_email: string
-          p_note: string
           p_ip: string
+          p_name: string
+          p_note: string
+          p_token: string
         }
         Returns: Json
       }
+      assign_multiple_workers_to_project: {
+        Args: { p_project_id: string; p_role?: string; p_user_ids: string[] }
+        Returns: Json
+      }
+      assign_multiple_workers_to_project_simple: {
+        Args: { p_project_id: string; p_role?: string; p_user_ids: string[] }
+        Returns: Json
+      }
+      assign_project_workers: {
+        Args: { p_project: string; p_user_ids: string[] }
+        Returns: undefined
+      }
+      assign_worker_bypass_rls: {
+        Args: { p_project_id: string; p_role?: string; p_user_id: string }
+        Returns: Json
+      }
+      assign_worker_simple: {
+        Args: { p_project_id: string; p_role?: string; p_user_id: string }
+        Returns: Json
+      }
+      assign_worker_to_project: {
+        Args: { p_project_id: string; p_role?: string; p_user_id: string }
+        Returns: Json
+      }
+      assign_worker_to_project_simple: {
+        Args: { p_project_id: string; p_role?: string; p_user_id: string }
+        Returns: Json
+      }
+      audit_guard_blocked: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      audit_guard_off: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      audit_guard_on: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      audit_sensitive_operation: {
+        Args: {
+          operation_type: string
+          record_id: string
+          sensitive_data_accessed?: string[]
+          table_name: string
+        }
+        Returns: undefined
+      }
+      can_access_project: {
+        Args: { project_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
+      can_access_project_assignments: {
+        Args: { p_project_id: string; p_user_id?: string }
+        Returns: boolean
+      }
+      can_access_project_financial_data: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
+      can_access_security_monitor: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      can_assign_to_project: {
+        Args: { p_assigner_id: string; p_project_id: string }
+        Returns: boolean
+      }
+      check_credential_rotation_required: {
+        Args: { p_credential_id: string; p_credential_type: string }
+        Returns: Json
+      }
+      check_customer_data_rate_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      check_project_worker_consistency: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          assigned_workers_count: number
+          is_consistent: boolean
+          project_id: string
+          project_name: string
+          user_project_role_count: number
+        }[]
+      }
       check_rate_limit: {
         Args: {
-          operation_name: string
           max_attempts?: number
+          operation_name: string
           window_minutes?: number
         }
         Returns: boolean
       }
+      check_rate_limit_enhanced: {
+        Args: {
+          max_attempts?: number
+          operation_name: string
+          window_minutes?: number
+        }
+        Returns: boolean
+      }
+      check_security_configuration: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          current_value: string
+          recommended_value: string
+          security_risk: string
+          setting_name: string
+        }[]
+      }
       check_shift_overlap: {
         Args: {
-          p_worker_id: string
-          p_start_time: string
           p_end_time: string
           p_exclude_shift_id?: string
+          p_start_time: string
+          p_worker_id: string
         }
         Returns: boolean
       }
       check_timer_overlap: {
         Args: {
-          p_user_id: string
-          p_start_time?: string
           p_exclude_id?: string
+          p_start_time?: string
+          p_user_id: string
         }
         Returns: boolean
+      }
+      check_worker_compensation_status: {
+        Args: { p_worker_id: string }
+        Returns: {
+          effective_from: string
+          has_compensation: boolean
+          is_current: boolean
+          payment_type: string
+        }[]
+      }
+      check_worker_data_consistency: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          assigned_workers_count: number
+          project_id: string
+          project_name: string
+          status: string
+          user_project_role_count: number
+        }[]
+      }
+      cleanup_old_security_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       complete_daily_task: {
         Args: { assignment_id: string }
         Returns: Json
       }
       create_user_profile: {
-        Args: { user_id: string; user_email?: string }
+        Args: { user_email: string; user_id: string }
+        Returns: undefined
+      }
+      debug_auth_state: {
+        Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      delete_apple_credentials_secure: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      ensure_default_membership: {
+        Args: { p_user?: string }
+        Returns: undefined
       }
       expire_old_daily_tasks: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      financial_data_security_notice: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       fn_is_member: {
         Args: { p_org: string }
@@ -2673,48 +3058,540 @@ export type Database = {
         Args: { p_org: string }
         Returns: string
       }
+      get_apple_credentials_secure: {
+        Args: { p_user_id?: string }
+        Returns: {
+          access_count: number
+          app_password: string
+          caldav_url: string
+          created_at: string
+          id: string
+          last_accessed: string
+          username: string
+        }[]
+      }
+      get_audit_trail_secure: {
+        Args:
+          | {
+              p_action?: string
+              p_end_date?: string
+              p_limit?: number
+              p_start_date?: string
+              p_user_id?: string
+            }
+          | {
+              p_action_filter?: string
+              p_hours_back?: number
+              p_user_id?: string
+            }
+        Returns: {
+          audit_id: string
+          event_action: string
+          event_details: Json
+          event_ip_address: string
+          event_severity: string
+          event_table_name: string
+          event_timestamp: string
+          event_user_id: string
+        }[]
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_current_user_role_enhanced: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_customer_data_secure: {
+        Args: {
+          p_document_type?: string
+          p_include_payment_data?: boolean
+          p_project_id?: string
+        }
+        Returns: {
+          amount_paid: number
+          client_address: string
+          client_email: string
+          client_name: string
+          client_phone: string
+          created_at: string
+          document_number: string
+          document_type: string
+          id: string
+          payment_status: string
+          project_id: string
+          status: string
+          subtotal: number
+          tax_amount: number
+          total_amount: number
+          updated_at: string
+        }[]
+      }
       get_document_public: {
         Args: { p_token: string }
         Returns: {
-          document_number: string
           client_name: string
-          total_amount: number
+          document_number: string
+          document_type: string
           notes: string
           status: string
-          document_type: string
+          total_amount: number
           valid_until: string
+        }[]
+      }
+      get_document_secure: {
+        Args: { p_document_id: string; p_include_payment_data?: boolean }
+        Returns: {
+          acceptance_token: string
+          accepted_by_email: string
+          accepted_by_name: string
+          amount_paid: number
+          client_address: string
+          client_email: string
+          client_name: string
+          client_phone: string
+          created_at: string
+          document_number: string
+          document_type: string
+          id: string
+          payment_status: string
+          payment_url: string
+          project_id: string
+          status: string
+          stripe_payment_intent_id: string
+          stripe_session_id: string
+          subtotal: number
+          tax_amount: number
+          total_amount: number
+          updated_at: string
+        }[]
+      }
+      get_employee_profile_hr_secure: {
+        Args: {
+          p_business_purpose?: string
+          p_employee_id: string
+          p_justification: string
+        }
+        Returns: {
+          avatar_url: string
+          bio: string
+          company_id: string
+          created_at: string
+          default_org_id: string
+          full_name: string
+          id: string
+          work_role: Json
+        }[]
+      }
+      get_financial_summary_secure: {
+        Args: { p_project_id?: string }
+        Returns: {
+          access_level: string
+          budget_variance: number
+          completion_percentage: number
+          project_id: string
+          project_name: string
+          total_budget: number
+          total_spent: number
+        }[]
+      }
+      get_financial_summary_secure_enhanced: {
+        Args: { p_project_id?: string; p_summary_level?: string }
+        Returns: {
+          budget_utilization_percent: number
+          last_updated: string
+          phases_count: number
+          project_id: string
+          project_name: string
+          total_budget: number
+          total_committed: number
+          total_spent: number
+          total_variance: number
+        }[]
+      }
+      get_my_current_rate_secure: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          effective_date: string
+          hourly_rate: number
+          monthly_salary: number
+          payment_type: string
         }[]
       }
       get_my_tasks: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          title: string
-          description: string
-          status: string
-          priority: string
           assigned_worker_id: string
-          due_date: string
           created_at: string
+          description: string
+          due_date: string
+          id: string
+          priority: string
+          status: string
+          title: string
           updated_at: string
+        }[]
+      }
+      get_my_tasks_secure: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          assigned_worker_id: string
+          created_at: string
+          description: string
+          due_date: string
+          id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }[]
+      }
+      get_org_scoped_data: {
+        Args: {
+          additional_filters?: Json
+          org_id_param: string
+          table_name: string
+        }
+        Returns: Json
+      }
+      get_payroll_data_secure: {
+        Args: { p_date_from?: string; p_date_to?: string; p_worker_id?: string }
+        Returns: {
+          amount: number
+          hourly_rate: number
+          hours_worked: number
+          masked_worker_name: string
+          payment_date: string
+          payment_type: string
+          project_name: string
+          worker_id: string
+        }[]
+      }
+      get_phase_costs_secure: {
+        Args: { p_project_id?: string }
+        Returns: {
+          budget: number
+          expense_cost: number
+          forecast: number
+          labor_cost_actual: number
+          labor_cost_planned: number
+          last_updated: string
+          material_cost: number
+          phase_id: string
+          phase_name: string
+          project_id: string
+          total_committed: number
+          variance: number
+        }[]
+      }
+      get_phase_costs_secure_enhanced: {
+        Args: {
+          p_include_detailed_breakdown?: boolean
+          p_phase_id?: string
+          p_project_id?: string
+        }
+        Returns: {
+          budget: number
+          expense_cost: number
+          forecast: number
+          labor_cost_actual: number
+          labor_cost_planned: number
+          last_updated: string
+          material_cost: number
+          phase_id: string
+          phase_name: string
+          project_id: string
+          total_committed: number
+          variance: number
+        }[]
+      }
+      get_phase_costs_summary: {
+        Args: { p_project_id?: string }
+        Returns: {
+          budget: number
+          expense_cost: number
+          forecast: number
+          labor_cost_actual: number
+          labor_cost_planned: number
+          last_updated: string
+          material_cost: number
+          phase_id: string
+          phase_name: string
+          project_id: string
+          total_committed: number
+          variance: number
+        }[]
+      }
+      get_profile_secure: {
+        Args: { p_user_id?: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          company_id: string
+          created_at: string
+          default_org_id: string
+          full_name: string
+          id: string
+          work_role: Json
+        }[]
+      }
+      get_project_costs_secure: {
+        Args: { p_project_id?: string }
+        Returns: {
+          budget: number
+          budget_variance: number
+          project_id: string
+          project_name: string
+          total_cost: number
+          total_expense_cost: number
+          total_labor_cost: number
+          total_material_cost: number
+        }[]
+      }
+      get_project_worker_basic_info: {
+        Args: { p_worker_id: string }
+        Returns: {
+          full_name: string
+          id: string
+          work_role: Json
+        }[]
+      }
+      get_public_profile_info: {
+        Args: { p_user_id: string }
+        Returns: {
+          display_name: string
+          id: string
+          work_role: Json
+        }[]
+      }
+      get_quotation_public_secure: {
+        Args: { p_token: string }
+        Returns: {
+          client_email: string
+          client_name: string
+          client_phone: string
+          document_number: string
+          document_type: string
+          notes: string
+          status: string
+          total_amount: number
+          valid_until: string
+        }[]
+      }
+      get_secure_customer_data: {
+        Args: { p_document_type?: string; p_project_id?: string }
+        Returns: {
+          amount_paid: number
+          client_email: string
+          client_name: string
+          client_phone: string
+          created_at: string
+          document_number: string
+          document_type: string
+          id: string
+          project_id: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }[]
+      }
+      get_security_alerts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          alert_id: string
+          details: Json
+          event_timestamp: string
+          event_type: string
+          ip_address: string
+          severity: string
+          user_id: string
+        }[]
+      }
+      get_security_dashboard: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          metric_description: string
+          metric_name: string
+          metric_value: number
+          threat_level: string
+        }[]
+      }
+      get_security_dashboard_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          access_violations: number
+          critical_alerts: number
+          failed_attempts: number
+          rate_violations: number
+          recent_logins: number
+          total_events: number
+        }[]
+      }
+      get_security_dashboard_metrics: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          metric_description: string
+          metric_name: string
+          metric_value: number
+          threat_level: string
+        }[]
+      }
+      get_security_monitor_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          action: string
+          event_category: string
+          event_timestamp: string
+          id: string
+          ip_address: string
+          severity_level: string
+          table_name: string
+          user_id: string
+          user_name: string
+        }[]
+      }
+      get_user_org_role: {
+        Args: { p_org_id: string }
+        Returns: string
+      }
+      get_user_role_secure: {
+        Args: { p_user_id?: string }
+        Returns: string
+      }
+      get_worker_rate_metadata: {
+        Args: { p_worker_id?: string }
+        Returns: {
+          effective_date: string
+          end_date: string
+          has_active_rate: boolean
+          id: string
+          is_current: boolean
+          payment_type: string
+        }[]
+      }
+      get_worker_rates_masked: {
+        Args: { p_worker_id?: string }
+        Returns: {
+          effective_date: string
+          end_date: string
+          hourly_rate: number
+          id: string
+          monthly_salary: number
+          payment_type: string
+          worker_id: string
+          worker_name: string
+        }[]
+      }
+      get_worker_rates_secure: {
+        Args:
+          | { p_effective_date?: string; p_worker_id?: string }
+          | { p_include_salary_details?: boolean; p_worker_id?: string }
+        Returns: {
+          created_at: string
+          effective_date: string
+          end_date: string
+          hourly_rate: number
+          id: string
+          monthly_salary: number
+          payment_type: string
+          updated_at: string
+          worker_id: string
+        }[]
+      }
+      get_worker_salary_hr_secure: {
+        Args: { p_justification?: string; p_worker_id: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          effective_date: string
+          end_date: string
+          hourly_rate: number
+          id: string
+          monthly_salary: number
+          payment_type: string
+          worker_id: string
         }[]
       }
       invite_user: {
         Args: {
-          p_org_id: string
           p_email: string
-          p_role: string
           p_expires_at?: string
+          p_org_id: string
+          p_role: string
         }
         Returns: Json
       }
-      is_org_member: {
-        Args: { check_org: string }
+      is_authorized_for_personal_data: {
+        Args: { access_reason?: string }
         Returns: boolean
+      }
+      is_hr_administrator: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_org_member: {
+        Args: { org_uuid: string }
+        Returns: boolean
+      }
+      log_credential_access: {
+        Args: {
+          p_access_reason?: string
+          p_access_type: string
+          p_additional_context?: Json
+          p_credential_id: string
+          p_credential_type: string
+        }
+        Returns: string
+      }
+      log_critical_security_event: {
+        Args:
+          | {
+              auto_response?: string
+              details?: Json
+              event_type: string
+              threat_level?: string
+            }
+          | { details?: Json; event_type: string; severity?: string }
+        Returns: undefined
+      }
+      log_high_risk_activity: {
+        Args: { details?: Json; event_type: string; risk_level?: string }
+        Returns: undefined
+      }
+      log_security_event: {
+        Args: { details?: Json; event_type: string; severity?: string }
+        Returns: undefined
+      }
+      log_sensitive_operation: {
+        Args: {
+          p_operation_data?: Json
+          p_operation_type: string
+          p_record_id?: string
+          p_risk_score?: number
+          p_table_name: string
+        }
+        Returns: undefined
+      }
+      manage_worker_rates_secure: {
+        Args: {
+          p_effective_date?: string
+          p_end_date?: string
+          p_hourly_rate?: number
+          p_monthly_salary?: number
+          p_operation: string
+          p_payment_type?: string
+          p_rate_id?: string
+          p_worker_id?: string
+        }
+        Returns: Json
+      }
+      missing_project_access: {
+        Args: { p_project: string }
+        Returns: {
+          email: string
+          user_id: string
+        }[]
       }
       next_document_number: {
         Args: { doc_type: string }
@@ -2728,8 +3605,76 @@ export type Database = {
         Args: { p_document_id: string }
         Returns: undefined
       }
+      repair_assigned_workers: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      repair_project_worker_assignments: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          repaired_projects: number
+          total_projects: number
+        }[]
+      }
+      rotate_security_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      safe_log_security_event: {
+        Args: { details?: Json; event_type: string; severity?: string }
+        Returns: boolean
+      }
+      secure_credential_operation: {
+        Args: {
+          credential_data?: Json
+          credential_type: string
+          operation_type: string
+        }
+        Returns: Json
+      }
+      secure_customer_data_with_audit: {
+        Args: {
+          p_access_reason?: string
+          p_document_type?: string
+          p_project_id?: string
+        }
+        Returns: {
+          amount_paid: number
+          client_email: string
+          client_name: string
+          client_phone: string
+          created_at: string
+          document_number: string
+          document_type: string
+          id: string
+          project_id: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }[]
+      }
+      secure_refresh_phase_costs_view: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       setup_demo_data: {
         Args: { manager_id: string; worker_id: string }
+        Returns: Json
+      }
+      store_apple_credentials_secure: {
+        Args: {
+          p_app_password: string
+          p_caldav_url?: string
+          p_username: string
+        }
+        Returns: Json
+      }
+      update_apple_credentials_secure: {
+        Args: {
+          p_app_password: string
+          p_caldav_url?: string
+          p_username: string
+        }
         Returns: Json
       }
       update_phase_progress: {
@@ -2740,12 +3685,41 @@ export type Database = {
         Args: { proj: string }
         Returns: undefined
       }
+      user_can_manage_project_assignments: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
+      user_has_project_role: {
+        Args: { p_project_id: string; p_user_id?: string }
+        Returns: boolean
+      }
       user_has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
+      }
+      user_is_global_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      validate_apple_credential_security: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
+      validate_user_profile_exists: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
+      verify_data_integrity: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          check_name: string
+          details: Json
+          issue_count: number
+          status: string
+        }[]
       }
     }
     Enums: {
