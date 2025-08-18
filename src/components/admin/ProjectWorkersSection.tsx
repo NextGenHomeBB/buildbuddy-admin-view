@@ -127,7 +127,7 @@ export function ProjectWorkersSection({ projectId }: ProjectWorkersSectionProps)
                   size="sm"
                   className="flex-1"
                 >
-                  {assignWorker.isPending ? 'Assigning...' : 'Assign'}
+                  {assignWorker.isPending ? 'Assigning to Project...' : 'Assign to Project'}
                 </Button>
                 <Button 
                   variant="outline" 
