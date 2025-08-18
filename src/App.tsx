@@ -3,12 +3,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import React from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { OrganizationProvider, useOrganization } from "@/contexts/OrganizationContext";
-import { OrganizationErrorBoundary } from "@/components/OrganizationErrorBoundary";
-import { OrganizationSelectionPrompt } from "@/components/admin/OrganizationSelectionPrompt";
-import { cacheManager } from "@/utils/cacheManager";
+import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ProjectLayout } from "@/components/admin/ProjectLayout";
 import { RequireAdmin } from "@/components/RequireAdmin";
@@ -23,8 +19,6 @@ import { AdminProjects } from "./pages/admin/AdminProjects";
 import { AdminLists } from "./pages/admin/AdminLists";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { AdminSettings } from "./pages/admin/AdminSettings";
-import { AdminProfile } from "./pages/admin/AdminProfile";
-import { AdminBilling } from "./pages/admin/AdminBilling";
 import { CalendarPage } from "./pages/admin/AdminCalendar";
 import AdminCosts from "./pages/admin/AdminCosts";
 import { AdminAvailability } from "./pages/admin/AdminAvailability";
@@ -66,90 +60,65 @@ const queryClient = new QueryClient({
   },
 });
 
-// Component to handle organization selection
-function AppContent() {
-  const { needsOrganizationSelection, refreshOrganization } = useOrganization();
-
-  if (needsOrganizationSelection) {
-    return <OrganizationSelectionPrompt onOrganizationJoined={refreshOrganization} />;
-  }
-
-  return (
-    <>
-      <Toaster />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/invite/:token" element={<AcceptInvite />} />
-          <Route path="/quotation/:token" element={<QuotationAcceptance />} />
-          <Route path="/system-overview" element={<RequireAdmin><SystemOverview /></RequireAdmin>} />
-          
-          {/* Admin routes */}
-          <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
-            <Route index element={<AdminOverview />} />
-            <Route path="overview" element={<AdminOverview />} />
-            <Route path="projects" element={<AdminProjects />} />
-            <Route path="lists" element={<AdminLists />} />
-            <Route path="calendar" element={<CalendarPage />} />
-            <Route path="availability" element={<AdminAvailability />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="materials" element={<AdminMaterials />} />
-            <Route path="indeling" element={<AdminIndeling />} />
-            <Route path="styling" element={<AdminStyling />} />
-            <Route path="ai-materials" element={<AdminAIMaterials />} />
-            <Route path="costs" element={<AdminCosts />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="quotations" element={<AdminQuotations />} />
-            <Route path="quotation-templates" element={<AdminQuotationTemplates />} />
-            <Route path="schedule/auto" element={<AdminScheduleAuto />} />
-            <Route path="schedule/manual" element={<AdminScheduleManual />} />
-            <Route path="system" element={<SystemOverview />} />
-            <Route path="settings" element={<AdminSettings />} />
-            <Route path="profile" element={<AdminProfile />} />
-            <Route path="billing" element={<AdminBilling />} />
-            <Route path="phase-templates" element={<PhaseTemplateListPage />} />
-            <Route path="phase-templates/:id" element={<PhaseTemplateDetailPage />} />
-            {/* Redirect old template URLs to new ones */}
-            <Route path="templates/phases" element={<Navigate to="/admin/phase-templates" replace />} />
-            <Route path="templates/phases/:id" element={<Navigate to="/admin/phase-templates" replace />} />
-          </Route>
-
-          {/* Project routes */}
-          <Route path="/admin/projects/:id/*" element={<RequireAdmin><ProjectDetailPage /></RequireAdmin>} />
-          
-          {/* Worker routes */}
-          <Route path="/worker" element={<RequireWorker><WorkerLayout /></RequireWorker>}>
-            <Route index element={<WorkerDashboard />} />
-            <Route path="projects" element={<WorkerProjects />} />
-            <Route path="lists" element={<WorkerLists />} />
-            <Route path="projects/:id" element={<WorkerProjectDetail />} />
-            <Route path="calendar" element={<WorkerCalendar />} />
-          </Route>
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </>
-  );
-}
-
 function App() {
-  // Initialize cache manager on app start
-  React.useEffect(() => {
-    cacheManager.initialize();
-  }, []);
-
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <AuthProvider>
-            <OrganizationErrorBoundary>
-              <OrganizationProvider>
-                <AppContent />
-              </OrganizationProvider>
-            </OrganizationErrorBoundary>
+            <OrganizationProvider>
+              <Toaster />
+              <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/invite/:token" element={<AcceptInvite />} />
+              <Route path="/quotation/:token" element={<QuotationAcceptance />} />
+              
+              {/* Admin routes */}
+              <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
+                <Route index element={<AdminOverview />} />
+                <Route path="overview" element={<AdminOverview />} />
+                <Route path="projects" element={<AdminProjects />} />
+                <Route path="lists" element={<AdminLists />} />
+                <Route path="calendar" element={<CalendarPage />} />
+                <Route path="availability" element={<AdminAvailability />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="materials" element={<AdminMaterials />} />
+                <Route path="indeling" element={<AdminIndeling />} />
+                <Route path="styling" element={<AdminStyling />} />
+                <Route path="ai-materials" element={<AdminAIMaterials />} />
+                <Route path="costs" element={<AdminCosts />} />
+                <Route path="reports" element={<Reports />} />
+                <Route path="quotations" element={<AdminQuotations />} />
+                <Route path="quotation-templates" element={<AdminQuotationTemplates />} />
+                <Route path="schedule/auto" element={<AdminScheduleAuto />} />
+                <Route path="schedule/manual" element={<AdminScheduleManual />} />
+                <Route path="system" element={<SystemOverview />} />
+                <Route path="settings" element={<AdminSettings />} />
+                <Route path="phase-templates" element={<PhaseTemplateListPage />} />
+                <Route path="phase-templates/:id" element={<PhaseTemplateDetailPage />} />
+                {/* Redirect old template URLs to new ones */}
+                <Route path="templates/phases" element={<Navigate to="/admin/phase-templates" replace />} />
+                <Route path="templates/phases/:id" element={<Navigate to="/admin/phase-templates" replace />} />
+              </Route>
+
+              {/* Project routes */}
+              <Route path="/admin/projects/:id/*" element={<RequireAdmin><ProjectDetailPage /></RequireAdmin>} />
+              
+              {/* Worker routes */}
+              <Route path="/worker" element={<RequireWorker><WorkerLayout /></RequireWorker>}>
+                <Route index element={<WorkerDashboard />} />
+                <Route path="projects" element={<WorkerProjects />} />
+                <Route path="lists" element={<WorkerLists />} />
+                <Route path="projects/:id" element={<WorkerProjectDetail />} />
+                <Route path="calendar" element={<WorkerCalendar />} />
+              </Route>
+              
+              <Route path="*" element={<NotFound />} />
+              </Routes>
+              </BrowserRouter>
+            </OrganizationProvider>
           </AuthProvider>
         </TooltipProvider>
       </QueryClientProvider>

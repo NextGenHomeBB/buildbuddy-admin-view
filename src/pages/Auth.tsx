@@ -39,17 +39,6 @@ export const Auth = () => {
     setLoading(true);
 
     try {
-      // Clean up existing auth state before signing in to prevent limbo states
-      const { cleanupAuthState, clearCachedUserState } = await import('@/utils/authCleanup');
-      cleanupAuthState();
-      clearCachedUserState();
-      
-      // Attempt global sign out to ensure clean state
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-      }
       // Check rate limiting for auth attempts
       const operation = isSignUp ? 'signup' : 'signin';
       const rateLimitAllowed = await checkRateLimit(operation, {
@@ -103,7 +92,17 @@ export const Auth = () => {
         if (error) throw error;
 
         if (data.user) {
-          logger.log('User signed up successfully', { userId: data.user.id });
+          // Create profile without role - roles are managed through user_roles table
+          await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: data.user.id,
+                full_name: fullNameValidation!.sanitizedValue
+              }
+            ]);
+
+          logger.log('User profile created', { userId: data.user.id });
 
           toast({
             title: "Account created!",
@@ -125,9 +124,7 @@ export const Auth = () => {
           title: "Welcome back!",
           description: "You have been signed in successfully.",
         });
-        
-        // Force page reload to ensure clean authentication state
-        window.location.href = '/';
+        navigate('/');
       }
     } catch (error: any) {
       logger.error('Authentication error', error);

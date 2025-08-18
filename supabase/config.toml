@@ -21,11 +21,5 @@ verify_jwt = true
 [functions.sync-timesheet]
 verify_jwt = true
 
-[functions.auth-debug]
-verify_jwt = true
-
-[functions.session-validate]
-verify_jwt = true
-
 [storage]
 enabled = true

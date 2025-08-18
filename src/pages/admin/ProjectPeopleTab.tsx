@@ -1,23 +1,41 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { ProjectWorkersList } from '@/components/admin/ProjectWorkersList';
-import { EnhancedWorkerAssignmentDialog } from '@/components/admin/EnhancedWorkerAssignmentDialog';
-import { ProjectAwareTaskDialog } from '@/components/admin/ProjectAwareTaskDialog';
-import { useProjectWorkers } from '@/hooks/useProjectWorkers';
+import { AssignmentGrid } from '@/components/admin/AssignmentGrid';
+import { AddWorkersDrawer } from '@/components/admin/AddWorkersDrawer';
+import { useAssignments } from '@/hooks/useAssignments';
+import { useWorkers } from '@/hooks/useWorkers';
+import { useAddWorkers } from '@/hooks/useAddWorkers';
+import { useUnassignWorkerFromProject } from '@/hooks/useProjectWorkers';
 
 interface ProjectPeopleTabProps {
   projectId: string;
 }
 
 export function ProjectPeopleTab({ projectId }: ProjectPeopleTabProps) {
-  const [isWorkerDialogOpen, setIsWorkerDialogOpen] = useState(false);
-  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   
-  const { data: projectWorkers = [], isLoading: assignmentsLoading } = useProjectWorkers(projectId);
+  const { data: assignments = [], isLoading: assignmentsLoading } = useAssignments(projectId);
+  const { data: allWorkers = [], isLoading: workersLoading } = useWorkers();
+  const addWorkersMutation = useAddWorkers();
+  const unassignWorkerMutation = useUnassignWorkerFromProject();
 
-  const handleWorkersAssigned = () => {
-    // Data will be automatically refetched due to query invalidation
+  // Get workers not already assigned to this project
+  const assignedWorkerIds = assignments.map(a => a.user_id);
+  const availableWorkers = allWorkers.filter(worker => !assignedWorkerIds.includes(worker.id));
+
+  const handleAssignWorkers = (workerIds: string[]) => {
+    addWorkersMutation.mutate({ projectId, workerIds });
+  };
+
+  const handleRemoveWorker = (assignmentId: string) => {
+    const assignment = assignments.find(a => a.id === assignmentId);
+    if (assignment) {
+      unassignWorkerMutation.mutate({ 
+        projectId, 
+        userId: assignment.user_id 
+      });
+    }
   };
 
   return (
@@ -26,44 +44,30 @@ export function ProjectPeopleTab({ projectId }: ProjectPeopleTabProps) {
         <div>
           <h2 className="text-lg font-semibold">Project Team</h2>
           <p className="text-sm text-muted-foreground">
-            Manage workers assigned to this project ({projectWorkers.length} assigned)
+            Manage workers assigned to this project ({assignments.length} assigned)
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setIsTaskDialogOpen(true)}
-            variant="outline"
-            disabled={projectWorkers.length === 0}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Task
-          </Button>
-          <Button
-            onClick={() => setIsWorkerDialogOpen(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Manage Workers
-          </Button>
-        </div>
+        <Button
+          onClick={() => setIsDrawerOpen(true)}
+          disabled={availableWorkers.length === 0 || workersLoading}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Workers
+        </Button>
       </div>
 
-      <ProjectWorkersList
-        workers={projectWorkers}
-        projectId={projectId}
+      <AssignmentGrid
+        assignments={assignments}
+        onRemoveWorker={handleRemoveWorker}
         isLoading={assignmentsLoading}
       />
 
-      <EnhancedWorkerAssignmentDialog
-        open={isWorkerDialogOpen}
-        onOpenChange={setIsWorkerDialogOpen}
-        projectId={projectId}
-        onWorkersAssigned={handleWorkersAssigned}
-      />
-
-      <ProjectAwareTaskDialog
-        open={isTaskDialogOpen}
-        onOpenChange={setIsTaskDialogOpen}
-        projectId={projectId}
+      <AddWorkersDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        availableWorkers={availableWorkers}
+        onAssignWorkers={handleAssignWorkers}
+        isLoading={addWorkersMutation.isPending}
       />
     </div>
   );

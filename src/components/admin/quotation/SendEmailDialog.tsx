@@ -43,35 +43,6 @@ export function SendEmailDialog({ open, onOpenChange, document, onEmailSent }: S
       return;
     }
 
-    // Enhanced validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (subject && subject.length > 200) {
-      toast({
-        title: "Error",
-        description: "Subject line is too long (maximum 200 characters)",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (message && message.length > 2000) {
-      toast({
-        title: "Error",
-        description: "Message is too long (maximum 2000 characters)",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-quotation-email', {
@@ -99,27 +70,11 @@ export function SendEmailDialog({ open, onOpenChange, document, onEmailSent }: S
       setMessage("");
     } catch (error: any) {
       console.error('Error sending email:', error);
-      
-      // Handle rate limiting and other security errors
-      if (error.message?.includes('Rate limit')) {
-        toast({
-          title: "Rate Limit Exceeded",
-          description: "Too many emails sent. Please wait before trying again.",
-          variant: "destructive",
-        });
-      } else if (error.message?.includes('Invalid')) {
-        toast({
-          title: "Invalid Data",
-          description: "Please check your input and try again.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to send email",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send email",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

@@ -91,23 +91,13 @@ export function useCreateTask() {
 
   return useMutation({
     mutationFn: async ({ projectId, data }: { projectId: string; data: CreateTaskData }): Promise<Task> => {
-      console.log('Creating task with data:', { projectId, data });
-      
-      // If no projectId provided, create task without project reference
-      const taskData = projectId ? { ...data, project_id: projectId } : data;
-      
       const { data: task, error } = await supabase
         .from('tasks')
-        .insert([taskData])
+        .insert([{ ...data, project_id: projectId }])
         .select()
         .single();
 
-      if (error) {
-        console.error('Task creation error:', error);
-        throw error;
-      }
-      
-      console.log('Task created successfully:', task);
+      if (error) throw error;
       return {
         ...task,
         status: task.status as Task['status'],
@@ -132,47 +122,19 @@ export function useCreateTask() {
       return { previousTasks, projectId };
     },
     onSuccess: (data, variables) => {
-      // Invalidate project-specific tasks
       queryClient.invalidateQueries({ queryKey: ['tasks', variables.projectId] });
-      // Invalidate all worker task lists to show new assignments
-      queryClient.invalidateQueries({ queryKey: ['worker-tasks'] });
-      // Invalidate optimized tasks queries
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      
       toast({
         title: "Task created",
         description: "New task has been created successfully.",
       });
     },
-    onError: (error: any, variables, context) => {
+    onError: (error, variables, context) => {
       if (context?.previousTasks) {
         queryClient.setQueryData(['tasks', context.projectId], context.previousTasks);
       }
-      
-      console.error('Error creating task:', error);
-      
-      // Enhanced error handling to surface database constraint errors
-      let errorMessage = "Failed to create task. Please try again.";
-      
-      if (error?.message) {
-        // Check for specific database constraint errors
-        if (error.message.includes('Cannot assign task to user without project access')) {
-          errorMessage = "Cannot assign this task: The selected worker doesn't have access to this project. Please assign them to the project first.";
-        } else if (error.message.includes('violates row-level security')) {
-          errorMessage = "Permission denied: You don't have permission to create tasks for this project.";
-        } else if (error.message.includes('Foreign key violation')) {
-          errorMessage = "Invalid reference: Please check that the project, phase, or assignee exists.";
-        } else if (error.message.includes('not-null constraint')) {
-          errorMessage = "Missing required information: Please fill in all required fields.";
-        } else {
-          // For other database errors, show the actual error message if it's user-friendly
-          errorMessage = error.message.length < 100 ? error.message : errorMessage;
-        }
-      }
-      
       toast({
-        title: "Error creating task",
-        description: errorMessage,
+        title: "Error",
+        description: "Failed to create task. Please try again.",
         variant: "destructive",
       });
     },
@@ -242,12 +204,7 @@ export function useUpdateTask() {
       return { previousTasks, projectId };
     },
     onSuccess: async (data) => {
-      // Invalidate project-specific tasks
       queryClient.invalidateQueries({ queryKey: ['tasks', data.project_id] });
-      // Invalidate all worker task lists to show updates
-      queryClient.invalidateQueries({ queryKey: ['worker-tasks'] });
-      // Invalidate optimized tasks queries
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       
       // Update phase and project progress
       try {

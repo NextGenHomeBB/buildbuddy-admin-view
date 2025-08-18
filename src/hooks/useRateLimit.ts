@@ -18,8 +18,7 @@ export const useRateLimit = () => {
     const { maxAttempts = 5, windowMinutes = 15 } = options;
 
     try {
-      // Use enhanced rate limiting function
-      const { data, error } = await supabase.rpc('check_rate_limit_enhanced', {
+      const { data, error } = await supabase.rpc('check_rate_limit', {
         operation_name: operation,
         max_attempts: maxAttempts,
         window_minutes: windowMinutes

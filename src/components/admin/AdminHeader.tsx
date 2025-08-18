@@ -14,13 +14,10 @@ import { Badge } from '@/components/ui/badge';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { CacheClearButton } from './CacheClearButton';
-import { useNavigate } from 'react-router-dom';
 
 export function AdminHeader() {
   const { user, signOut } = useAuthContext();
   const { currentOrg, error } = useOrganization();
-  const navigate = useNavigate();
 
   return (
     <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm">
@@ -92,19 +89,15 @@ export function AdminHeader() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate('/admin/profile')}>
+              <DropdownMenuItem>
                 Profile Settings
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
+              <DropdownMenuItem>
                 Team Settings
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/admin/billing')}>
+              <DropdownMenuItem>
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <div className="px-2 py-1">
-                <CacheClearButton />
-              </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive" onClick={signOut}>
                 Sign out

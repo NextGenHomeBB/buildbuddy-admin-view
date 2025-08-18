@@ -3,16 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Users, BarChart3, Settings, Clock, MapPin, AlertTriangle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Calendar, Users, BarChart3, Settings, Clock, MapPin } from 'lucide-react';
 import { ScheduleCalendarView } from '@/components/admin/schedule/ScheduleCalendarView';
 import { ScheduleBoard } from '@/components/admin/schedule/ScheduleBoard';
 import { WorkforceOverview } from '@/components/admin/schedule/WorkforceOverview';
 import { ScheduleAnalytics } from '@/components/admin/schedule/ScheduleAnalytics';
 import { useShifts } from '@/hooks/useShiftOptimization';
 import { useOptimizedTasks } from '@/hooks/useOptimizedTasks';
-import { useWorkersWithProjectAccess } from '@/hooks/useWorkersWithProjectAccess';
-import { useProjectDataConsistency, useRepairProjectAssignments } from '@/hooks/useProjectDataConsistency';
+import { useWorkers } from '@/hooks/useWorkers';
 import { useCreateTask } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/use-toast';
 import { format, addDays, startOfWeek } from 'date-fns';
@@ -28,22 +26,19 @@ export default function AdminScheduleManual() {
 
   const { data: shifts } = useShifts();
   const { data: tasks } = useOptimizedTasks();
-  const { data: workersWithAccess = [], isLoading: isLoadingWorkers, error: workersError } = useWorkersWithProjectAccess();
-  const { data: consistencyData } = useProjectDataConsistency();
-  const repairMutation = useRepairProjectAssignments();
+  const { data: workers } = useWorkers();
   const createTaskMutation = useCreateTask();
-
-  // Convert workers with access to simple worker format for compatibility
-  const workers = workersWithAccess.map(w => ({
-    id: w.id,
-    full_name: w.full_name,
-    role: w.role,
-    avatar_url: w.avatar_url
-  }));
 
   const handleTaskCreate = async (taskData: any) => {
     try {
-      console.log('handleTaskCreate called with:', taskData);
+      if (!taskData.project_id) {
+        toast({
+          title: "Error",
+          description: "Please select a project to create the task",
+          variant: "destructive"
+        });
+        return;
+      }
 
       // Calculate end_date from start_date + duration_days
       const endDate = taskData.start_date && taskData.duration_days 
@@ -63,10 +58,8 @@ export default function AdminScheduleManual() {
         is_scheduled: true
       };
 
-      console.log('Creating task with processed data:', createTaskData);
-
       await createTaskMutation.mutateAsync({
-        projectId: taskData.project_id || '', // Allow empty project ID for unassigned tasks
+        projectId: taskData.project_id,
         data: createTaskData
       });
 
@@ -74,37 +67,13 @@ export default function AdminScheduleManual() {
         title: "Success", 
         description: "Task created successfully"
       });
-    } catch (error: any) {
-      console.error('Task creation failed:', error);
-      
-      // Enhanced error handling
-      let errorMessage = "Failed to create task";
-      
-      if (error?.message) {
-        if (error.message.includes('row-level security')) {
-          errorMessage = "Permission denied: Check your project access permissions";
-        } else if (error.message.includes('foreign key')) {
-          errorMessage = "Invalid reference: Please check project/phase selection";
-        } else if (error.message.includes('not-null')) {
-          errorMessage = "Missing required fields";
-        } else {
-          errorMessage = error.message;
-        }
-      }
-      
+    } catch (error) {
       toast({
-        title: "Error creating task",
-        description: errorMessage,
+        title: "Error",
+        description: "Failed to create task",
         variant: "destructive"
       });
     }
-  };
-
-  // Check for data inconsistencies
-  const hasInconsistencies = consistencyData?.some(check => !check.is_consistent) || false;
-  
-  const handleRepairData = () => {
-    repairMutation.mutate();
   };
 
   const totalShifts = shifts?.length || 0;
@@ -129,38 +98,6 @@ export default function AdminScheduleManual() {
           </Button>
         </div>
       </div>
-
-      {/* Data Consistency Alert */}
-      {hasInconsistencies && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Data Inconsistency Detected</AlertTitle>
-          <AlertDescription className="flex items-center justify-between">
-            <span>
-              Worker assignments are out of sync. This may cause assignment issues.
-            </span>
-            <Button 
-              onClick={handleRepairData} 
-              disabled={repairMutation.isPending}
-              size="sm"
-              variant="outline"
-            >
-              {repairMutation.isPending ? 'Repairing...' : 'Repair Now'}
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Workers Error Alert */}
-      {workersError && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Worker Data Error</AlertTitle>
-          <AlertDescription>
-            Unable to load worker data: {workersError.message}
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* Overview Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
@@ -194,9 +131,6 @@ export default function AdminScheduleManual() {
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Workers</p>
                 <p className="text-xl sm:text-2xl font-bold">{totalWorkers}</p>
-                {workersError && (
-                  <p className="text-xs text-destructive mt-1">Data unavailable</p>
-                )}
               </div>
               <Users className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground shrink-0" />
             </div>

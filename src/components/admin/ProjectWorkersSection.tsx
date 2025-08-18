@@ -16,10 +16,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useProjectWorkers, useAssignSingleWorkerToProject, useUnassignWorkerFromProject } from '@/hooks/useProjectWorkers';
+import { useProjectWorkers, useAssignWorkerToProject, useUnassignWorkerFromProject } from '@/hooks/useProjectWorkers';
 import { useWorkers } from '@/hooks/useWorkers';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
 
 interface ProjectWorkersSectionProps {
   projectId: string;
@@ -31,9 +29,8 @@ export function ProjectWorkersSection({ projectId }: ProjectWorkersSectionProps)
   
   const { data: projectWorkers = [], isLoading: loadingProjectWorkers } = useProjectWorkers(projectId);
   const { data: allWorkers = [], isLoading: loadingAllWorkers } = useWorkers();
-  const assignWorker = useAssignSingleWorkerToProject();
+  const assignWorker = useAssignWorkerToProject();
   const unassignWorker = useUnassignWorkerFromProject();
-  const { user, isAdmin } = useAuth();
 
   // Filter out workers already assigned to the project
   const availableWorkers = allWorkers.filter(
@@ -43,27 +40,13 @@ export function ProjectWorkersSection({ projectId }: ProjectWorkersSectionProps)
   const handleAssignWorker = async () => {
     if (!selectedWorkerId) return;
     
-    if (!user) {
-      toast({
-        title: "Authentication Error", 
-        description: "Please log in to assign workers.",
-        variant: "destructive",
-      });
-      return;
-    }
+    await assignWorker.mutateAsync({
+      projectId,
+      userId: selectedWorkerId,
+    });
     
-    try {
-      await assignWorker.mutateAsync({
-        projectId,
-        userId: selectedWorkerId,
-      });
-      
-      setSelectedWorkerId('');
-      setIsAddingWorker(false);
-    } catch (error) {
-      console.error('Worker assignment error:', error);
-      // Error handling is done in the mutation hook
-    }
+    setSelectedWorkerId('');
+    setIsAddingWorker(false);
   };
 
   const handleUnassignWorker = async (userId: string) => {
@@ -97,15 +80,13 @@ export function ProjectWorkersSection({ projectId }: ProjectWorkersSectionProps)
           </div>
         </div>
         
-        
         <Popover open={isAddingWorker} onOpenChange={setIsAddingWorker}>
           <PopoverTrigger asChild>
             <Button 
               variant="outline" 
               size="sm" 
               className="gap-2 bg-white/80 backdrop-blur-sm"
-              disabled={availableWorkers.length === 0 || !user}
-              title={!user ? 'Login required to assign workers' : availableWorkers.length === 0 ? 'No available workers to assign' : ''}
+              disabled={availableWorkers.length === 0}
             >
               <Plus className="h-4 w-4" />
               Add Member

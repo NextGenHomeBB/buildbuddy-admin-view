@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Mail, Users, Shield, Send, Check } from 'lucide-react';
 import { logger } from '@/utils/logger';
-import { useOrganization } from '@/contexts/OrganizationContext';
 import {
   Dialog,
   DialogContent,
@@ -47,7 +46,6 @@ export function UserInviteDialog({ open, onOpenChange, onUserInvited }: UserInvi
   const [invitedEmails, setInvitedEmails] = useState<string[]>([]);
   const [step, setStep] = useState<'form' | 'success'>('form');
   const { toast } = useToast();
-  const { currentOrg } = useOrganization();
 
   const form = useForm<InviteFormData>({
     resolver: zodResolver(inviteSchema),
@@ -110,21 +108,12 @@ export function UserInviteDialog({ open, onOpenChange, onUserInvited }: UserInvi
         return;
       }
 
-      if (!currentOrg?.id) {
-        toast({
-          title: 'No organization selected',
-          description: 'Please select an organization first.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
       // Send invitations through edge function
       const { data: result, error } = await supabase.functions.invoke('invite_users', {
         body: {
           emails: valid,
           role: data.role,
-          org_id: currentOrg.id,
+          message: data.message,
           send_welcome: data.send_welcome,
         },
         headers: {
@@ -134,27 +123,9 @@ export function UserInviteDialog({ open, onOpenChange, onUserInvited }: UserInvi
 
       if (error) {
         logger.error('Failed to send invitations:', error);
-        
-        // Better error handling based on error type
-        let errorMessage = 'An unexpected error occurred';
-        let errorTitle = 'Failed to send invitations';
-        
-        if (error.message?.includes('Rate limit exceeded')) {
-          errorTitle = 'Too many requests';
-          errorMessage = 'Please wait a moment before sending more invitations.';
-        } else if (error.message?.includes('Admin or owner access required')) {
-          errorTitle = 'Insufficient permissions';
-          errorMessage = 'You need admin or owner privileges to send invitations.';
-        } else if (error.message?.includes('Organization ID is required')) {
-          errorTitle = 'Organization error';
-          errorMessage = 'Please select an organization first.';
-        } else if (error.message) {
-          errorMessage = error.message;
-        }
-        
         toast({
-          title: errorTitle,
-          description: errorMessage,
+          title: 'Failed to send invitations',
+          description: error.message || 'An unexpected error occurred',
           variant: 'destructive',
         });
         return;

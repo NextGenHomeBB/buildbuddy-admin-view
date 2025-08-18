@@ -25,40 +25,27 @@ export function useWorkerProjects() {
         return [];
       }
       
-      // Query projects through user_project_role table
-      const { data: projectAssignments, error: projectsError } = await supabase
-        .from('user_project_role')
-        .select(`
-          project_id,
-          role,
-          projects (
-            id,
-            name,
-            description,
-            status,
-            progress,
-            location,
-            start_date,
-            budget
-          )
-        `)
-        .eq('user_id', user.id);
+      // Directly query projects where the user is in assigned_workers array
+      const { data: projects, error: projectsError } = await supabase
+        .from('projects')
+        .select('id, name, description, status, progress, location, start_date, budget, assigned_workers')
+        .contains('assigned_workers', [user.id]);
 
       if (projectsError) {
         throw projectsError;
       }
 
-      // Map to the expected format with actual user role
-      return projectAssignments?.map(assignment => ({
-        id: assignment.projects.id,
-        name: assignment.projects.name,
-        description: assignment.projects.description || '',
-        status: assignment.projects.status || 'planning',
-        progress: assignment.projects.progress || 0,
-        location: assignment.projects.location,
-        start_date: assignment.projects.start_date,
-        budget: assignment.projects.budget,
-        user_role: assignment.role
+      // Map to the expected format with user_role as 'worker'
+      return projects?.map(project => ({
+        id: project.id,
+        name: project.name,
+        description: project.description || '',
+        status: project.status || 'planning',
+        progress: project.progress || 0,
+        location: project.location,
+        start_date: project.start_date,
+        budget: project.budget,
+        user_role: 'worker' as const
       })) || [];
     },
     enabled: !!user?.id,

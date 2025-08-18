@@ -2,8 +2,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from './AuthContext';
 import { setCurrentOrgId, clearCurrentOrgId } from '@/lib/supabase-org-helper';
-import { logger } from '@/utils/logger';
-import { cacheManager } from '@/utils/cacheManager';
 
 interface Organization {
   id: string;
@@ -16,9 +14,6 @@ interface OrganizationContextType {
   loading: boolean;
   error: string | null;
   refreshOrganization: () => Promise<void>;
-  clearCacheAndRetry: () => Promise<void>;
-  retryCount: number;
-  needsOrganizationSelection: boolean;
 }
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
@@ -28,20 +23,12 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
 
   const fetchDefaultOrganization = async () => {
-    if (!user) {
-      logger.debug('OrganizationContext: No user found');
-      return;
-    }
+    if (!user) return;
 
     try {
       setError(null);
-      logger.info('OrganizationContext: Fetching organization for user', { 
-        userId: user.id, 
-        retryCount 
-      });
       
       // First try to get user's default organization from profiles
       const { data: profile, error: profileError } = await supabase
@@ -50,111 +37,55 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         .eq('id', user.id)
         .single();
 
-      logger.debug('OrganizationContext: Profile query result', { profile, profileError });
-
-      if (profileError) {
-        logger.error('OrganizationContext: Profile error', profileError);
-        throw profileError;
-      }
+      if (profileError) throw profileError;
 
       let orgId = profile?.default_org_id;
-      logger.debug('OrganizationContext: Found default_org_id', { orgId });
 
-      // If no default org, check for existing memberships
+      // If no default org, try to get user's first membership
       if (!orgId) {
-        logger.debug('OrganizationContext: No default org, checking memberships...');
         const { data: membership, error: membershipError } = await supabase
           .from('organization_members')
-          .select('org_id, role')
+          .select('org_id')
           .eq('user_id', user.id)
           .eq('status', 'active')
           .order('created_at', { ascending: true })
           .limit(1)
-          .maybeSingle();
+          .single();
 
-        logger.debug('OrganizationContext: Membership query result', { membership, membershipError });
-
-        if (membershipError) {
-          logger.error('OrganizationContext: Membership error', membershipError);
-          throw membershipError;
-        }
-
-        if (!membership) {
-          logger.info('OrganizationContext: No active memberships found - user needs to select organization');
-          setError('no_organization_selected');
+        if (membershipError || !membership) {
+          setError('No organization found. Please contact support.');
           return;
-        } else {
-          orgId = membership.org_id;
-          logger.debug('OrganizationContext: Found org via membership', { orgId });
-
-          // Update profile with this default org
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ default_org_id: orgId })
-            .eq('id', user.id);
-
-          if (updateError) {
-            logger.error('OrganizationContext: Failed to update profile', updateError);
-          }
         }
+
+        orgId = membership.org_id;
+
+        // Update profile with this default org
+        await supabase
+          .from('profiles')
+          .update({ default_org_id: orgId })
+          .eq('id', user.id);
       }
 
       // Get organization details
-      logger.debug('OrganizationContext: Fetching organization details', { orgId });
       const { data: org, error: orgError } = await supabase
         .from('organizations')
         .select('id, name, created_at')
         .eq('id', orgId)
         .single();
 
-      logger.debug('OrganizationContext: Organization query result', { org, orgError });
+      if (orgError) throw orgError;
 
-      if (orgError) {
-        logger.error('OrganizationContext: Organization error', orgError);
-        throw orgError;
-      }
-
-      if (!org) {
-        logger.error('OrganizationContext: Organization not found');
-        setError('Organization not found. Please contact support.');
-        return;
-      }
-
-      logger.info('OrganizationContext: Successfully loaded organization', { 
-        orgName: org.name, 
-        orgId: org.id 
-      });
       setCurrentOrg(org);
       setCurrentOrgId(org.id);
       
     } catch (error) {
-      logger.error('OrganizationContext: Error fetching default organization', error);
-      setError(`Failed to load organization: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      
-      // If this is a repeated failure, suggest cache clearing
-      if (retryCount > 2) {
-        logger.warn('Multiple organization load failures, cache issue suspected', { retryCount });
-        setError('Persistent loading issue detected. Try clearing cache.');
-      }
+      console.error('Error fetching default organization:', error);
+      setError('Failed to load organization');
     }
   };
 
   const refreshOrganization = async () => {
-    setRetryCount(prev => prev + 1);
     await fetchDefaultOrganization();
-  };
-
-  const clearCacheAndRetry = async () => {
-    try {
-      logger.info('Clearing cache and retrying organization load');
-      await cacheManager.clearAllCaches({ clearStorage: false });
-      setRetryCount(0);
-      setError(null);
-      await fetchDefaultOrganization();
-    } catch (error) {
-      logger.error('Failed to clear cache and retry', error);
-      setError('Failed to clear cache. Please try a manual refresh.');
-    }
   };
 
   useEffect(() => {
@@ -167,17 +98,12 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  const needsOrganizationSelection = error === 'no_organization_selected';
-
   return (
     <OrganizationContext.Provider value={{
       currentOrg,
       loading,
       error,
-      refreshOrganization,
-      clearCacheAndRetry,
-      retryCount,
-      needsOrganizationSelection
+      refreshOrganization
     }}>
       {children}
     </OrganizationContext.Provider>

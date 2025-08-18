@@ -54,13 +54,13 @@ export class ErrorBoundary extends Component<Props, State> {
                 Try Again
               </Button>
             </div>
-            {this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <details className="mt-4 text-left">
                 <summary className="cursor-pointer text-sm text-muted-foreground">
-                  Error Details
+                  Error Details (Development)
                 </summary>
-                <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto max-h-32">
-                  {this.state.error.stack || this.state.error.message}
+                <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto">
+                  {this.state.error.stack}
                 </pre>
               </details>
             )}
