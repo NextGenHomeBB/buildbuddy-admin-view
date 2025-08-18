@@ -60,7 +60,7 @@ export function useCreateTaskWithAssignment() {
           description: data.description,
           assignee: data.assigneeId,
           project_id: data.projectId,
-          due_date: data.dueDate,
+          end_date: data.dueDate,
           priority: data.priority || 'medium',
           status: 'todo'
         })
