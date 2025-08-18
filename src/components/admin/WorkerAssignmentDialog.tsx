@@ -54,20 +54,39 @@ export function WorkerAssignmentDialog({
 
   const handleAssignWorkers = async () => {
     if (!projectId || selectedWorkers.length === 0) {
-      console.warn('Cannot assign workers: missing projectId or no workers selected');
+      console.warn('[DIALOG] Cannot assign workers: missing projectId or no workers selected', {
+        projectId,
+        selectedWorkersCount: selectedWorkers.length
+      });
+      
+      toast({
+        title: "Invalid Selection",
+        description: "Please select at least one worker to assign.",
+        variant: "destructive",
+      });
       return;
     }
 
-    // Debug authentication state
-    console.log('Assignment attempt:', {
+    // Enhanced debug authentication state
+    console.log('[DIALOG] Assignment attempt details:', {
       projectId,
       selectedWorkers,
-      user: user?.id,
-      session: session?.access_token ? 'present' : 'missing',
-      userRole: user?.role
+      selectedWorkersCount: selectedWorkers.length,
+      user: {
+        id: user?.id,
+        email: user?.email,
+        role: user?.role
+      },
+      session: {
+        hasAccessToken: !!session?.access_token,
+        tokenLength: session?.access_token?.length || 0,
+        expiresAt: session?.expires_at
+      },
+      timestamp: new Date().toISOString()
     });
 
     if (!user) {
+      console.error('[DIALOG] User not authenticated');
       toast({
         title: "Authentication Required",
         description: "Please log in to assign workers.",
@@ -77,6 +96,7 @@ export function WorkerAssignmentDialog({
     }
 
     if (!session?.access_token) {
+      console.error('[DIALOG] Session missing or invalid');
       toast({
         title: "Session Expired",
         description: "Your session has expired. Please log in again.",
@@ -85,23 +105,54 @@ export function WorkerAssignmentDialog({
       return;
     }
 
+    console.log('[DIALOG] Starting worker assignment mutation...');
+    
     try {
-      await addWorkersMutation.mutateAsync({
+      const result = await addWorkersMutation.mutateAsync({
         projectId,
         workerIds: selectedWorkers
       });
 
+      console.log('[DIALOG] Assignment mutation completed successfully:', result);
+      
       setSelectedWorkers([]);
       onWorkersAssigned?.();
       onOpenChange(false);
+      
+      toast({
+        title: "Assignment Successful",
+        description: `Successfully processed worker assignment.`,
+      });
     } catch (error) {
-      console.error('Worker assignment failed:', {
-        error,
+      console.error('[DIALOG] Worker assignment failed:', {
+        error: error instanceof Error ? {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        } : error,
         projectId,
         selectedWorkers,
-        user: user?.id
+        user: user?.id,
+        timestamp: new Date().toISOString()
       });
-      // Error is already handled by the mutation hook
+      
+      // Additional error handling for better user experience
+      if (error instanceof Error) {
+        if (error.message.includes('organization')) {
+          toast({
+            title: "Organization Issue",
+            description: "There may be an organization membership issue. Please contact support.",
+            variant: "destructive",
+          });
+        } else if (error.message.includes('permission')) {
+          toast({
+            title: "Permission Denied",
+            description: "You don't have sufficient permissions for this action.",
+            variant: "destructive",
+          });
+        }
+      }
+      // Main error handling is done by the mutation hook
     }
   };
 

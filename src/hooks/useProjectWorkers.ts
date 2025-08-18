@@ -163,10 +163,36 @@ export function useAssignMultipleWorkers() {
       console.log(`[ASSIGN] Starting secure assignment of ${workerIds.length} workers to project ${projectId}`);
       
       if (!projectId || !workerIds?.length) {
+        console.error('[ASSIGN] Validation failed:', { projectId, workerIds });
         throw new Error('Project ID and at least one Worker ID are required');
       }
 
+      // Enhanced debugging - get current session info
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      console.log('[ASSIGN] Authentication state:', {
+        hasSession: !!session,
+        hasUser: !!user,
+        userId: user?.id,
+        sessionError: sessionError?.message,
+        userError: userError?.message,
+        projectId,
+        workerCount: workerIds.length
+      });
+
+      if (!session || !user) {
+        console.error('[ASSIGN] Authentication failed:', { session: !!session, user: !!user });
+        throw new Error('Authentication required. Please log in and try again.');
+      }
+
       // Use the secure RPC function for assignment
+      console.log(`[ASSIGN] Calling RPC with params:`, {
+        p_project_id: projectId,
+        p_user_ids: workerIds,
+        p_role: 'worker'
+      });
+
       const { data, error } = await supabase.rpc('assign_multiple_workers_to_project', {
         p_project_id: projectId,
         p_user_ids: workerIds,
@@ -178,11 +204,14 @@ export function useAssignMultipleWorkers() {
           error,
           code: error.code,
           message: error.message,
+          details: error.details,
+          hint: error.hint,
           projectId,
-          workerIds
+          workerIds,
+          userId: user?.id
         });
         
-        // Provide user-friendly error messages
+        // Provide user-friendly error messages based on the enhanced RPC responses
         if (error.code === '42501') {
           throw new Error('You don\'t have permission to assign workers to this project.');
         } else if (error.message?.includes('Insufficient permissions')) {
@@ -191,19 +220,27 @@ export function useAssignMultipleWorkers() {
           throw new Error('Project not found. Please refresh and try again.');
         } else if (error.message?.includes('User not found')) {
           throw new Error('One or more selected workers were not found. Please refresh and try again.');
+        } else if (error.message?.includes('not a member of the project organization')) {
+          throw new Error('Selected worker(s) are not members of the project organization.');
+        } else if (error.message?.includes('Admin or organization owner role required')) {
+          throw new Error('You need admin or organization owner permissions to assign workers.');
         }
         
         throw error;
       }
       
-      console.log(`[ASSIGN] Successfully assigned workers via RPC:`, data);
+      console.log(`[ASSIGN] RPC response received:`, data);
       const result = data as unknown as AssignmentResult;
-      return {
+      
+      const returnValue = {
         assigned: result?.assigned_count || 0,
         alreadyAssigned: workerIds.length - (result?.assigned_count || 0),
         errors: result?.errors || [],
         success: result?.success || false
       };
+      
+      console.log(`[ASSIGN] Returning result:`, returnValue);
+      return returnValue;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['project-workers', variables.projectId] });
