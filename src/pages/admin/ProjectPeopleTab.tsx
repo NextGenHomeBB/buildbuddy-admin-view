@@ -25,6 +25,7 @@ export function ProjectPeopleTab({ projectId }: ProjectPeopleTabProps) {
   const availableWorkers = allWorkers.filter(worker => !assignedWorkerIds.includes(worker.id));
 
   const handleAssignWorkers = (workerIds: string[]) => {
+    console.log('ProjectPeopleTab: Assigning workers', { projectId, workerIds });
     addWorkersMutation.mutate({ projectId, workerIds });
   };
 

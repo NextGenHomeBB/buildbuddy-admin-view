@@ -3451,6 +3451,10 @@ export type Database = {
           user_name: string
         }[]
       }
+      get_user_effective_role: {
+        Args: { p_org_id?: string; p_user_id?: string }
+        Returns: string
+      }
       get_user_org_role: {
         Args: { p_org_id: string }
         Returns: string

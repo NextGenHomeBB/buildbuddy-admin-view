@@ -15,7 +15,12 @@ export function useAddWorkers() {
 
   return useMutation({
     mutationFn: async ({ projectId, workerIds }: AddWorkersRequest) => {
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        console.error('AddWorkers: User not authenticated');
+        throw new Error('User not authenticated');
+      }
+
+      console.log('AddWorkers: Starting assignment', { projectId, workerIds, adminId: user.id });
 
       const { data, error } = await supabase.functions.invoke('assignWorkers', {
         body: {
@@ -25,7 +30,12 @@ export function useAddWorkers() {
         }
       });
 
-      if (error) throw error;
+      console.log('AddWorkers: Response received', { data, error });
+
+      if (error) {
+        console.error('AddWorkers: Edge function error', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: (data, variables) => {
