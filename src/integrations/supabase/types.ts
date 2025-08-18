@@ -2923,6 +2923,10 @@ export type Database = {
         Args: { project_uuid: string; user_uuid: string }
         Returns: boolean
       }
+      can_access_project_assignments: {
+        Args: { p_project_id: string; p_user_id?: string }
+        Returns: boolean
+      }
       can_access_project_financial_data: {
         Args: { p_project_id: string }
         Returns: boolean
@@ -3449,6 +3453,10 @@ export type Database = {
       }
       get_user_org_role: {
         Args: { p_org_id: string }
+        Returns: string
+      }
+      get_user_role_secure: {
+        Args: { p_user_id?: string }
         Returns: string
       }
       get_worker_rate_metadata: {
