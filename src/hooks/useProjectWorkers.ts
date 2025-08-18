@@ -193,7 +193,7 @@ export function useAssignMultipleWorkers() {
         p_role: 'worker'
       });
 
-      const { data, error } = await supabase.rpc('assign_multiple_workers_to_project', {
+      const { data, error } = await supabase.rpc('assign_multiple_workers_to_project_simple', {
         p_project_id: projectId,
         p_user_ids: workerIds,
         p_role: 'worker'
@@ -308,7 +308,7 @@ export function useAssignSingleWorkerToProject() {
       console.log('Assigning single worker via RPC:', { projectId, userId, role });
 
       // Use the secure RPC function for assignment
-      const { data, error } = await supabase.rpc('assign_worker_to_project', {
+      const { data, error } = await supabase.rpc('assign_worker_to_project_simple', {
         p_project_id: projectId.trim(),
         p_user_id: userId.trim(),
         p_role: role?.trim() || 'worker'
